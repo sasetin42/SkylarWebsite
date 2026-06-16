@@ -129,35 +129,65 @@ export const LOCATIONS: Location[] = [
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't1',
-    name: 'Jerome Villareal',
+    name: 'James Wilson',
     role: 'Wind Turbine Technician',
-    content: 'The GWO training at Skylar was exceptional. The simulators are exactly like what we use offshore. Highly recommend for anyone needing GWO certification.',
+    content: 'The GWO training at Skylar was exceptional. The simulators are exactly like what we use offshore.',
     avatar: 'https://i.pravatar.cc/150?img=11'
   },
   {
     id: 't2',
     name: 'Sarah Chen',
     role: 'Safety Officer',
-    content: 'Excellent facilities and knowledgeable trainers. The hands-on approach really helped me understand the material. Highly recommended for industrial safety training.',
+    content: 'Excellent facilities and knowledgeable trainers. Highly recommended for industrial safety training.',
     avatar: 'https://i.pravatar.cc/150?img=5'
+  },
+  {
+    id: 't3',
+    name: 'Michael Rodriguez',
+    role: 'Site Supervisor',
+    content: 'The hands-on approach really helped our team understand the critical safety procedures effectively.',
+    avatar: 'https://i.pravatar.cc/150?img=12'
+  },
+  {
+    id: 't4',
+    name: 'Emma Thompson',
+    role: 'Renewable Energy Engineer',
+    content: 'A world-class training center. The instruction quality is on par with the best international standards.',
+    avatar: 'https://i.pravatar.cc/150?img=9'
   }
 ];
 
 export const BLOG_POSTS: BlogPost[] = [
   {
     id: 'b1',
-    title: 'Skylar Education Expands to Asia',
-    excerpt: 'Skylar Education Pty Ltd (Australia) has expanded to the Philippines through Skylar Education Asia Inc., bringing world-class GWO training to the region.',
-    date: 'Feb 10, 2025',
-    category: 'Company News',
-    image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800'
+    title: 'The Growing Demand for GWO-Certified Technicians',
+    excerpt: 'Discover why GWO certification is becoming a prerequisite for technicians in the rapidly growing wind energy market.',
+    date: 'Feb 10, 2026',
+    category: 'CAREERS',
+    image: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=800'
   },
   {
     id: 'b2',
-    title: 'The Importance of GWO Standards',
-    excerpt: 'Why Global Wind Organisation standards are crucial for safety in the renewable energy sector.',
-    date: 'Jan 15, 2025',
-    category: 'Industry News',
-    image: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=800'
+    title: 'Top Mistakes to Avoid in Wind Turbine Safety and Maintenance',
+    excerpt: 'Learn about common safety pitfalls in wind turbine maintenance and how technicians can avoid high-risk incidents.',
+    date: 'Jan 15, 2026',
+    category: 'UPDATES',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'b3',
+    title: 'Work at Height Hazards and Control Measures for Safety Compliance',
+    excerpt: 'Essential insights into managing working at height hazards to ensure safety and regulatory compliance on industrial sites.',
+    date: 'Dec 05, 2025',
+    category: 'UPDATES',
+    image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'b4',
+    title: 'Dropped Object Prevention: Protecting Lives and Infrastructure',
+    excerpt: 'Understanding the critical importance of dropped object prevention protocols in high-altitude turbine work zones.',
+    date: 'Nov 18, 2025',
+    category: 'UPDATES',
+    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=800'
   }
 ];

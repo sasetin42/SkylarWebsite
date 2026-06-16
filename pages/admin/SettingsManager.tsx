@@ -240,7 +240,7 @@ export const SettingsManager: React.FC = () => {
                                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Brand Color (Primary)</label>
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-lg bg-primary shadow-sm border border-gray-200 dark:border-gray-700"></div>
-                                        <input type="text" value="#1C3D72" disabled className="p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-300 font-mono text-sm" />
+                                        <input type="text" value="#041024" disabled className="p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-300 font-mono text-sm" />
                                     </div>
                                 </div>
                             </div>

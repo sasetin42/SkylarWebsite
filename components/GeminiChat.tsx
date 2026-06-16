@@ -147,7 +147,7 @@ export const GeminiChat: React.FC = () => {
                     <button 
                         key={i} 
                         onClick={() => handleSend(sug)}
-                        className="whitespace-nowrap text-xs font-bold text-primary bg-blue-50 hover:bg-blue-100 border border-blue-100 px-3 py-1.5 rounded-full transition-colors"
+                        className="whitespace-nowrap text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-3 py-1.5 rounded-full transition-colors"
                     >
                         {sug}
                     </button>
@@ -176,7 +176,7 @@ export const GeminiChat: React.FC = () => {
           <div className="flex gap-2 items-center bg-gray-50 border border-gray-200 rounded-full px-2 py-2 shadow-inner focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
             <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-full transition-colors"
+                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
                 title="Upload image for analysis"
             >
                 <Paperclip className="w-5 h-5" />

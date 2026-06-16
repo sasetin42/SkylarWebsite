@@ -112,7 +112,7 @@ o ask a question about this Privacy Notice`
             </h1>
             
             <div className="mb-6">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-[#0072CE] text-white text-xs font-bold uppercase tracking-widest shadow-lg">
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-primary text-white text-xs font-bold uppercase tracking-widest shadow-lg">
                  <Shield size={14} className="text-white" /> Enrolments
                </div>
             </div>
@@ -148,7 +148,7 @@ o ask a question about this Privacy Notice`
                             className="w-full flex items-center justify-between p-6 md:p-8 text-left bg-white hover:bg-gray-50 transition-colors group focus:outline-none"
                         >
                             <div className="flex items-center gap-6">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm shrink-0 ${openSections[section.id] ? 'bg-primary text-white rotate-90' : 'bg-blue-50 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm shrink-0 ${openSections[section.id] ? 'bg-primary text-white rotate-90' : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
                                     {openSections[section.id] ? <Minus size={24} /> : <Plus size={24} />}
                                 </div>
                                 <div>

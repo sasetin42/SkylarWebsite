@@ -43,7 +43,7 @@ interface ServiceCardProps {
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ icon: Icon, title, desc }) => (
   <div className="flex gap-4 p-4 rounded-xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-gray-100">
-    <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-primary">
+    <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-primary">
       <Icon size={24} />
     </div>
     <div>

@@ -259,8 +259,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                   key={tab.id}
                   onClick={() => setActiveGwoTab(tab.id)}
                   className={`py-4 px-6 rounded-xl font-heading font-bold text-sm md:text-base uppercase tracking-wider transition-all duration-300 flex-1 text-center border-b-4 md:border-b-0 md:border-2 shadow-sm ${activeGwoTab === tab.id
-                      ? 'bg-[#0072CE] text-white border-[#005bb5] shadow-lg transform md:-translate-y-1'
-                      : 'bg-gray-50 text-gray-500 border-transparent hover:bg-gray-100 hover:text-[#0072CE]'
+                      ? 'bg-primary text-white border-primary/80 shadow-lg transform md:-translate-y-1'
+                      : 'bg-gray-50 text-gray-500 border-transparent hover:bg-gray-100 hover:text-primary'
                     }`}
                 >
                   {tab.label}
@@ -277,7 +277,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 <div className="space-y-12">
                   <div className="flex flex-col lg:flex-row items-center gap-12">
                     <div className="lg:w-1/2">
-                      <h3 className="text-xl md:text-2xl font-bold text-[#0072CE] mb-6">
+                      <h3 className="text-xl md:text-2xl font-bold text-primary mb-6">
                         Aligning with Renewable Energy Goals
                       </h3>
                       <div className="prose prose-lg text-gray-600">
@@ -292,7 +292,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                   </div>
 
                   <div className="border-t border-gray-100 pt-10">
-                    <h3 className="text-xl md:text-2xl font-bold text-[#0072CE] mb-6">
+                    <h3 className="text-xl md:text-2xl font-bold text-primary mb-6">
                       The Role of GWO in Industry Growth
                     </h3>
                     <p className="text-gray-600 leading-relaxed text-base md:text-lg">
@@ -305,7 +305,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                   {content[activeGwoTab]?.map((item, idx) => (
                     <div key={idx} className="flex flex-col md:flex-row gap-4 md:gap-8 items-start">
                       <div className="shrink-0 mt-1">
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0072CE]/10 text-[#0072CE] flex items-center justify-center">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                           <CheckCircle size={24} />
                         </div>
                       </div>
@@ -418,11 +418,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 className="absolute inset-0 w-full h-full object-cover"
               />
               {/* Overlay for depth */}
-              <div className="absolute inset-0 bg-[#0A3D62]/20 mix-blend-multiply"></div>
+              <div className="absolute inset-0 bg-[#041024]/20 mix-blend-multiply"></div>
             </div>
 
-            {/* Text Content - Right with Premium Blue Gradient Background */}
-            <div className="lg:w-1/2 bg-gradient-to-br from-[#0A3D62] via-[#1B6CA8] to-[#3DA5F4] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
+            {/* Text Content - Right with Premium Brand Background */}
+            <div className="lg:w-1/2 bg-[#041024] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
               {/* Decorative subtle pattern */}
               <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -436,13 +436,13 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6 text-white leading-tight">
                   {section.data.heading}
                 </h2>
-                <div className="prose prose-lg text-blue-50 mb-8 whitespace-pre-line leading-relaxed">
+                <div className="prose prose-lg text-white/80 mb-8 whitespace-pre-line leading-relaxed">
                   {section.data.description}
                 </div>
 
                 {section.data.partners && (
                   <div className="mt-8 pt-6 border-t border-white/20">
-                    <p className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-4">Trusted Partners</p>
+                    <p className="text-xs font-bold text-white/70 uppercase tracking-wider mb-4">Trusted Partners</p>
                     <div className="flex gap-6 opacity-90">
                       {section.data.partners.map(p => (
                         <span key={p} className="font-heading font-bold text-xl text-white">{p}</span>
@@ -473,11 +473,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 className="absolute inset-0 w-full h-full object-cover"
               />
               {/* Overlay for depth */}
-              <div className="absolute inset-0 bg-[#0A3D62]/20 mix-blend-multiply"></div>
+              <div className="absolute inset-0 bg-[#041024]/20 mix-blend-multiply"></div>
             </div>
 
-            {/* Text Content - Right with Premium Blue Gradient Background */}
-            <div className="lg:w-1/2 bg-gradient-to-br from-[#0A3D62] via-[#1B6CA8] to-[#3DA5F4] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
+            {/* Text Content - Right with Premium Brand Background */}
+            <div className="lg:w-1/2 bg-[#041024] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
               {/* Decorative subtle pattern */}
               <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -491,7 +491,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6 text-white leading-tight">
                   {section.data.heading}
                 </h2>
-                <div className="prose prose-lg text-blue-50 mb-8 whitespace-pre-line leading-relaxed">
+                <div className="prose prose-lg text-white/80 mb-8 whitespace-pre-line leading-relaxed">
                   {section.data.description}
                 </div>
               </div>
@@ -517,11 +517,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 className="absolute inset-0 w-full h-full object-cover"
               />
               {/* Overlay for depth */}
-              <div className="absolute inset-0 bg-[#0A3D62]/30 mix-blend-multiply"></div>
+              <div className="absolute inset-0 bg-[#041024]/30 mix-blend-multiply"></div>
             </div>
 
-            {/* Text Content - Right with Premium Blue Gradient Background */}
-            <div className="lg:w-1/2 bg-gradient-to-br from-[#0A3D62] via-[#1B6CA8] to-[#3DA5F4] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
+            {/* Text Content - Right with Premium Brand Background */}
+            <div className="lg:w-1/2 bg-[#041024] p-8 md:p-12 lg:p-16 text-white relative flex flex-col justify-center">
               {/* Decorative subtle pattern */}
               <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
               <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mb-16 pointer-events-none"></div>
@@ -535,7 +535,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6 text-white leading-tight">
                   {section.data.heading}
                 </h2>
-                <div className="prose prose-lg text-blue-50 mb-8 whitespace-pre-line leading-relaxed">
+                <div className="prose prose-lg text-white/80 mb-8 whitespace-pre-line leading-relaxed">
                   {section.data.description}
                 </div>
 
@@ -593,7 +593,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                 const Icon = IconMap[item.icon || 'Award'] || Award;
                 return (
                   <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center hover:-translate-y-1 transition-transform duration-300">
-                    <div className="w-16 h-16 bg-blue-50 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
                       <Icon size={32} />
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-secondary">{item.title}</h3>

@@ -110,7 +110,7 @@ export const Contact: React.FC = () => {
                       onChange={handleChange}
                       type="text" 
                       required
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 focus:border-[#0072CE] transition-all" 
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all" 
                       placeholder="Name"
                     />
                   </div>
@@ -122,7 +122,7 @@ export const Contact: React.FC = () => {
                       onChange={handleChange}
                       type="email" 
                       required
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 focus:border-[#0072CE] transition-all" 
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all" 
                       placeholder="Email"
                     />
                   </div>
@@ -133,7 +133,7 @@ export const Contact: React.FC = () => {
                       value={formData.mobile}
                       onChange={handleChange}
                       type="tel" 
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 focus:border-[#0072CE] transition-all" 
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all" 
                       placeholder="Mobile"
                     />
                   </div>
@@ -145,7 +145,7 @@ export const Contact: React.FC = () => {
                       onChange={handleChange}
                       required
                       rows={5} 
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0072CE]/20 focus:border-[#0072CE] transition-all resize-none"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all resize-none"
                       placeholder="Message"
                     ></textarea>
                   </div>
@@ -168,7 +168,7 @@ export const Contact: React.FC = () => {
                   <button 
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="w-full py-4 text-base font-bold uppercase tracking-wider bg-[#0072CE] hover:bg-[#005bb5] text-white rounded-md shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0072CE]"
+                    className="w-full py-4 text-base font-bold uppercase tracking-wider bg-primary hover:bg-[#041024]/80 text-white rounded-md shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#041024]"
                   >
                     {status === 'submitting' ? (
                       <span className="flex items-center justify-center gap-2">

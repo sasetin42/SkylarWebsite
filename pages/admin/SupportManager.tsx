@@ -20,6 +20,10 @@ export const SupportManager: React.FC = () => {
   };
 
   const getStudentName = (id: string) => {
+      if (id && id.startsWith('guest|')) {
+          const parts = id.split('|');
+          return `${parts[1]} (${parts[2]}) [Guest]`;
+      }
       const s = students.find(stu => stu.id === id);
       return s ? `${s.firstName} ${s.lastName}` : 'Unknown';
   };

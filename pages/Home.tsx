@@ -10,7 +10,7 @@ import {
 import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
 import { TESTIMONIALS, BLOG_POSTS } from '../constants';
-import { getCourses, getPageContent } from '../services/storageService';
+import { getCourses, getPageContent, saveTicket } from '../services/storageService';
 import { Course, SitePage } from '../types';
 
 interface FormErrors {
@@ -18,6 +18,7 @@ interface FormErrors {
   email?: string;
   phone?: string;
   message?: string;
+  robot?: string;
 }
 
 interface NewsletterForm {
@@ -33,6 +34,7 @@ const Home: React.FC = () => {
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isRobotChecked, setIsRobotChecked] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'success'>('idle');
   const [imageLoads, setImageLoads] = useState<Record<string, boolean>>({});
@@ -110,16 +112,14 @@ const Home: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
-    if (!formData.name.trim()) errors.name = 'Name is required';
+    if (!formData.name.trim()) errors.name = 'Full Name is required';
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = 'Email Address is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = 'Please enter a valid email address';
     }
-    if (formData.phone && !/^[\d\s\-+()]{7,}$/.test(formData.phone)) {
-      errors.phone = 'Please enter a valid phone number';
-    }
     if (!formData.message.trim()) errors.message = 'Message is required';
+    if (!isRobotChecked) errors.robot = 'Please verify that you are not a robot';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -136,8 +136,26 @@ const Home: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
     setContactStatus('sending');
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setContactStatus('success');
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    try {
+      const ticketId = 'ticket-' + Date.now();
+      const dateStr = new Date().toISOString().split('T')[0];
+      saveTicket({
+        id: ticketId,
+        studentId: `guest|${formData.name.trim()}|${formData.email.trim()}`,
+        subject: `Home Contact Form Inquiry`,
+        message: formData.message.trim(),
+        status: 'Open',
+        priority: 'Medium',
+        dateCreated: dateStr,
+        lastUpdated: dateStr
+      });
+      setContactStatus('success');
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setIsRobotChecked(false);
+    } catch (err) {
+      setContactStatus('error');
+    }
   };
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -153,6 +171,53 @@ const Home: React.FC = () => {
     setImageLoads(prev => ({ ...prev, [key]: true }));
   };
 
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter search results in real-time
+  const searchResults = React.useMemo(() => {
+    const query = heroSearch.trim().toLowerCase();
+    if (!query) return null;
+
+    const allCourses = getCourses();
+    const matchedCourses = allCourses.filter(c => 
+      c.title.toLowerCase().includes(query) || 
+      c.description.toLowerCase().includes(query) ||
+      c.category.toLowerCase().includes(query)
+    );
+
+    // Extract categories
+    const categories = Array.from(new Set(allCourses.map(c => c.category)));
+    const matchedCategories = categories.filter(cat => 
+      cat.toLowerCase().includes(query)
+    );
+
+    // Filter BLOG_POSTS (Insights)
+    const matchedInsights = BLOG_POSTS.filter(post => 
+      post.title.toLowerCase().includes(query) || 
+      post.excerpt.toLowerCase().includes(query) ||
+      post.category.toLowerCase().includes(query)
+    );
+
+    return {
+      courses: matchedCourses.slice(0, 5),
+      categories: matchedCategories.slice(0, 3),
+      insights: matchedInsights.slice(0, 4),
+      hasResults: matchedCourses.length > 0 || matchedCategories.length > 0 || matchedInsights.length > 0
+    };
+  }, [heroSearch]);
+
   const accreditation = pageContent?.sections.find(s => s.id === 'accreditation')?.data;
   const coursesIntro = pageContent?.sections.find(s => s.id === 'courses_intro')?.data;
 
@@ -160,7 +225,7 @@ const Home: React.FC = () => {
     <div className="animate-fade-in bg-surface">
       <div className="relative">
         {/* ===== HERO SECTION ===== */}
-        <section className="relative h-screen min-h-[750px] max-h-[1080px] flex items-center overflow-hidden group" aria-label="Hero Slider">
+        <section className="relative h-[80vh] min-h-[600px] max-h-[850px] flex items-center overflow-hidden group" aria-label="Hero Slider">
           {/* Sliding Background Layer */}
           <div
             className="absolute inset-0 flex transition-transform duration-1100 ease-in-out will-change-transform"
@@ -179,9 +244,9 @@ const Home: React.FC = () => {
                   onLoad={() => handleImageLoad(`slide-${idx}`)}
                 />
                 {/* Multi-layer overlay for depth and readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#051124]/95 via-[#051124]/70 to-[#051124]/30"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#051124]/90 via-transparent to-[#051124]/20"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-[#051124]/10 via-transparent to-[#051124]/60"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#041024]/95 via-[#041024]/70 to-[#041024]/30"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-transparent to-[#041024]/20"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-[#041024]/10 via-transparent to-[#041024]/60"></div>
               </div>
             ))}
           </div>
@@ -198,7 +263,7 @@ const Home: React.FC = () => {
                   </div>
 
                   {/* Main Heading */}
-                  <h1 className="text-4xl md:text-[70px] font-heading font-black leading-[1.1] tracking-tight drop-shadow-2xl">
+                  <h1 className="text-4xl md:text-[70px] font-heading font-bold leading-[1.1] tracking-tight drop-shadow-2xl">
                     {slides[currentSlide].heading}
                   </h1>
 
@@ -214,7 +279,8 @@ const Home: React.FC = () => {
                   <div className="flex flex-col sm:flex-row gap-4 md:gap-5 pt-2 pointer-events-auto">
                     <Link to={slides[currentSlide].buttonLink} className="w-full sm:w-auto">
                       <Button
-                        className="w-full font-bold bg-accent text-secondary hover:bg-white hover:text-secondary border-2 border-transparent shadow-xl shadow-accent/20 px-8 py-3.5 text-sm md:text-base rounded-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-accent/30"
+                        variant="secondary"
+                        className="w-full px-8 py-3.5 rounded-xl shadow-xl shadow-accent/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-accent/30 text-sm md:text-base"
                       >
                         {slides[currentSlide].buttonText}
                       </Button>
@@ -250,7 +316,7 @@ const Home: React.FC = () => {
           </button>
 
           {/* Slide Indicators */}
-          <div className="absolute bottom-40 md:bottom-44 left-1/2 -translate-x-1/2 flex gap-3 z-30">
+          <div className="absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 flex gap-3 z-30">
             {slides.map((_, idx) => (
               <button
                 key={idx}
@@ -268,19 +334,35 @@ const Home: React.FC = () => {
 
         {/* Floating Search Bar */}
         <div className="absolute bottom-0 left-0 right-0 z-50 translate-y-1/2 px-4 md:px-8 pointer-events-none">
-          <div className="container mx-auto max-w-5xl pointer-events-auto">
+          <div ref={searchContainerRef} className="container mx-auto max-w-5xl pointer-events-auto relative">
             <form onSubmit={handleHeroSearch} className="bg-white rounded-2xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.35)] border border-gray-100 p-2 md:p-3 flex flex-col md:flex-row gap-3 ring-1 ring-black/5">
-              <div className="flex-1 relative group">
-                <div className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 bg-gray-100 p-2.5 rounded-xl text-gray-500 group-focus-within:text-primary group-focus-within:bg-blue-50 transition-all duration-300">
+              <div className="flex-grow relative group flex items-center">
+                <div className="absolute left-4 md:left-5 bg-gray-100 p-2.5 rounded-xl text-gray-500 group-focus-within:text-primary group-focus-within:bg-primary/10 transition-all duration-300">
                   <Search className="w-5 h-5" />
                 </div>
                 <input
                   type="text"
                   value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
+                  onChange={(e) => {
+                    setHeroSearch(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
                   placeholder="What training do you need?"
-                  className="w-full pl-16 md:pl-20 pr-5 py-4 md:py-5 bg-transparent rounded-xl focus:outline-none text-base md:text-lg text-gray-900 placeholder-gray-400 font-semibold"
+                  className="w-full pl-16 md:pl-20 pr-10 py-4 md:py-5 bg-transparent focus:outline-none text-base md:text-lg text-gray-900 placeholder-gray-400 font-semibold"
                 />
+                {heroSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHeroSearch('');
+                      setShowSearchResults(false);
+                    }}
+                    className="absolute right-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               <Button
                 type="submit"
@@ -289,252 +371,245 @@ const Home: React.FC = () => {
                 Search Courses
               </Button>
             </form>
+
+            {/* Live Search Popup */}
+            {showSearchResults && searchResults && (
+              <div className="absolute left-0 right-0 top-full mt-3 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 p-6 z-50 text-left max-h-[480px] overflow-y-auto flex flex-col gap-6">
+                {!searchResults.hasResults ? (
+                  <div className="py-8 text-center">
+                    <AlertCircle className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium text-base">No results found for "{heroSearch}"</p>
+                    <p className="text-gray-400 text-xs mt-1">Try searching for GWO, Construction, safety or height.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Categories Section */}
+                    {searchResults.categories.length > 0 && (
+                      <div>
+                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-2 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
+                          <Target className="w-3.5 h-3.5" /> Course Categories
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {searchResults.categories.map((cat, index) => (
+                            <Link
+                              key={index}
+                              to={`/courses?category=${cat}`}
+                              onClick={() => setShowSearchResults(false)}
+                              className="px-3.5 py-1.5 rounded-lg bg-gray-50 border border-gray-100 hover:border-primary/30 hover:bg-primary/5 text-gray-700 hover:text-primary transition-all text-xs font-bold"
+                            >
+                              {cat} Training
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Courses Section */}
+                    {searchResults.courses.length > 0 && (
+                      <div>
+                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-3 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5" /> Courses
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {searchResults.courses.map((course) => (
+                            <Link
+                              key={course.id}
+                              to={`/courses/${course.id}`}
+                              onClick={() => setShowSearchResults(false)}
+                              className="group p-2.5 -mx-2.5 rounded-xl hover:bg-gray-50 flex justify-between items-center transition-colors"
+                            >
+                              <div className="text-left pr-4">
+                                <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">{course.title}</div>
+                                <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">{course.description}</div>
+                              </div>
+                              <span className="text-xs text-gray-400 font-bold shrink-0 bg-gray-100 px-2 py-0.5 rounded uppercase">{course.category}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Insights Section */}
+                    {searchResults.insights.length > 0 && (
+                      <div>
+                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-3 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5" /> Industry Insights & Blog
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {searchResults.insights.map((post) => (
+                            <Link
+                              key={post.id}
+                              to="/news"
+                              onClick={() => setShowSearchResults(false)}
+                              className="group p-2.5 -mx-2.5 rounded-xl hover:bg-gray-50 flex items-start gap-3 transition-colors"
+                            >
+                              <img src={post.image} className="w-12 h-12 object-cover rounded-lg shrink-0 border border-gray-100 animate-fade-in" alt="" />
+                              <div className="text-left">
+                                <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1 leading-snug">{post.title}</div>
+                                <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+                                  <span className="text-accent font-bold uppercase text-[9px] tracking-wider bg-accent/5 px-1.5 py-0.5 rounded">{post.category}</span>
+                                  <span>{post.date}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Spacer for Search Bar offset */}
-      <div className="h-28 md:h-24 bg-surface"></div>
+      <div className="h-28 md:h-24 bg-white"></div>
 
-      {/* Accreditation Strip */}
-      <div className="bg-white border-y border-gray-200 py-10 overflow-hidden relative z-10">
-        <div className="container mx-auto px-4 md:px-8">
-          <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">
-            {accreditation?.heading || "Nationally Recognised & Trusted By Industry Leaders"}
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            <div className="flex items-center gap-2 font-bold text-xl text-gray-800"><Award size={28} /> NRT</div>
-            <div className="flex items-center gap-2 font-bold text-xl text-gray-800"><ShieldCheck size={28} /> WorkSafe</div>
-            <div className="flex items-center gap-2 font-bold text-xl text-gray-800"><Fan size={28} /> GWO</div>
-            <div className="flex items-center gap-2 font-bold text-xl text-gray-800"><Globe size={28} /> ASQA</div>
-            <div className="flex items-center gap-2 font-bold text-xl text-gray-800"><HardHat size={28} /> HSEQ</div>
-          </div>
-        </div>
-      </div>
+      {/* Explore Our Training Programs */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 md:px-8 text-center">
+          <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">Specialized Pathways</span>
+          <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-12">Explore Our Training Programs</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Global Wind Organization Training */}
+            <Link to="/courses?category=GWO" className="relative group overflow-hidden rounded-2xl aspect-[4/3] md:aspect-[16/10] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <img 
+                src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800" 
+                alt="Global Wind Organization Training" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6 text-left">
+                <h3 className="text-white font-heading font-bold text-xl md:text-2xl leading-tight mb-2">
+                  Global Wind Organization Training
+                </h3>
+              </div>
+            </Link>
 
-      {/* Popular Courses */}
-      <section className="py-20 md:py-28 bg-surface relative">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">{coursesIntro?.subheading || "Popular Programs"}</span>
-              <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary">{coursesIntro?.heading || "Start Your Career"}</h2>
-            </div>
-            <Link to="/courses" className="group flex items-center gap-2 text-primary font-bold hover:text-secondary transition-colors text-sm md:text-base whitespace-nowrap">
-              View All Categories <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            {/* Other */}
+            <Link to="/courses?category=Other" className="relative group overflow-hidden rounded-2xl aspect-[4/3] md:aspect-[16/10] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <img 
+                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800" 
+                alt="Other Training Programs" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6 text-left">
+                <h3 className="text-white font-heading font-bold text-xl md:text-2xl leading-tight mb-2">
+                  Other
+                </h3>
+              </div>
             </Link>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {featuredCourses.map(course => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* Industry-Leading Skills & Support */}
-      <section className="py-24 bg-secondary text-white relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/30 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl -ml-20 -mb-20"></div>
-        </div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">Excellence in Safety Training</span>
-            <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6">Industry-Leading Skills & Support</h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: ShieldCheck, title: "Industry-Relevant Accreditation", desc: "Skylar Education meets rigorous international safety standards for industrial operations.", link: "/about" },
-              { icon: Award, title: "Nationally Recognised (RTO)", desc: "Our courses align with Australian RTO #45000 standards and quality frameworks.", link: "/about" },
-              { icon: GraduationCap, title: "Experienced Instructors", desc: "Learn from industry veterans with years of real-world operational experience.", link: "/about/team" },
-              { icon: Zap, title: "Flexibility in Training Delivery", desc: "We offer tailored training schedules to minimize downtime for your workforce.", link: "/courses" }
-            ].map((item, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-2xl hover:bg-white/10 transition-all duration-300 group hover:-translate-y-1">
-                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-6 text-accent group-hover:scale-110 transition-transform shadow-lg shadow-black/5">
-                  <item.icon size={28} />
-                </div>
-                <h3 className="font-bold text-lg mb-4 leading-tight min-h-[3rem]">{item.title}</h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed min-h-[4rem]">{item.desc}</p>
-                <Link to={item.link} className="inline-flex items-center gap-2 text-accent font-bold text-xs uppercase tracking-wider hover:text-white transition-colors">
-                  View Details <ArrowRight size={14} />
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Sign Up / Enrollment Form */}
-      <section className="py-20 bg-surface">
+      {/* Industry-Leading Skills and Support */}
+      <section className="py-16 bg-[#F8FAFC] border-b border-gray-100">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col lg:flex-row max-w-5xl mx-auto border border-gray-100">
-            <div className="lg:w-1/2 relative min-h-[300px] bg-gray-200">
-              {!imageLoads['contact-image'] && (
-                <div className="absolute inset-0 bg-gray-300 animate-pulse" />
-              )}
-              <img
-                src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1000"
-                alt="Construction Site"
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoads['contact-image'] ? 'opacity-100' : 'opacity-0'}`}
-                onLoad={() => handleImageLoad('contact-image')}
-              />
-              <div className="absolute inset-0 bg-secondary/20 mix-blend-multiply"></div>
-            </div>
-            <div className="lg:w-1/2 p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h3 className="font-heading font-bold text-xl tracking-widest text-secondary uppercase mb-2">Skylar</h3>
-                <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Join With Us</h2>
-              </div>
-
-              {contactStatus === 'success' ? (
-                <div className="text-center py-12 animate-pop-in">
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={32} />
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary text-center mb-12">
+            Industry-Leading Skills and Support
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {[
+              {
+                icon: Globe,
+                title: "Global Network Excellence",
+                desc: "Connecting you with world-class training standards globally."
+              },
+              {
+                icon: Award,
+                title: "Industry-Recognised GWO Standards",
+                desc: "Training aligned with global safety requirements."
+              },
+              {
+                icon: Users,
+                title: "Experienced Instructors",
+                desc: "Learn from industry veterans with years of field experience."
+              },
+              {
+                icon: Zap,
+                title: "Flexibility in Training Solutions",
+                desc: "Tailored programs to meet your specific operational needs."
+              }
+            ].map((card, idx) => {
+              const Icon = card.icon;
+              return (
+                <div 
+                  key={idx} 
+                  className="bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-[#EFF6FF] flex items-center justify-center mb-6 text-secondary">
+                    <Icon size={24} />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Message Sent</h3>
-                  <p className="text-gray-500">We'll get back to you shortly.</p>
-                  <button
-                    onClick={() => { setContactStatus('idle'); setFormData({ name: '', email: '', phone: '', message: '' }); }}
-                    className="mt-6 text-primary font-bold text-sm hover:underline"
-                  >
-                    Send Another
-                  </button>
+                  <h3 className="text-lg font-bold text-secondary mb-3 leading-snug">
+                    {card.title}
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed max-w-[240px]">
+                    {card.desc}
+                  </p>
                 </div>
-              ) : (
-                <form onSubmit={handleContactSubmit} className="space-y-4" noValidate>
-                  <div>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Name"
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-1 transition-colors ${
-                        formErrors.name ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-primary focus:ring-primary'
-                      }`}
-                      required
-                    />
-                    {formErrors.name && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{formErrors.name}</p>}
-                  </div>
-                  <div>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Email"
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-1 transition-colors ${
-                        formErrors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-primary focus:ring-primary'
-                      }`}
-                      required
-                    />
-                    {formErrors.email && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{formErrors.email}</p>}
-                  </div>
-                  <div>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="Phone"
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-sm focus:outline-none focus:ring-1 transition-colors ${
-                        formErrors.phone ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-primary focus:ring-primary'
-                      }`}
-                    />
-                    {formErrors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{formErrors.phone}</p>}
-                  </div>
-                  <div>
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      rows={3}
-                      placeholder="Message"
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-sm resize-none focus:outline-none focus:ring-1 transition-colors ${
-                        formErrors.message ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-primary focus:ring-primary'
-                      }`}
-                      required
-                    />
-                    {formErrors.message && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{formErrors.message}</p>}
-                  </div>
-
-                  <div className="bg-gray-50 border border-gray-200 rounded p-2 flex items-center justify-between w-full max-w-[250px]">
-                    <div className="flex items-center gap-3">
-                      <input type="checkbox" className="w-6 h-6 border-2 border-gray-300 rounded cursor-pointer" />
-                      <span className="text-xs text-gray-600 font-medium">I'm not a robot</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" className="w-8 h-8 opacity-50" alt="captcha" />
-                      <span className="text-[8px] text-gray-400">reCAPTCHA</span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={contactStatus === 'sending'}
-                    className="w-full bg-secondary text-white font-bold py-3.5 rounded-lg hover:bg-primary transition-colors text-sm uppercase tracking-wider shadow-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {contactStatus === 'sending' ? (
-                      <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Sending...</>
-                    ) : (
-                      <><Send size={16} /> Send Enquiry</>
-                    )}
-                  </button>
-                </form>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* About / Sustainable Future */}
-      <section className="py-24 bg-secondary text-white relative overflow-hidden">
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/10">
-                {!imageLoads['about-image'] && <div className="w-full h-96 bg-gray-800 animate-pulse" />}
-                <img
-                  src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=1000"
-                  alt="Team Collaboration"
-                  className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoads['about-image'] ? 'opacity-100' : 'opacity-0'}`}
-                  onLoad={() => handleImageLoad('about-image')}
-                />
-                <div className="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
-              </div>
-              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+      {/* Why Skylar Asia? Banner Section */}
+      <section className="py-16 bg-[#F8FAFC]">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-[0_10px_30px_-5px_rgba(0,0,0,0.08)] border border-gray-100">
+            {/* Left side: Image */}
+            <div className="md:w-1/2 relative min-h-[300px] md:min-h-[400px]">
+              <img
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800"
+                alt="Leading Safety Training"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-secondary/10 mix-blend-multiply"></div>
             </div>
-            <div>
-              <span className="inline-block py-1 px-3 rounded bg-blue-900/50 text-blue-300 text-xs font-bold uppercase tracking-widest mb-6 border border-blue-800">
-                Tailored Safety Training For Your Unique Needs
-              </span>
-              <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6 leading-tight">
-                Leading Safety Training and Services for a <span className="text-blue-400">Sustainable Future</span>
-              </h2>
-              <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                Discover how Skylar Education provides customised, high-quality training and safety services that prioritise injury-free work environments and meet your unique needs. Visit our About page to learn more about our commitment to empowering your industry.
-              </p>
-              <div className="bg-white text-secondary p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-accent relative">
-                <p className="font-medium italic leading-relaxed">
-                  "Skylar Education leads in off-the-job safety training across Australia. By tailoring programs to each industry, we help clients meet and exceed standards while creating cultures where every worker goes home safe."
+            
+            {/* Right side: Content with grid background pattern */}
+            <div className="md:w-1/2 bg-gradient-to-br from-[#1C64B4] to-[#2E8CD6] p-8 md:p-14 lg:p-16 flex flex-col justify-between text-white relative overflow-hidden">
+              {/* Subtle blueprint grid overlay */}
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+              
+              <div className="relative z-10">
+                <span className="text-[#FBBF24] font-bold tracking-widest text-xs md:text-sm uppercase mb-3 block">
+                  WHY SKYLAR ASIA?
+                </span>
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading font-bold mb-5 leading-tight">
+                  Leading Safety Training and Services for a Sustainable Future
+                </h2>
+                <p className="text-white/90 text-sm md:text-base leading-relaxed mb-8 font-light max-w-xl">
+                  Our diverse digital capabilities define our approach. High-quality training is at the core of what we do, ensuring your workforce is safe, compliant, and ready for the future. We combine cutting-edge facilities with expert instruction to deliver the best learning outcomes.
                 </p>
               </div>
-              <Link to="/about">
-                <Button className="bg-[#0072CE] hover:bg-white hover:text-[#0072CE] text-white px-8 py-4 uppercase tracking-widest text-xs font-bold rounded-lg shadow-lg shadow-blue-900/20 transition-all">
-                  More About Us
-                </Button>
-              </Link>
+
+              <div className="relative z-10 border-t border-white/20 pt-6 mt-6 md:mt-8">
+                <span className="text-white/60 font-semibold tracking-wider text-[11px] uppercase mb-1 block">
+                  TRUSTED PARTNERS
+                </span>
+                <span className="text-lg font-bold text-white">
+                  GWO Certified
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+
+
 
       {/* Easy 4-Step Enrolment */}
       <section className="py-24 bg-white relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="inline-block py-1 px-3 rounded bg-blue-100 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
+            <span className="inline-block py-1 px-3 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
               Learning Hassle-Free
             </span>
             <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-4">Easy 4-Step Enrolment</h2>
@@ -552,7 +627,7 @@ const Home: React.FC = () => {
             ].map((item, idx) => (
               <div key={idx} className="flex flex-col items-center text-center group">
                 <div className="relative mb-6">
-                  <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-900/20 transform group-hover:-translate-y-2 transition-transform duration-300">
+                  <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-xl shadow-primary/20 transform group-hover:-translate-y-2 transition-transform duration-300">
                     <item.icon className="text-white w-10 h-10" strokeWidth={1.5} />
                   </div>
                   <div className="absolute -top-3 -left-3 bg-secondary text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-xl border-2 border-white shadow-sm">
@@ -601,7 +676,7 @@ const Home: React.FC = () => {
               </p>
               <div className="space-y-8">
                 <div className="flex gap-4">
-                  <div className="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
+                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
                     <HardHat size={24} />
                   </div>
                   <div>
@@ -610,7 +685,7 @@ const Home: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
+                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
                     <Target size={24} />
                   </div>
                   <div>
@@ -619,7 +694,7 @@ const Home: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
+                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
                     <Award size={24} />
                   </div>
                   <div>
@@ -636,30 +711,34 @@ const Home: React.FC = () => {
       {/* Testimonials */}
       <section className="py-24 bg-secondary text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl -ml-20 -mb-20"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
         <div className="container mx-auto px-4 md:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">Testimonials</span>
-            <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6">What Our Students Say</h2>
+            <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">WHAT PEOPLE SAY</span>
+            <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6">Success Stories</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="flex gap-1 text-accent mb-4">
-                  {[1, 2, 3, 4, 5].map(star => <Star key={star} size={16} fill="currentColor" />)}
+              <div key={i} className="bg-[#162238]/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-white/5 hover:bg-[#1A2B48]/80 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 shadow-lg">
+                <div>
+                  <div className="flex gap-1 text-accent mb-5">
+                    {[1, 2, 3, 4, 5].map(star => <Star key={star} size={15} fill="currentColor" className="text-accent" />)}
+                  </div>
+                  <p className="text-[14px] md:text-[15px] text-gray-200 italic mb-6 leading-relaxed">
+                    “{t.content}”
+                  </p>
                 </div>
-                <p className="text-lg text-gray-200 italic mb-6 leading-relaxed">"{t.content}"</p>
-                <div className="flex items-center gap-4">
-                  {!imageLoads[`avatar-${t.id}`] && <div className="w-12 h-12 rounded-full bg-gray-600 animate-pulse" />}
+                <div className="flex items-center gap-3.5 pt-4 border-t border-white/5">
+                  {!imageLoads[`avatar-${t.id}`] && <div className="w-11 h-11 rounded-full bg-gray-700 animate-pulse" />}
                   <img
                     src={t.avatar}
                     alt={t.name}
-                    className={`w-12 h-12 rounded-full object-cover border-2 border-accent transition-opacity duration-300 ${imageLoads[`avatar-${t.id}`] ? 'opacity-100' : 'opacity-0'}`}
+                    className={`w-11 h-11 rounded-full object-cover border-2 border-accent transition-opacity duration-300 ${imageLoads[`avatar-${t.id}`] ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => handleImageLoad(`avatar-${t.id}`)}
                   />
-                  <div>
-                    <h4 className="font-bold text-white">{t.name}</h4>
-                    <p className="text-sm text-gray-400">{t.role}</p>
+                  <div className="text-left">
+                    <h4 className="font-bold text-white text-[14px] leading-tight mb-0.5">{t.name}</h4>
+                    <p className="text-[11px] text-gray-400 leading-tight">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -668,37 +747,41 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Latest News */}
+      {/* Latest News / Industry Insights */}
       <section className="py-24 bg-surface">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary">Latest Industry News</h2>
+          <div className="flex justify-between items-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary">Industry Insights</h2>
             <Link to="/news">
-              <Button variant="outline">View All Blog</Button>
+              <Button variant="outline" className="rounded-xl border-gray-200 bg-white hover:bg-gray-50 text-secondary font-semibold text-sm px-6 py-2.5">
+                View Blog
+              </Button>
             </Link>
           </div>
-          <div className="grid md:grid-cols-2 gap-8">
-            {BLOG_POSTS.slice(0, 2).map((post) => (
-              <Link key={post.id} to="/news" className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-                <div className="grid md:grid-cols-2 h-full">
-                  <div className="h-48 md:h-full overflow-hidden relative bg-gray-200">
-                    {!imageLoads[`blog-${post.id}`] && <div className="w-full h-full bg-gray-300 animate-pulse" />}
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${imageLoads[`blog-${post.id}`] ? 'opacity-100' : 'opacity-0'}`}
-                      onLoad={() => handleImageLoad(`blog-${post.id}`)}
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-                  </div>
-                  <div className="p-8 flex flex-col justify-center">
-                    <div className="text-xs font-bold text-accent uppercase tracking-wider mb-2">{post.category}</div>
-                    <h3 className="text-xl font-bold text-secondary mb-3 group-hover:text-primary transition-colors">{post.title}</h3>
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-4">{post.excerpt}</p>
-                    <span className="text-sm font-bold text-gray-400 flex items-center gap-2 group-hover:text-primary transition-colors">
-                      Read Article <ArrowRight size={14} />
-                    </span>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {BLOG_POSTS.map((post) => (
+              <Link key={post.id} to="/news" className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-gray-100/60">
+                <div className="h-48 overflow-hidden relative bg-gray-100">
+                  {!imageLoads[`blog-${post.id}`] && <div className="w-full h-full bg-gray-200 animate-pulse" />}
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${imageLoads[`blog-${post.id}`] ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => handleImageLoad(`blog-${post.id}`)}
+                  />
+                  <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                </div>
+                <div className="p-6 flex flex-col flex-grow text-left min-h-[220px]">
+                  <div className="text-xs font-bold text-accent uppercase tracking-wider mb-2.5">{post.category}</div>
+                  <h3 className="text-base font-bold text-secondary mb-3 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+                    {post.title}
+                  </h3>
+                  <p className="text-gray-500 text-xs md:text-sm line-clamp-3 mb-5 leading-relaxed">
+                    {post.excerpt}
+                  </p>
+                  <span className="text-xs font-bold text-gray-400 flex items-center gap-1.5 mt-auto group-hover:text-primary transition-colors">
+                    Read Article <ArrowRight size={14} />
+                  </span>
                 </div>
               </Link>
             ))}
@@ -706,49 +789,149 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 md:py-24 bg-gradient-to-r from-accent to-yellow-400 relative overflow-hidden mx-4 rounded-3xl mb-12">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="container mx-auto px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 text-center md:text-left">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-heading font-bold mb-4 text-secondary">Ready to upskill?</h2>
-            <p className="text-lg md:text-xl font-medium text-secondary/80">Book your spot today. Classes fill up fast.</p>
-          </div>
-          <Link to="/courses" className="w-full md:w-auto">
-            <button className="bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 md:py-5 px-10 md:px-12 rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg uppercase tracking-wide focus:outline-none focus:ring-4 focus:ring-white/50 border-4 border-transparent hover:border-secondary w-full md:w-auto">
-              ENROLL NOW
+      {/* Elevate Your Safety Skills CTA */}
+      <section className="py-20 md:py-24 bg-secondary text-white text-center relative overflow-hidden">
+        <div className="container mx-auto px-4 md:px-8 relative z-10 flex flex-col items-center justify-center">
+          <h2 className="text-3xl md:text-[42px] font-heading font-bold mb-4 tracking-tight">
+            Elevate Your Safety Skills
+          </h2>
+          <p className="text-gray-300 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
+            Join thousands of professionals who trust Skylar Education for their safety training.
+          </p>
+          <Link to="/courses">
+            <button className="bg-accent text-secondary hover:bg-white hover:text-secondary font-bold py-4 px-8 md:px-10 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 text-sm md:text-base tracking-wide">
+              View Course Calendar
             </button>
           </Link>
         </div>
-        <div className="absolute top-0 right-0 w-96 h-full bg-white/20 skew-x-12 transform translate-x-32 pointer-events-none" aria-hidden="true"></div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 bg-secondary text-white">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-heading font-bold mb-4">Stay Updated</h3>
-            <p className="text-gray-400 mb-8">Subscribe to our newsletter for the latest course updates and industry safety news.</p>
-            {newsletterStatus === 'success' ? (
-              <div className="bg-green-500/20 text-green-300 rounded-xl p-4 animate-pop-in">
-                <CheckCircle size={20} className="inline mr-2" />
-                Successfully subscribed!
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Your email address"
-                  className="flex-1 px-5 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent transition-colors text-sm"
-                  required
-                />
-                <button type="submit" className="px-8 py-3.5 bg-accent text-secondary font-bold rounded-xl hover:bg-yellow-400 transition-colors text-sm whitespace-nowrap">
-                  Subscribe
-                </button>
-              </form>
-            )}
+      {/* Contact Us Section */}
+      <section className="py-20 md:py-24 bg-gray-50 text-secondary">
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 flex flex-col md:flex-row min-h-[580px]">
+            {/* Left Side: Image */}
+            <div className="md:w-1/2 relative min-h-[300px] md:min-h-full">
+              <img
+                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=1200"
+                alt="Contact Us"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            {/* Right Side: Form */}
+            <div className="md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center text-left">
+              <h2 className="text-3xl md:text-4xl font-heading font-bold mb-2 tracking-tight text-secondary">
+                Contact Us
+              </h2>
+              <p className="text-gray-500 text-sm md:text-base mb-8">
+                Ready to get started? Fill out the form below.
+              </p>
+              
+              {contactStatus === 'success' ? (
+                <div className="bg-green-50/80 border border-green-200 text-green-800 rounded-2xl p-6 text-center animate-fade-in">
+                  <CheckCircle className="mx-auto text-green-500 mb-3" size={40} />
+                  <h3 className="text-lg font-bold mb-1">Message Sent!</h3>
+                  <p className="text-sm text-green-700">
+                    Thank you for reaching out. We will get back to you as soon as possible.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-5">
+                  <div>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Full Name"
+                      className={`w-full px-5 py-4 bg-gray-50 hover:bg-gray-100/70 focus:bg-white border ${formErrors.name ? 'border-red-500 focus:ring-red-100' : 'border-gray-100 focus:border-primary focus:ring-blue-100'} rounded-2xl text-secondary placeholder-gray-400 focus:outline-none focus:ring-4 transition-all text-sm md:text-base`}
+                    />
+                    {formErrors.name && (
+                      <p className="text-red-500 text-xs mt-1.5 ml-1 flex items-center gap-1">
+                        <AlertCircle size={12} className="shrink-0" /> {formErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Email Address"
+                      className={`w-full px-5 py-4 bg-gray-50 hover:bg-gray-100/70 focus:bg-white border ${formErrors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-100 focus:border-primary focus:ring-blue-100'} rounded-2xl text-secondary placeholder-gray-400 focus:outline-none focus:ring-4 transition-all text-sm md:text-base`}
+                    />
+                    {formErrors.email && (
+                      <p className="text-red-500 text-xs mt-1.5 ml-1 flex items-center gap-1">
+                        <AlertCircle size={12} className="shrink-0" /> {formErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <textarea
+                      name="message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      placeholder="Your Message"
+                      className={`w-full px-5 py-4 bg-gray-50 hover:bg-gray-100/70 focus:bg-white border ${formErrors.message ? 'border-red-500 focus:ring-red-100' : 'border-gray-100 focus:border-primary focus:ring-blue-100'} rounded-2xl text-secondary placeholder-gray-400 focus:outline-none focus:ring-4 transition-all text-sm md:text-base resize-none`}
+                    />
+                    {formErrors.message && (
+                      <p className="text-red-500 text-xs mt-1.5 ml-1 flex items-center gap-1">
+                        <AlertCircle size={12} className="shrink-0" /> {formErrors.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Robot Checkbox */}
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100/70 border border-gray-100 rounded-2xl transition-colors">
+                    <input
+                      type="checkbox"
+                      id="robot"
+                      checked={isRobotChecked}
+                      onChange={(e) => {
+                        setIsRobotChecked(e.target.checked);
+                        if (formErrors.robot) {
+                          setFormErrors(prev => ({ ...prev, robot: undefined }));
+                        }
+                      }}
+                      className="w-5 h-5 rounded border-gray-300 text-secondary focus:ring-secondary/50 cursor-pointer"
+                    />
+                    <label htmlFor="robot" className="text-sm text-gray-500 cursor-pointer select-none font-medium">
+                      I am not a robot
+                    </label>
+                  </div>
+                  {formErrors.robot && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" /> {formErrors.robot}
+                    </p>
+                  )}
+
+                  {contactStatus === 'error' && (
+                    <p className="text-red-500 text-xs ml-1 flex items-center gap-1">
+                      <AlertCircle size={12} className="shrink-0" /> Something went wrong. Please try again.
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={contactStatus === 'sending'}
+                    className="w-full bg-secondary hover:bg-secondary/95 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 shadow-md flex items-center justify-center gap-2 text-sm md:text-base tracking-wider disabled:opacity-75"
+                  >
+                    {contactStatus === 'sending' ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        SENDING...
+                      </>
+                    ) : (
+                      'SEND MESSAGE'
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </section>

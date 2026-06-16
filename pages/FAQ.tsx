@@ -100,7 +100,7 @@ export const FAQ: React.FC = () => {
             
             {/* Subtitle Badge */}
             <div className="mb-6">
-               <div className="bg-[#0072CE] text-white font-bold text-xs md:text-sm px-4 py-1 uppercase tracking-[0.15em] shadow-lg transform -skew-x-12 inline-block">
+               <div className="bg-primary text-white font-bold text-xs md:text-sm px-4 py-1 uppercase tracking-[0.15em] shadow-lg transform -skew-x-12 inline-block">
                   <div className="transform skew-x-12">Skylar Education Help</div>
                </div>
             </div>

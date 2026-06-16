@@ -832,18 +832,18 @@ export const getThemeSettings = (): ThemeSettings => {
   
   if (!stored) {
     theme = {
-      colorPrimary: '#1C3D72',
-      colorSecondary: '#0B1E36',
+      colorPrimary: '#041024',
+      colorSecondary: '#041024',
       colorAccent: '#FFC107',
       colorSurface: '#F4F7FB',
       fontSans: "'Maven Pro', sans-serif",
       fontHeading: "'Maven Pro', sans-serif",
       borderRadius: 12,
-      baseFontSize: 16
+      baseFontSize: 15
     };
   } else {
     theme = JSON.parse(stored);
-    if (typeof theme.baseFontSize === 'undefined') theme.baseFontSize = 16;
+    if (typeof theme.baseFontSize === 'undefined') theme.baseFontSize = 15;
     if (theme.fontHeading && (theme.fontHeading.includes('Poppins') || theme.fontHeading.includes('Inter'))) {
       theme.fontHeading = "'Maven Pro', sans-serif";
     }

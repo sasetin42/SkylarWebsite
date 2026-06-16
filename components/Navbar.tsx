@@ -70,14 +70,14 @@ export const Navbar: React.FC = () => {
   const isSolid = !isHome || isScrolled;
 
   const navBackgroundClass = isSolid
-    ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-gray-800 py-2'
-    : 'bg-transparent py-3';
+    ? 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 py-2'
+    : 'bg-transparent py-4';
 
   const linkColorClass = isSolid
-    ? 'text-secondary dark:text-white hover:text-primary dark:hover:text-blue-400'
+    ? 'text-secondary hover:text-primary'
     : 'text-white/90 hover:text-white';
 
-  const mobileToggleClass = isSolid ? 'text-secondary dark:text-white' : 'text-white';
+  const mobileToggleClass = isSolid ? 'text-secondary' : 'text-white';
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -128,11 +128,11 @@ export const Navbar: React.FC = () => {
               <img
                 src={LOGO_URL}
                 alt="Skylar Education"
-                className={`h-8 md:h-10 w-auto transition-all duration-300 ${isSolid ? 'brightness-0 dark:brightness-0 dark:invert' : ''}`}
+                className={`h-8 md:h-10 w-auto transition-all duration-300 ${isSolid ? 'brightness-0' : ''}`}
               />
               <div className="flex flex-col">
-                <span className={`font-heading font-bold text-xl leading-none transition-colors ${isSolid ? 'text-secondary dark:text-white' : 'text-white'}`}>Skylar</span>
-                <span className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${isSolid ? 'text-gray-500 dark:text-gray-400' : 'text-gray-300'}`}>Education</span>
+                <span className={`font-heading font-bold text-xl leading-none transition-colors ${isSolid ? 'text-secondary' : 'text-white'}`}>Skylar</span>
+                <span className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${isSolid ? 'text-gray-500' : 'text-gray-300'}`}>Education</span>
               </div>
             </Link>
 
@@ -156,18 +156,18 @@ export const Navbar: React.FC = () => {
 
                   {/* Dropdown Menu */}
                   {link.subItems && activeDropdown === link.name && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-64 animate-fade-in-up">
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden py-2">
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 pt-4 w-64 animate-fade-in-up">
+                      <div className="bg-white rounded-xl shadow-2xl border-t-4 border-t-primary border-x border-b border-gray-100 overflow-hidden py-2.5">
                         {link.subItems.map((subItem) => (
                           <Link
                             key={subItem.path}
                             to={subItem.path}
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group/item"
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors group/item"
                           >
-                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-300 rounded-lg group-hover/item:bg-primary group-hover/item:text-white transition-colors">
+                            <div className="p-2 bg-slate-100 text-secondary rounded-lg group-hover/item:bg-primary group-hover/item:text-white transition-all duration-200">
                               {subItem.icon && <subItem.icon size={16} />}
                             </div>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover/item:text-primary dark:group-hover/item:text-white transition-colors">
+                            <span className="text-sm font-semibold text-slate-700 group-hover/item:text-primary transition-colors">
                               {subItem.name}
                             </span>
                           </Link>
@@ -184,7 +184,7 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={toggleTheme}
                 className={`p-2.5 rounded-full transition-all ${isSolid
-                    ? 'hover:bg-gray-100 dark:hover:bg-gray-800 text-secondary dark:text-gray-200'
+                    ? 'hover:bg-gray-100 text-secondary'
                     : 'hover:bg-white/20 text-white'
                   }`}
                 aria-label="Toggle Theme"
@@ -193,13 +193,13 @@ export const Navbar: React.FC = () => {
               </button>
 
               <Link to="/admin" className="relative group" title="Admin Panel">
-                <div className={`p-2.5 rounded-full transition-all ${isSolid ? 'bg-gray-100 dark:bg-gray-800 text-secondary dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                <div className={`p-2.5 rounded-full transition-all ${isSolid ? 'bg-gray-100 text-secondary hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                   <Lock size={20} />
                 </div>
               </Link>
 
               <Link to="/checkout" className="relative group">
-                <div className={`p-2.5 rounded-full transition-all ${isSolid ? 'bg-gray-100 dark:bg-gray-800 text-secondary dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                <div className={`p-2.5 rounded-full transition-all ${isSolid ? 'bg-gray-100 text-secondary hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                   <ShoppingCart size={20} />
                   {cartCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full shadow-sm animate-pop-in">
@@ -210,7 +210,7 @@ export const Navbar: React.FC = () => {
               </Link>
 
               <Link to="/courses">
-                <button className={`px-5 py-2 rounded-xl font-bold text-xs transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-xl ${isSolid
+                <button className={`px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-xl ${isSolid
                     ? 'bg-primary text-white hover:bg-secondary'
                     : 'bg-white text-secondary hover:bg-gray-100'
                   }`}>
@@ -224,7 +224,7 @@ export const Navbar: React.FC = () => {
               <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-full transition-all ${isSolid
-                    ? 'active:bg-gray-100 dark:active:bg-gray-800 text-secondary dark:text-gray-200'
+                    ? 'active:bg-gray-100 text-secondary'
                     : 'active:bg-white/20 text-white'
                   }`}
               >
@@ -232,7 +232,7 @@ export const Navbar: React.FC = () => {
               </button>
 
               <Link to="/checkout" className="relative">
-                <div className={`p-2 rounded-full ${isSolid ? 'text-secondary dark:text-white' : 'text-white'}`}>
+                <div className={`p-2 rounded-full ${isSolid ? 'text-secondary' : 'text-white'}`}>
                   <ShoppingCart size={24} />
                   {cartCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full">

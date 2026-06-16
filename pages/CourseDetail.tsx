@@ -167,7 +167,7 @@ export const CourseDetail: React.FC = () => {
             <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100">
                 <section className="mb-12">
                 <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg text-primary"><FileText size={24} className="md:w-7 md:h-7" /></div>
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><FileText size={24} className="md:w-7 md:h-7" /></div>
                     Course Overview
                 </h2>
                 <p className="text-gray-600 leading-relaxed text-base md:text-lg">
