@@ -101,14 +101,25 @@ const ThemeEngine: React.FC = () => {
 
 const PublicLayout: React.FC = () => {
   const location = useLocation();
-  const isHome = location.pathname === '/';
-  const isCourses = location.pathname.startsWith('/courses');
+  const p = location.pathname;
+
+  // Pages that manage their own top-padding internally (have premium hero sections with pt-[80px])
+  const hasSelfPaddedHero = 
+    p === '/' ||
+    p.startsWith('/courses') ||
+    p.startsWith('/about') ||
+    p.startsWith('/news') ||
+    p.startsWith('/contact') ||
+    p.startsWith('/faq') ||
+    p.startsWith('/locations') ||
+    p.startsWith('/gwo-benefits') ||
+    p.startsWith('/team');
 
   return (
     <div className="flex flex-col min-h-screen">
       <ThemeEngine />
       <Navbar />
-      <main id="main-content" className={`flex-grow ${(!isHome && !isCourses) ? 'pt-[80px]' : ''}`}>
+      <main id="main-content" className={`flex-grow ${hasSelfPaddedHero ? '' : 'pt-[80px]'}`}>
         <Outlet />
       </main>
       <Footer />

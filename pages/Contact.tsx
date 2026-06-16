@@ -68,7 +68,7 @@ export const Contact: React.FC = () => {
       <Breadcrumbs />
 
       {/* ─── Premium Hero ─────────────────────────────────────────── */}
-      <div className="relative h-[380px] overflow-hidden bg-secondary border-b-4 border-accent pt-[80px]">
+      <div className="relative min-h-[420px] overflow-hidden bg-secondary border-b-4 border-accent">
         {/* BG image */}
         <div className="absolute inset-0 z-0">
           <img src={heroBg} alt="Contact Background" className="w-full h-full object-cover" />
@@ -77,7 +77,7 @@ export const Contact: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-center z-10 pt-[80px]">
+        <div className="absolute inset-0 flex flex-col justify-center z-10 pt-[100px] pb-8">
           <div className="container mx-auto px-4 md:px-8">
             <div className="max-w-4xl animate-fade-in-up">
               {/* Accent badges */}
@@ -92,7 +92,7 @@ export const Contact: React.FC = () => {
                   Multiple Locations
                 </span>
               </div>
-              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: '50px' }}>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: '50px', lineHeight: '55px' }}>
                 {hero?.heading || 'Contact'} <span className="text-accent">Skylar Education</span>
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
