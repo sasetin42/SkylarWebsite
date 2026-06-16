@@ -200,25 +200,7 @@ export const Courses: React.FC = () => {
       </div>
       {/* ─────────────────────────────────────────────────────────── */}
 
-      <div className="container mx-auto px-4 md:px-8 -mt-8 relative z-20">
-
-        {/* ─── Stats Bar ──────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { icon: <BookOpen size={20} className="text-accent" />, value: `${totalCourses}+`, label: 'Available Courses' },
-            { icon: <Users size={20} className="text-accent" />, value: '15,000+', label: 'Graduates Trained' },
-            { icon: <Star size={20} className="text-accent" />, value: '4.9/5', label: 'Average Rating' },
-            { icon: <Award size={20} className="text-accent" />, value: 'GWO', label: 'Internationally Certified' },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-lg border border-gray-100 px-5 py-4 flex items-center gap-4 hover:shadow-xl transition-shadow">
-              <div className="p-2.5 bg-accent/10 rounded-xl shrink-0">{stat.icon}</div>
-              <div>
-                <div className="font-heading font-bold text-secondary text-xl leading-none">{stat.value}</div>
-                <div className="text-gray-500 text-xs mt-0.5">{stat.label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="container mx-auto px-4 md:px-8 mt-10 relative z-20">
 
         {/* ─── Category Pills Row ─────────────────────────────────── */}
         <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
