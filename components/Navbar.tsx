@@ -137,46 +137,65 @@ export const Navbar: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-6">
-              {navLinks.map((link) => (
-                <div
-                  key={link.name}
-                  className="relative group h-full flex items-center"
-                  onMouseEnter={() => handleMouseEnter(link.name)}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <Link
-                    to={link.path}
-                    className={`text-sm font-bold uppercase tracking-wide transition-all duration-200 relative flex items-center gap-1 ${linkColorClass}`}
+            <div className="hidden lg:flex items-center gap-3">
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.path || (link.subItems && link.subItems.some(sub => location.pathname === sub.path));
+                return (
+                  <div
+                    key={link.name}
+                    className="relative group py-2 flex items-center"
+                    onMouseEnter={() => handleMouseEnter(link.name)}
+                    onMouseLeave={handleMouseLeave}
                   >
-                    {link.name}
-                    {link.subItems && <ChevronDown size={14} className={`transition-transform duration-200 ${activeDropdown === link.name ? 'rotate-180' : ''}`} />}
-                    <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
-                  </Link>
+                    <Link
+                      to={link.path}
+                      className={`text-xs font-bold uppercase tracking-wider transition-all duration-300 relative flex items-center gap-1 py-1.5 px-3 rounded-lg ${
+                        isActive
+                          ? (isSolid ? 'text-primary bg-slate-100/60 dark:bg-slate-800/40' : 'text-white bg-white/10')
+                          : linkColorClass
+                      } hover:bg-slate-100/40 dark:hover:bg-slate-800/20`}
+                    >
+                      {link.name}
+                      {link.subItems && <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown === link.name ? 'rotate-180' : ''}`} />}
+                    </Link>
 
-                  {/* Dropdown Menu */}
-                  {link.subItems && activeDropdown === link.name && (
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 pt-4 w-64 animate-fade-in-up">
-                      <div className="bg-white rounded-xl shadow-2xl border-t-4 border-t-primary border-x border-b border-gray-100 overflow-hidden py-2.5">
-                        {link.subItems.map((subItem) => (
-                          <Link
-                            key={subItem.path}
-                            to={subItem.path}
-                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors group/item"
-                          >
-                            <div className="p-2 bg-slate-100 text-secondary rounded-lg group-hover/item:bg-primary group-hover/item:text-white transition-all duration-200">
-                              {subItem.icon && <subItem.icon size={16} />}
-                            </div>
-                            <span className="text-sm font-semibold text-slate-700 group-hover/item:text-primary transition-colors">
-                              {subItem.name}
-                            </span>
-                          </Link>
-                        ))}
+                    {/* Dropdown Menu */}
+                    {link.subItems && activeDropdown === link.name && (
+                      <div className="absolute top-[85%] left-1/2 transform -translate-x-1/2 pt-4 w-72 animate-fade-in-up">
+                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl dark:shadow-black/20 border border-slate-100/80 dark:border-slate-800/80 overflow-hidden p-2">
+                          {link.subItems.map((subItem) => {
+                            const isSubActive = location.pathname === subItem.path;
+                            return (
+                              <Link
+                                key={subItem.path}
+                                to={subItem.path}
+                                className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-300 group/item ${
+                                  isSubActive ? 'bg-slate-50 dark:bg-slate-850/60' : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
+                                }`}
+                              >
+                                <div className={`p-2 rounded-lg transition-all duration-300 ${
+                                  isSubActive
+                                    ? 'bg-secondary text-accent dark:bg-slate-800'
+                                    : 'bg-slate-100 dark:bg-slate-800/50 text-secondary dark:text-slate-300 group-hover/item:bg-secondary dark:group-hover/item:bg-accent group-hover/item:text-accent dark:group-hover/item:text-secondary'
+                                }`}>
+                                  {subItem.icon && <subItem.icon size={16} className="transition-transform duration-300 group-hover/item:scale-110" />}
+                                </div>
+                                <span className={`text-sm font-semibold transition-colors duration-300 ${
+                                  isSubActive
+                                    ? 'text-secondary dark:text-accent font-bold'
+                                    : 'text-slate-700 dark:text-slate-300 group-hover/item:text-secondary dark:group-hover/item:text-white'
+                                }`}>
+                                  {subItem.name}
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Actions */}
