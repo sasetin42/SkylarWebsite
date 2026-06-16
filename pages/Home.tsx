@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
+import { InteractiveMap } from '../components/InteractiveMap';
 import { TESTIMONIALS, BLOG_POSTS } from '../constants';
 import { getCourses, getPageContent, saveTicket } from '../services/storageService';
 import { Course, SitePage } from '../types';
@@ -932,6 +933,32 @@ const Home: React.FC = () => {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Map Section */}
+      <section className="py-20 bg-white text-center">
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+          <div className="mb-12">
+            <span className="text-accent font-bold text-xs uppercase tracking-widest block mb-3">
+              SKYLAR EDUCATION LOCATIONS
+            </span>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary tracking-tight">
+              World-Class Training Facilities
+            </h2>
+          </div>
+          
+          <div className="h-[450px] md:h-[550px] w-full rounded-3xl overflow-hidden shadow-2xl border border-gray-100 mb-8 relative">
+            <InteractiveMap />
+          </div>
+
+          <div className="flex justify-center">
+            <Link to="/locations">
+              <button className="bg-secondary hover:bg-secondary/95 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 text-sm md:text-base tracking-wide uppercase">
+                View All Locations
+              </button>
+            </Link>
           </div>
         </div>
       </section>
