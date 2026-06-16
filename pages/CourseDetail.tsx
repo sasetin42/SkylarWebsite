@@ -105,7 +105,7 @@ export const CourseDetail: React.FC = () => {
       <Breadcrumbs />
       
       {/* Hero Header with Background Image - Increased Depth */}
-      <div className="relative py-16 md:py-24 lg:py-36 overflow-hidden bg-secondary border-b-8 border-accent shadow-2xl">
+      <div className="relative pt-[144px] pb-16 md:pt-[176px] md:pb-24 lg:pt-[224px] lg:pb-36 overflow-hidden bg-secondary border-b-8 border-accent shadow-2xl">
          {/* Background Image */}
          <div className="absolute inset-0 z-0">
             <img 

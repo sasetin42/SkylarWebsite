@@ -1,6 +1,24 @@
 
 import { Course, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog } from '../types';
 import { COURSES as SEED_COURSES, LOCATIONS } from '../constants';
+import { supabaseClient } from './supabaseClient';
+
+// Intercept localStorage.setItem to sync with Supabase in the background
+const originalSetItem = localStorage.setItem.bind(localStorage);
+localStorage.setItem = (key: string, value: string) => {
+  originalSetItem(key, value);
+  if (key.startsWith('apex_')) {
+    try {
+      const parsed = JSON.parse(value);
+      supabaseClient.upsert(key, parsed).catch(err => {
+        console.error(`Failed to sync key ${key} to Supabase:`, err);
+      });
+    } catch (e) {
+      // Ignore parse errors (non-JSON strings)
+    }
+  }
+};
+
 
 // Keys
 const SAVED_KEY = 'apex_saved_courses_v1';
@@ -412,8 +430,8 @@ const SEED_PAGES: SitePage[] = [
             type: 'features',
             data: {
                 items: [
-                    { title: "Our Courses", description: "Browse our extensive range of accredited qualifications.", image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920" },
-                    { title: "GWO Certified Training", description: "World-class safety training for wind energy.", image: "https://images.unsplash.com/photo-1515658323427-8554106ec904?auto=format&fit=crop&q=80&w=1920" }
+                    { title: "Our Courses", description: "Browse our extensive range of accredited qualifications.", image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920" },
+                    { title: "GWO Certified Training", description: "World-class safety training for wind energy.", image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1920" }
                 ]
             }
         },
@@ -898,3 +916,49 @@ export const saveTicket = (ticket: SupportTicket) => {
     else tickets.push(ticket);
     localStorage.setItem(TICKETS_KEY, JSON.stringify(tickets));
 };
+
+// --- Supabase Initialization & Seeding ---
+export const initializeSupabase = async (): Promise<void> => {
+  try {
+    const data = await supabaseClient.getAll();
+    const dbKeys = new Set(data.map(item => item.key));
+    
+    // 1. Populate what we got from Supabase
+    data.forEach(item => {
+      localStorage.setItem(item.key, JSON.stringify(item.value));
+    });
+
+    // 2. Seed default values in Supabase if they are missing
+    if (!dbKeys.has(COURSES_KEY)) {
+      const courses = getCourses();
+      await supabaseClient.upsert(COURSES_KEY, courses);
+    }
+    if (!dbKeys.has(SITE_PAGES_KEY)) {
+      const pages = getSitePages();
+      await supabaseClient.upsert(SITE_PAGES_KEY, pages);
+    }
+    if (!dbKeys.has(TRAINERS_KEY)) {
+      const trainers = getTrainers();
+      await supabaseClient.upsert(TRAINERS_KEY, trainers);
+    }
+    if (!dbKeys.has(ROLES_KEY)) {
+      const roles = getRoles();
+      await supabaseClient.upsert(ROLES_KEY, roles);
+    }
+    if (!dbKeys.has(ADMIN_USERS_KEY)) {
+      const admins = getAdminUsers();
+      await supabaseClient.upsert(ADMIN_USERS_KEY, admins);
+    }
+    if (!dbKeys.has(THEME_KEY)) {
+      const theme = getThemeSettings();
+      await supabaseClient.upsert(THEME_KEY, theme);
+    }
+    if (!dbKeys.has(SETTINGS_KEY)) {
+      const settings = getSettings();
+      await supabaseClient.upsert(SETTINGS_KEY, settings);
+    }
+  } catch (error) {
+    console.error('Failed to initialize data from Supabase:', error);
+  }
+};
+

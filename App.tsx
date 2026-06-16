@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -20,6 +20,7 @@ import { Complaints } from './pages/Complaints';
 import { FAQ } from './pages/FAQ';
 import { Contact } from './pages/Contact';
 import { Blog } from './pages/Blog';
+import { TermsOfService } from './pages/TermsOfService';
 import { GeminiChat } from './components/GeminiChat';
 import { MyLearning } from './pages/MyLearning';
 import { Checkout } from './pages/Checkout';
@@ -41,7 +42,7 @@ import { SupportManager } from './pages/admin/SupportManager'; // New
 import { ScrollToTop } from './components/ScrollToTop';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
-import { getThemeSettings, getPageContent } from './services/storageService';
+import { getThemeSettings, getPageContent, initializeSupabase } from './services/storageService';
 import { ThemeSettings } from './types';
 
 // Helper to map route paths to CMS Page IDs
@@ -99,11 +100,15 @@ const ThemeEngine: React.FC = () => {
 };
 
 const PublicLayout: React.FC = () => {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  const isCourses = location.pathname.startsWith('/courses');
+
   return (
     <div className="flex flex-col min-h-screen">
       <ThemeEngine />
       <Navbar />
-      <main id="main-content" className="flex-grow">
+      <main id="main-content" className={`flex-grow ${(!isHome && !isCourses) ? 'pt-[80px]' : ''}`}>
         <Outlet />
       </main>
       <Footer />
@@ -114,6 +119,59 @@ const PublicLayout: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await initializeSupabase();
+      } catch (error) {
+        console.error("Initialization error:", error);
+      } finally {
+        setLoading(false);
+        // Apply theme immediately after data load
+        window.dispatchEvent(new Event('themeUpdated'));
+      }
+    };
+    init();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0b1e36',
+        color: '#ffffff',
+        fontFamily: "'Maven Pro', sans-serif"
+      }}>
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '4px solid rgba(255, 255, 255, 0.1)',
+          borderTopColor: '#FFC107',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '20px'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', letterSpacing: '0.05em', color: '#f4f7fb', margin: 0 }}>
+          SKYLAR EDUCATION ASIA
+        </h2>
+        <p style={{ fontSize: '0.875rem', color: '#8fa0b5', marginTop: '8px' }}>
+          Connecting to database...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <Router>
@@ -141,6 +199,8 @@ const App: React.FC = () => {
               <Route path="/contact" element={<Contact />} />
               <Route path="/my-learning" element={<MyLearning />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyNotice />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 

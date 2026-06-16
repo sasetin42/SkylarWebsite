@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Building, User, Globe, ArrowRight } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, CheckCircle, Building, Globe, ArrowRight } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { getPageContent } from '../services/storageService';
+import { supabaseClient } from '../services/supabaseClient';
 import { SitePage } from '../types';
 import { Link } from 'react-router-dom';
 
@@ -24,7 +25,6 @@ export const Contact: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    // Load CMS content
     const content = getPageContent('contact');
     if (content) setPageContent(content);
   }, []);
@@ -34,15 +34,25 @@ export const Contact: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
-    
-    // Simulate API submission
-    setTimeout(() => {
-      setStatus('success');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    try {
+      const id = await supabaseClient.saveContactSubmission({
+        name: formData.name,
+        email: formData.email,
+        mobile: formData.mobile || undefined,
+        message: formData.message,
+      });
+      if (id) {
+        setStatus('success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
   };
 
   const hero = pageContent?.sections.find(s => s.id === 'hero')?.data;
@@ -50,30 +60,50 @@ export const Contact: React.FC = () => {
   const hours = pageContent?.sections.find(s => s.id === 'hours')?.data;
   const formIntro = pageContent?.sections.find(s => s.id === 'form_intro')?.data;
 
+  // Default hero bg if no CMS image
+  const heroBg = hero?.image || 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?auto=format&fit=crop&q=80&w=1920';
+
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
       <Breadcrumbs />
-      <div className="bg-secondary text-white relative overflow-hidden py-20">
-        {hero?.image && (
-            <div className="absolute inset-0 opacity-50">
-                 <img src={hero.image} alt="Contact Background" className="w-full h-full object-cover" />
-                 <div className="absolute inset-0 bg-secondary/60 mix-blend-multiply"></div>
-            </div>
-        )}
-        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-          <Globe size={400} className="-mr-20 -mt-20" />
+
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative h-[380px] overflow-hidden bg-secondary border-b-4 border-accent pt-[80px]">
+        {/* BG image */}
+        <div className="absolute inset-0 z-0">
+          <img src={heroBg} alt="Contact Background" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">
-              {hero?.heading || 'Contact Skylar Education'}
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300">
-              {hero?.description || 'Whether you need to book a group session, verify a certificate, or ask about our courses, our team is ready to assist.'}
-            </p>
+
+        {/* Content */}
+        <div className="absolute inset-0 flex flex-col justify-center z-10 pt-[80px]">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="max-w-4xl animate-fade-in-up">
+              {/* Accent badges */}
+              <div className="flex flex-wrap gap-2.5 mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  ✉ 24hr Response
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                  Friendly Support Team
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                  Multiple Locations
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: '50px' }}>
+                {hero?.heading || 'Contact'} <span className="text-accent">Skylar Education</span>
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed" style={{ fontSize: '18px' }}>
+                {hero?.description || 'Whether you need to book a group session, verify a certificate, or ask about our courses, our team is ready to assist.'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+      {/* ─────────────────────────────────────────────────────────── */}
 
       <div className="container mx-auto px-4 md:px-8 relative z-10 -mt-16">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden grid lg:grid-cols-5 border border-gray-100">
@@ -90,18 +120,23 @@ export const Contact: React.FC = () => {
                 <p className="text-gray-600 text-lg max-w-md mb-8">
                   Thank you for contacting Skylar Education. Our student support team has received your enquiry and will respond within 24 hours.
                 </p>
-                <Button onClick={() => { setStatus('idle'); setFormData({ ...formData, message: '' }); }}>
+                <Button onClick={() => { setStatus('idle'); setFormData({ name: '', email: '', mobile: '', message: '' }); }}>
                   Send Another Message
                 </Button>
               </div>
             ) : (
               <div className="max-w-xl mx-auto">
-                {/* Optional Intro if needed, keeping it minimal to match the clean look of the request */}
                 <div className="mb-8">
                     <h2 className="text-2xl font-heading font-bold text-secondary mb-2">{formIntro?.heading || 'Send us a message'}</h2>
                     <p className="text-gray-500">{formIntro?.description || "Fill out the form below and we'll get back to you shortly."}</p>
                 </div>
                 
+                {status === 'error' && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+                    Something went wrong. Please try again or contact us directly via phone.
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <input 
@@ -134,7 +169,7 @@ export const Contact: React.FC = () => {
                       onChange={handleChange}
                       type="tel" 
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all" 
-                      placeholder="Mobile"
+                      placeholder="Mobile (optional)"
                     />
                   </div>
 
@@ -168,7 +203,7 @@ export const Contact: React.FC = () => {
                   <button 
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="w-full py-4 text-base font-bold uppercase tracking-wider bg-primary hover:bg-[#041024]/80 text-white rounded-md shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#041024]"
+                    className="w-full py-4 text-base font-bold uppercase tracking-wider bg-primary hover:bg-[#041024]/80 text-white rounded-md shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#041024] disabled:opacity-60"
                   >
                     {status === 'submitting' ? (
                       <span className="flex items-center justify-center gap-2">
@@ -186,7 +221,6 @@ export const Contact: React.FC = () => {
 
           {/* Info Side */}
           <div className="bg-secondary text-white p-8 md:p-12 lg:col-span-2 flex flex-col justify-between relative overflow-hidden">
-            {/* Pattern Overlay */}
             <div className="absolute inset-0 bg-primary/10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
             
             <div className="relative z-10">

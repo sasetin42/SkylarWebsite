@@ -557,31 +557,52 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
   }
 
   switch (section.type) {
-    case 'hero':
+    case 'hero': {
+      const heroBgSR = section.data.image || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920';
       return (
-        <section className="bg-secondary text-white py-20 relative overflow-hidden">
-          {section.data.image && (
-            <div className="absolute inset-0 z-0 opacity-40">
-              <img src={section.data.image} alt="Background" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-secondary/60 mix-blend-multiply"></div>
-            </div>
-          )}
-          <div className="container mx-auto px-4 md:px-8 relative z-10">
-            <div className="max-w-3xl">
-              {section.data.subheading && (
-                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-4 block">{section.data.subheading}</span>
-              )}
-              <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6">{section.data.heading}</h1>
-              <p className="text-xl text-gray-300 mb-8">{section.data.description}</p>
-              {section.data.buttonText && (
-                <Link to={section.data.buttonLink || '#'}>
-                  <Button size="lg" className="shadow-xl">{section.data.buttonText}</Button>
-                </Link>
-              )}
+        <section className="relative h-[380px] overflow-hidden bg-secondary border-b-4 border-accent pt-[80px]">
+          {/* BG image with double overlay */}
+          <div className="absolute inset-0 z-0">
+            <img src={heroBgSR} alt="Background" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
+          </div>
+
+          {/* Content */}
+          <div className="absolute inset-0 flex flex-col justify-center z-10 pt-[80px]">
+            <div className="container mx-auto px-4 md:px-8">
+              <div className="max-w-4xl animate-fade-in-up">
+                {/* Accent badges */}
+                {section.data.subheading && (
+                  <div className="flex flex-wrap gap-2.5 mb-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                      {section.data.subheading}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                      Skylar Education
+                    </span>
+                  </div>
+                )}
+                <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: '50px' }}>
+                  {section.data.heading}
+                </h1>
+                <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+                <p className="text-gray-200 font-medium max-w-2xl leading-relaxed" style={{ fontSize: '18px' }}>
+                  {section.data.description}
+                </p>
+                {section.data.buttonText && (
+                  <div className="mt-8">
+                    <Link to={section.data.buttonLink || '#'}>
+                      <Button size="lg" className="shadow-xl">{section.data.buttonText}</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
       );
+    }
 
     case 'features':
       return (
