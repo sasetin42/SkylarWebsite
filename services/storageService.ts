@@ -775,7 +775,8 @@ export const getAdminUsers = (): AdminUser[] => {
   const stored = localStorage.getItem(ADMIN_USERS_KEY);
   if (!stored) {
       const defaultAdmins: AdminUser[] = [
-          { id: 'admin1', name: 'Admin User', email: 'admin@skylareducation.asia', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
+          { id: 'admin1', name: 'Admin User', email: 'admin@skylareducation.asia', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
+          { id: 'e90e43c6-e13c-4a0f-a058-3f8fbc73666b', name: 'Super Admin', email: 'admin@skylar.com.ph', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
       ];
       localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
       return defaultAdmins;
@@ -801,7 +802,7 @@ export const getRoles = (): Role[] => {
     const stored = localStorage.getItem(ROLES_KEY);
     if (!stored) {
         const defaultRoles = [
-            { id: 'r1', name: 'Super Admin', description: 'Full access', usersCount: 1 },
+            { id: 'r1', name: 'Super Admin', description: 'Full access', usersCount: 2 },
             { id: 'r2', name: 'Instructor', description: 'Manage courses and sessions', usersCount: 2 }
         ];
         localStorage.setItem(ROLES_KEY, JSON.stringify(defaultRoles));

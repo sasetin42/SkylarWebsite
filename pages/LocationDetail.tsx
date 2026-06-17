@@ -35,20 +35,34 @@ export const LocationDetail: React.FC = () => {
     <div className="bg-white min-h-screen pb-20 animate-fade-in">
       <Breadcrumbs />
       
-      {/* Hero */}
-      <div className="relative h-[400px] lg:h-[500px]">
-        <img src={location.image} alt={location.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/50 to-transparent"></div>
-        <div className="absolute inset-0 flex flex-col justify-end container mx-auto px-4 md:px-8 pb-12 text-white">
-           <Link to="/locations" className="text-white/80 hover:text-white flex items-center gap-2 mb-6 transition-colors w-fit">
-              <ArrowLeft size={20} /> Back to All Locations
-           </Link>
-           <span className="bg-accent text-secondary font-bold px-3 py-1 rounded text-xs uppercase tracking-widest w-fit mb-4 border border-yellow-500 shadow-lg">{location.state} Campus</span>
-           <h1 className="text-4xl md:text-6xl font-heading font-bold mb-4 drop-shadow-lg">{location.name}</h1>
-           <div className="flex flex-col md:flex-row gap-6 text-gray-200 text-sm md:text-base">
-              <div className="flex items-center gap-2"><MapPin className="text-accent" size={18}/> {location.address}</div>
-              <div className="flex items-center gap-2"><Phone className="text-accent" size={18}/> {location.phone}</div>
-           </div>
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
+        <div className="absolute inset-0 z-0">
+          <img src={location.image} alt={location.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
+        </div>
+        <div className="relative z-10 pt-[120px] pb-14">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="max-w-3xl animate-fade-in-up">
+              <Link to="/locations" className="text-white/80 hover:text-white flex items-center gap-2 mb-6 transition-colors w-fit text-sm font-bold uppercase tracking-wider">
+                <ArrowLeft size={16} /> Back to All Locations
+              </Link>
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  <MapPin size={12} /> {location.state} Campus
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
+                {location.name}
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <div className="flex flex-col md:flex-row gap-4 text-gray-200 text-sm md:text-base mt-4">
+                <div className="flex items-center gap-2"><MapPin className="text-accent" size={16}/> {location.address}</div>
+                <div className="flex items-center gap-2"><Phone className="text-accent" size={16}/> {location.phone}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

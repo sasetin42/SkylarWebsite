@@ -104,33 +104,35 @@ export const CourseDetail: React.FC = () => {
     <div className="bg-gray-50 relative pb-32 md:pb-24">
       <Breadcrumbs />
       
-      {/* Hero Header with Background Image - Increased Depth */}
-      <div className="relative pt-[144px] pb-16 md:pt-[176px] md:pb-24 lg:pt-[224px] lg:pb-36 overflow-hidden bg-secondary border-b-8 border-accent shadow-2xl">
-         {/* Background Image */}
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
          <div className="absolute inset-0 z-0">
-            <img 
-              src={course.image} 
-              alt={course.title} 
-              className="w-full h-full object-cover opacity-30 mix-blend-overlay"
-            />
-            {/* Brand Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/95 to-primary/80"></div>
+            <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
          </div>
 
-        <div className="container mx-auto px-4 md:px-8 relative z-10 text-white">
-          <Link to="/courses" className="inline-flex items-center text-accent hover:text-white mb-6 md:mb-8 text-sm font-bold uppercase tracking-wider transition-colors bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-            <ArrowLeft size={16} className="mr-2" /> Back to Courses
-          </Link>
+        <div className="relative z-10 pt-[120px] pb-14">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="animate-fade-in-up">
+              <Link to="/courses" className="inline-flex items-center text-white/80 hover:text-white mb-6 md:mb-8 text-sm font-bold uppercase tracking-wider transition-colors">
+                <ArrowLeft size={16} className="mr-2" /> Back to Courses
+              </Link>
 
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-                <div className="inline-block px-4 py-2 bg-accent text-secondary font-bold text-xs uppercase tracking-widest rounded-lg mb-6 shadow-lg shadow-accent/20">
-                {course.category}
-                </div>
-                <h1 className="text-3xl md:text-4xl lg:text-6xl font-heading font-bold mb-6 leading-tight drop-shadow-lg">{course.title}</h1>
-                <p className="text-lg md:text-xl text-gray-100 mb-10 leading-relaxed border-l-4 border-accent pl-6">{course.shortDescription}</p>
-                
-                <div className="flex flex-col sm:flex-row flex-wrap gap-4 text-sm md:text-base">
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  {course.category}
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
+                {course.title}
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg border-l-4 border-accent/50 pl-5 mb-8">
+                {course.shortDescription}
+              </p>
+              
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4 text-sm md:text-base">
                 <div className="flex items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 shadow-lg flex-1 sm:flex-none">
                     <Clock className="w-6 h-6 mr-3 text-accent" />
                     <div>
@@ -152,7 +154,7 @@ export const CourseDetail: React.FC = () => {
                         <span className="font-bold text-lg">{course.level}</span>
                     </div>
                 </div>
-                </div>
+              </div>
             </div>
           </div>
         </div>

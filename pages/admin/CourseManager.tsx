@@ -404,7 +404,7 @@ export const CourseManager: React.FC = () => {
                             <Button 
                                 onClick={handleGenerateImage} 
                                 disabled={isGenerating || !genPrompt}
-                                className="w-full mt-4 bg-gradient-to-r from-accent to-yellow-500 text-white border-none shadow-lg hover:shadow-xl"
+                                className="w-full mt-4 bg-[#EBB108] text-[#041024] border-none shadow-lg hover:shadow-xl hover:bg-[#d4a017]"
                             >
                                 {isGenerating ? <span className="flex items-center gap-2"><Loader className="animate-spin" size={16}/> Generating...</span> : 'Generate Image'}
                             </Button>

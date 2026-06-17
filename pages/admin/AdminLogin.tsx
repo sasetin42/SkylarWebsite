@@ -227,7 +227,7 @@ export const AdminLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-accent to-yellow-500 hover:to-yellow-400 text-secondary font-bold rounded-xl shadow-lg shadow-accent/20 hover:shadow-accent/40 transition-all transform hover:-translate-y-1 active:scale-95 text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-[#EBB108] hover:bg-[#d4a017] text-[#041024] font-bold rounded-xl shadow-lg shadow-[#EBB108]/20 hover:shadow-[#EBB108]/40 transition-all transform hover:-translate-y-1 active:scale-95 text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Signing In...' : 'Sign In to Dashboard'}
               </button>

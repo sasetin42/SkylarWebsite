@@ -191,42 +191,32 @@ export const StudentInfo: React.FC = () => {
     <div className="bg-gray-50 min-h-screen pb-24">
       <Breadcrumbs />
       
-      {/* Enhanced Hero Section - Static */}
-      <div className="relative bg-secondary overflow-hidden py-24 flex items-center justify-center h-[350px]">
-        
-        {/* Abstract Background Elements */}
-        {hero?.image && (
-            <div className="absolute inset-0 z-0">
-                <img 
-                    src={hero.image} 
-                    alt="Background" 
-                    className="w-full h-full object-cover opacity-60" 
-                />
-                <div className="absolute inset-0 bg-secondary/50 mix-blend-multiply"></div>
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
+        <div className="absolute inset-0 z-0">
+          <img src={hero?.image || "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=1920"} alt="Student Hub" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
+        </div>
+        <div className="relative z-10 pt-[120px] pb-14">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="max-w-3xl animate-fade-in-up">
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  <GraduationCap size={12} /> Student Central
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                  Skylar Education
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
+                {hero?.heading || 'Your hub for success.'}
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
+                {hero?.description || 'Access your learning portal, download key resources, and find support for your academic journey at Skylar Education.'}
+              </p>
             </div>
-        )}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/20 rounded-full blur-3xl -ml-20 -mb-20"></div>
-        
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="max-w-3xl">
-            {/* Badge */}
-            <div className="mb-4">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-accent text-sm font-bold backdrop-blur-sm animate-fade-in-down">
-                  <GraduationCap size={16} /> Student Central
-               </div>
-            </div>
-
-            {/* Heading */}
-            <h1 className="font-heading font-bold text-white text-3xl md:text-4xl mb-4">
-              {hero?.heading || 'Your hub for success.'}
-            </h1>
-
-            {/* Description */}
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed animate-fade-in-up delay-100">
-              {hero?.description || 'Access your learning portal, download key resources, and find support for your academic journey at Skylar Education.'}
-            </p>
           </div>
         </div>
       </div>

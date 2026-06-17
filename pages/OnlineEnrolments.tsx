@@ -34,34 +34,32 @@ export const OnlineEnrolments: React.FC = () => {
     <div className="bg-gray-50 min-h-screen pb-24 font-sans text-gray-900">
       <Breadcrumbs />
 
-      {/* HEADER SECTION */}
-      <div className="relative flex items-center justify-center overflow-hidden h-[350px] md:h-[450px]">
-        <div className="absolute inset-0 animate-fade-in">
-          <img 
-             src={hero?.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1920"} 
-             alt="Online Learning" 
-             className="w-full h-full object-cover transform scale-105" 
-          />
-          <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/50 to-transparent opacity-90"></div>
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
+        <div className="absolute inset-0 z-0">
+          <img src={hero?.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1920"} alt="Online Learning" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
-        
-        <div className="container mx-auto px-4 md:px-8 relative z-10 text-white w-full flex flex-col justify-center h-full animate-fade-in-up">
-          <div className="max-w-3xl">
-            <div className="mb-8">
-               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 text-accent text-xs font-bold uppercase tracking-widest border border-white/20 backdrop-blur-md shadow-lg">
-                 <Laptop size={14} /> Student Portal
-               </div>
+        <div className="relative z-10 pt-[120px] pb-14">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="max-w-3xl animate-fade-in-up">
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  <Laptop size={12} /> Student Portal
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                  24/7 Access
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
+                {hero?.heading || "Enrol Anytime, Anywhere"}
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
+                {hero?.description || "Secure, fast, and accessible 24/7 from any device."}
+              </p>
             </div>
-
-            <h1 className="font-heading font-bold leading-tight tracking-tight text-4xl md:text-6xl mb-6 drop-shadow-xl">
-              {hero?.heading || "Enrol Anytime, Anywhere"}
-            </h1>
-            
-            <p className="text-lg md:text-2xl text-blue-100 leading-relaxed font-light">
-              {hero?.description || "Secure, fast, and accessible 24/7 from any device."}
-            </p>
           </div>
         </div>
       </div>

@@ -94,32 +94,32 @@ o ask a question about this Privacy Notice`
     <div className="bg-white min-h-screen pb-24 font-sans text-gray-900">
       <Breadcrumbs />
 
-      {/* HEADER SECTION */}
-      <div className="relative flex items-center justify-center overflow-hidden py-24 md:py-32">
-        <div className="absolute inset-0">
-          <img 
-             src={hero?.image || "https://images.unsplash.com/photo-1535083252457-6080fe29be45?auto=format&fit=crop&q=80&w=1920"} 
-             alt="Privacy and Security" 
-             className="w-full h-full object-cover" 
-          />
-          <div className="absolute inset-0 bg-secondary/80 mix-blend-multiply"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-secondary via-transparent to-transparent"></div>
+      {/* ─── Premium Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
+        <div className="absolute inset-0 z-0">
+          <img src={hero?.image || "https://images.unsplash.com/photo-1535083252457-6080fe29be45?auto=format&fit=crop&q=80&w=1920"} alt="Privacy and Security" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10 text-white w-full">
-          <div className="max-w-3xl">
-            <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-6xl mb-6 drop-shadow-lg">
-              {hero?.heading || "Privacy Notice"}
-            </h1>
-            
-            <div className="mb-6">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded bg-primary text-white text-xs font-bold uppercase tracking-widest shadow-lg">
-                 <Shield size={14} className="text-white" /> Enrolments
-               </div>
+        <div className="relative z-10 pt-[120px] pb-14">
+          <div className="container mx-auto px-4 md:px-8">
+            <div className="max-w-3xl animate-fade-in-up">
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                  <Shield size={12} /> Privacy & Security
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                  Enrolments
+                </span>
+              </div>
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
+                {hero?.heading || "Privacy Notice"}
+              </h1>
+              <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
+                {hero?.description || "How we handle and protect your personal information."}
+              </p>
             </div>
-            
-            <p className="text-lg md:text-xl text-gray-200 leading-relaxed opacity-90">
-              {hero?.description || "How we handle and protect your personal information."}
-            </p>
           </div>
         </div>
       </div>

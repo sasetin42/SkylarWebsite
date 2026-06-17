@@ -226,7 +226,7 @@ const Home: React.FC = () => {
     <div className="animate-fade-in bg-surface">
       <div className="relative">
         {/* ===== HERO SECTION ===== */}
-        <section className="relative h-[80vh] min-h-[600px] max-h-[850px] flex items-center overflow-hidden group" aria-label="Hero Slider">
+        <section className="relative h-[80vh] min-h-[600px] max-h-[850px] flex items-center overflow-hidden group border-b-4 border-accent bg-secondary" aria-label="Hero Slider">
           {/* Sliding Background Layer */}
           <div
             className="absolute inset-0 flex transition-transform duration-1100 ease-in-out will-change-transform"
@@ -245,9 +245,8 @@ const Home: React.FC = () => {
                   onLoad={() => handleImageLoad(`slide-${idx}`)}
                 />
                 {/* Multi-layer overlay for depth and readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#041024]/95 via-[#041024]/70 to-[#041024]/30"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-transparent to-[#041024]/20"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-[#041024]/10 via-transparent to-[#041024]/60"></div>
+                <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95"></div>
               </div>
             ))}
           </div>
@@ -257,22 +256,29 @@ const Home: React.FC = () => {
             <div className="max-w-5xl">
               {slides.length > 0 && (
                 <div key={currentSlide} className="space-y-6 md:space-y-8 animate-fade-in-up">
-                  {/* Accreditation Badge */}
-                  <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-white/20 bg-white/10 backdrop-blur-lg text-white text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg w-fit">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.9)]"></span>
-                    Premium Safety Training
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2.5 mb-0">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+                      ★ 4.9/5 Rating
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                      GWO Certified
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                      WorkSafe Approved
+                    </span>
                   </div>
 
                   {/* Main Heading */}
-                  <h1 className="text-4xl md:text-[70px] font-heading font-bold leading-[1.1] tracking-tight drop-shadow-2xl">
+                  <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
                     {slides[currentSlide].heading}
                   </h1>
 
                   {/* Yellow Accent Divider */}
-                  <div className="w-20 h-1.5 bg-accent rounded-full shadow-lg shadow-accent/50"></div>
+                  <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm"></div>
 
                   {/* Description */}
-                  <p className="text-[18px] text-gray-200 leading-relaxed max-w-2xl font-light border-l-4 border-accent/80 pl-5 md:pl-7">
+                  <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
                     {slides[currentSlide].description}
                   </p>
 

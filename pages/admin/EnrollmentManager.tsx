@@ -82,7 +82,7 @@ export const EnrollmentManager: React.FC = () => {
                     onClick={() => setStatusFilter(status)}
                     className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
                         statusFilter === status 
-                        ? 'bg-primary text-white shadow-md' 
+                        ? 'bg-[#EBB108] text-[#041024] shadow-md' 
                         : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                 >
