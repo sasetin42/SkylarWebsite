@@ -26,7 +26,7 @@ export const Blog: React.FC = () => {
       <Breadcrumbs />
 
       {/* ─── Premium Hero ─────────────────────────────────────────── */}
-      <div className="relative h-[380px] overflow-hidden bg-secondary border-b-4 border-accent pt-[80px]">
+      <div className="relative overflow-hidden bg-secondary border-b-4 border-accent">
         {/* BG image */}
         <div className="absolute inset-0 z-0">
           <img src={heroBg} alt="Blog Background" className="w-full h-full object-cover" />
@@ -34,27 +34,30 @@ export const Blog: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
 
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-center z-10 pt-[80px]">
+        {/* Content — in normal flow so section auto-expands to fit */}
+        <div className="relative z-10 pt-[120px] pb-14">
           <div className="container mx-auto px-4 md:px-8">
-            <div className="max-w-4xl animate-fade-in-up">
+            <div className="max-w-3xl animate-fade-in-up">
               {/* Accent badges */}
-              <div className="flex flex-wrap gap-2.5 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
+              <div className="flex flex-wrap gap-2.5 mb-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
                   ✍ Industry Insights
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
                   Safety Updates
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
                   Skylar News
                 </span>
               </div>
-              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: '50px' }}>
+              <h1
+                className="font-heading font-bold text-white mb-4 drop-shadow-lg"
+                style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}
+              >
                 {hero?.heading || 'News'} <span className="text-accent">&amp; Articles</span>
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
-              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed" style={{ fontSize: '18px' }}>
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
                 {hero?.description || 'Stay updated with the latest industry trends, safety standards, and institute announcements.'}
               </p>
             </div>
