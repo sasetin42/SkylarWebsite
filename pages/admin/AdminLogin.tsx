@@ -10,13 +10,58 @@ export const AdminLogin: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@skylareducation.asia' && password === 'admin') {
+    setError('');
+    setLoading(true);
+
+    // 1. Fallback developer credentials
+    if (
+      (email === 'admin@skylareducation.asia' && password === 'admin') ||
+      (email === 'admin@skylar.com.ph' && password === 'admin')
+    ) {
       localStorage.setItem('isAdminAuthenticated', 'true');
       navigate('/admin/dashboard');
-    } else {
-      setError('Invalid credentials. Try admin@skylareducation.asia / admin');
+      setLoading(false);
+      return;
+    }
+
+    // 2. Real Supabase Auth authentication
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
+
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const userEmail = data.user?.email || email;
+        if (
+          userEmail === 'admin@skylar.com.ph' || 
+          userEmail === 'admin@skylareducation.asia'
+        ) {
+          localStorage.setItem('isAdminAuthenticated', 'true');
+          localStorage.setItem('supabaseToken', data.access_token);
+          navigate('/admin/dashboard');
+          return;
+        }
+      }
+      
+      setError('Invalid credentials. Try admin@skylareducation.asia / admin or your Supabase credentials');
+    } catch (err) {
+      console.error(err);
+      setError('Connection failed. Please check credentials or try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,9 +226,10 @@ export const AdminLogin: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-4 bg-gradient-to-r from-accent to-yellow-500 hover:to-yellow-400 text-secondary font-bold rounded-xl shadow-lg shadow-accent/20 hover:shadow-accent/40 transition-all transform hover:-translate-y-1 active:scale-95 text-lg tracking-wide"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-accent to-yellow-500 hover:to-yellow-400 text-secondary font-bold rounded-xl shadow-lg shadow-accent/20 hover:shadow-accent/40 transition-all transform hover:-translate-y-1 active:scale-95 text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In to Dashboard
+                {loading ? 'Signing In...' : 'Sign In to Dashboard'}
               </button>
             </form>
           </div>
