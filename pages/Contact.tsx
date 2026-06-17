@@ -77,7 +77,7 @@ export const Contact: React.FC = () => {
         </div>
 
         {/* Content — in normal flow so section auto-expands to fit */}
-        <div className="relative z-10 pt-[120px] pb-14">
+        <div className="relative z-10 pt-[120px] pb-28">
           <div className="container mx-auto px-4 md:px-8">
             <div className="max-w-3xl animate-fade-in-up">
               {/* Accent badges */}
