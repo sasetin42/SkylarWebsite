@@ -144,8 +144,6 @@ export const Navbar: React.FC = () => {
                   <div
                     key={link.name}
                     className="relative group py-2 flex items-center"
-                    onMouseEnter={() => handleMouseEnter(link.name)}
-                    onMouseLeave={handleMouseLeave}
                   >
                     <Link
                       to={link.path}
@@ -156,12 +154,12 @@ export const Navbar: React.FC = () => {
                       } hover:bg-slate-100/40 dark:hover:bg-slate-800/20`}
                     >
                       {link.name}
-                      {link.subItems && <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown === link.name ? 'rotate-180' : ''}`} />}
+                      {link.subItems && <ChevronDown size={12} className="transition-transform duration-300 group-hover:rotate-180" />}
                     </Link>
 
                     {/* Dropdown Menu */}
-                    {link.subItems && activeDropdown === link.name && (
-                      <div className="absolute top-[85%] left-1/2 transform -translate-x-1/2 pt-4 w-72 animate-fade-in-up">
+                    {link.subItems && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out translate-y-2 group-hover:translate-y-0 z-50 pointer-events-none group-hover:pointer-events-auto">
                         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl dark:shadow-black/20 border border-slate-100/80 dark:border-slate-800/80 overflow-hidden p-2">
                           {link.subItems.map((subItem) => {
                             const isSubActive = location.pathname === subItem.path;
