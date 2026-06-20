@@ -12,11 +12,11 @@ import { Link } from 'react-router-dom';
 const LocationCard: React.FC<{ location: Location }> = ({ location }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-      <div className="h-64 overflow-hidden relative shrink-0">
+      <Link to={`/locations/${location.id}`} className="block h-64 overflow-hidden relative shrink-0">
         <img src={location.image} alt={location.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         <h3 className="absolute bottom-4 left-6 text-2xl font-bold text-white pr-4">{location.name}</h3>
-      </div>
+      </Link>
       
       <div className="p-8 flex flex-col flex-1">
         <div className="space-y-6">

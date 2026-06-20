@@ -290,7 +290,7 @@ export const LOCATIONS: Location[] = [
     address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
     phone: '+63 45 123 4567',
     email: 'info@skylareducation.asia',
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800',
+    image: '/wind-turbine-worker.png',
     coordinates: { lat: 15.14, lng: 120.59 },
     state: 'Pampanga'
   },
@@ -300,7 +300,7 @@ export const LOCATIONS: Location[] = [
     address: 'Pier 18, Port Area, Tondo, Manila, Metro Manila, 1012, Philippines',
     phone: '+63 2 8234 5678',
     email: 'manila@skylareducation.asia',
-    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=800',
+    image: '/manila-safety-center.png',
     coordinates: { lat: 14.62, lng: 120.96 },
     state: 'Manila'
   }

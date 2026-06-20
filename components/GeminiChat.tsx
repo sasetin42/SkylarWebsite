@@ -11,6 +11,182 @@ const SUGGESTIONS = [
   "Contact support"
 ];
 
+const parseInlineMarkdown = (text: string) => {
+  const parts: (string | React.ReactNode)[] = [];
+  let remaining = text;
+  let keyIdx = 0;
+  
+  while (remaining.length > 0) {
+    const boldIndex = remaining.indexOf('**');
+    const linkIndex = remaining.indexOf('[');
+    
+    if (boldIndex === -1 && linkIndex === -1) {
+      parts.push(remaining);
+      break;
+    }
+    
+    if (boldIndex !== -1 && (linkIndex === -1 || boldIndex < linkIndex)) {
+      if (boldIndex > 0) {
+        parts.push(remaining.substring(0, boldIndex));
+      }
+      const endBold = remaining.indexOf('**', boldIndex + 2);
+      if (endBold !== -1) {
+        const boldText = remaining.substring(boldIndex + 2, endBold);
+        parts.push(<strong key={`b-${keyIdx++}`} className="font-bold text-secondary">{boldText}</strong>);
+        remaining = remaining.substring(endBold + 2);
+      } else {
+        parts.push(remaining.substring(boldIndex));
+        break;
+      }
+    } else {
+      if (linkIndex > 0) {
+        parts.push(remaining.substring(0, linkIndex));
+      }
+      const endLabel = remaining.indexOf(']', linkIndex);
+      const startUrl = remaining.indexOf('(', endLabel);
+      const endUrl = remaining.indexOf(')', startUrl);
+      
+      if (endLabel !== -1 && startUrl === endLabel + 1 && endUrl !== -1) {
+        const label = remaining.substring(linkIndex + 1, endLabel);
+        const url = remaining.substring(startUrl + 1, endUrl);
+        parts.push(
+          <a 
+            key={`a-${keyIdx++}`} 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-primary hover:text-accent font-semibold underline transition-colors"
+          >
+            {label}
+          </a>
+        );
+        remaining = remaining.substring(endUrl + 1);
+      } else {
+        parts.push(remaining.substring(linkIndex));
+        break;
+      }
+    }
+  }
+  return parts.length > 0 ? parts : text;
+};
+
+const formatMessage = (text: string) => {
+  if (!text) return null;
+  const paragraphs = text.split(/\n\n+/);
+
+  return paragraphs.map((para, pIdx) => {
+    const trimmed = para.trim();
+    if (!trimmed) return null;
+
+    if (trimmed.startsWith('###')) {
+      const headerText = trimmed.replace(/^###\s*/, '').trim();
+      let icon = '💡';
+      let iconBg = 'bg-yellow-500/10 text-yellow-600';
+      if (headerText.toLowerCase().includes('usi')) {
+        icon = '🆔';
+        iconBg = 'bg-blue-500/10 text-blue-600';
+      } else if (headerText.toLowerCase().includes('course') || headerText.toLowerCase().includes('safety') || headerText.toLowerCase().includes('train')) {
+        icon = '🛡️';
+        iconBg = 'bg-emerald-500/10 text-emerald-600';
+      } else if (headerText.toLowerCase().includes('location') || headerText.toLowerCase().includes('campus') || headerText.toLowerCase().includes('campuses')) {
+        icon = '📍';
+        iconBg = 'bg-red-500/10 text-red-600';
+      } else if (headerText.toLowerCase().includes('refund') || headerText.toLowerCase().includes('cancel') || headerText.toLowerCase().includes('policy')) {
+        icon = '💳';
+        iconBg = 'bg-amber-500/10 text-amber-600';
+      }
+
+      return (
+        <div key={pIdx} className="mb-4 mt-2">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-sm shrink-0 ${iconBg}`}>
+              {icon}
+            </span>
+            <h3 className="font-extrabold text-secondary text-sm md:text-[15px]">{headerText}</h3>
+          </div>
+          <div className="w-12 h-1 bg-accent/60 rounded-full" />
+        </div>
+      );
+    }
+
+    if (trimmed.startsWith('-') || trimmed.startsWith('*') || /^\d+\./.test(trimmed)) {
+      const lines = trimmed.split('\n');
+      return (
+        <ul key={pIdx} className="space-y-3.5 my-3 pl-1 bg-gray-50/70 p-3 rounded-2xl border border-gray-200/60 shadow-sm">
+          {lines.map((line, lIdx) => {
+            const cleanLine = line.trim();
+            if (!cleanLine) return null;
+            const lineText = cleanLine.replace(/^[-*\d.]+\s*/, '').trim();
+            const parsedContent = parseInlineMarkdown(lineText);
+
+            let bulletIcon: string | React.ReactNode = '•';
+            let iconClass = 'text-primary font-extrabold shrink-0 mt-1';
+            
+            if (cleanLine.match(/^\d+\./)) {
+              const num = cleanLine.match(/^\d+/)?.[0];
+              bulletIcon = num || '•';
+              iconClass = 'flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-extrabold shrink-0 mt-0.5';
+            } else if (lineText.toLowerCase().includes('duration:')) {
+              bulletIcon = '⏱️';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.toLowerCase().includes('cost:') || lineText.toLowerCase().includes('price:')) {
+              bulletIcon = '💰';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.toLowerCase().includes('prereq') || lineText.toLowerCase().includes('must possess')) {
+              bulletIcon = '📋';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.toLowerCase().includes('email:') || lineText.toLowerCase().includes('phone:') || lineText.toLowerCase().includes('address:')) {
+              bulletIcon = '📞';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.toLowerCase().startsWith('hello') || lineText.toLowerCase().startsWith('hi')) {
+              bulletIcon = '👋';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.startsWith('📑')) {
+              bulletIcon = '📑';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.startsWith('🆔')) {
+              bulletIcon = '🆔';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.startsWith('📍')) {
+              bulletIcon = '📍';
+              iconClass = 'shrink-0 text-sm';
+            } else if (lineText.startsWith('💳')) {
+              bulletIcon = '💳';
+              iconClass = 'shrink-0 text-sm';
+            }
+
+            let finalContent = parsedContent;
+            if (typeof bulletIcon === 'string' && ['📑', '🆔', '📍', '💳', '👋'].includes(bulletIcon)) {
+              if (lineText.startsWith(bulletIcon)) {
+                finalContent = parseInlineMarkdown(lineText.substring(bulletIcon.length).trim());
+              }
+            }
+
+            return (
+              <li key={lIdx} className="flex items-start gap-2.5 text-xs md:text-sm text-gray-700 leading-relaxed">
+                {typeof bulletIcon === 'string' && bulletIcon === '•' ? (
+                  <span className={iconClass}>•</span>
+                ) : /^\d+$/.test(bulletIcon as string) ? (
+                  <span className={iconClass}>{bulletIcon}</span>
+                ) : (
+                  <span className="shrink-0 mt-0.5 text-sm">{bulletIcon}</span>
+                )}
+                <span className="flex-1">{finalContent}</span>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    return (
+      <p key={pIdx} className="text-xs md:text-sm text-gray-700 leading-relaxed mb-3">
+        {parseInlineMarkdown(trimmed)}
+      </p>
+    );
+  });
+};
+
 export const GeminiChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -86,9 +262,9 @@ export const GeminiChat: React.FC = () => {
       </button>
 
       {/* Chat Window */}
-      <div className={`fixed bottom-24 right-6 w-[90vw] md:w-96 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl z-50 overflow-hidden transition-all duration-300 transform origin-bottom-right flex flex-col border border-white/20 ${
+      <div className={`fixed bottom-6 right-24 w-[85vw] md:w-[410px] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl z-50 overflow-hidden transition-all duration-300 transform origin-bottom-right flex flex-col border border-white/20 ${
         isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-8 pointer-events-none'
-      }`} style={{ maxHeight: 'calc(100vh - 120px)', height: '600px' }}>
+      }`} style={{ maxHeight: 'calc(100vh - 110px)', height: '560px' }}>
         
         {/* Header */}
         <div className="bg-gradient-to-r from-secondary to-primary p-5 flex justify-between items-center text-white shadow-lg relative overflow-hidden">
@@ -123,7 +299,7 @@ export const GeminiChat: React.FC = () => {
                   ? 'bg-gradient-to-br from-primary to-blue-700 text-white rounded-br-sm' 
                   : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
               }`}>
-                {msg.text}
+                {msg.role === 'user' ? msg.text : formatMessage(msg.text)}
               </div>
             </div>
           ))}
@@ -172,7 +348,7 @@ export const GeminiChat: React.FC = () => {
         )}
 
         {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-100 relative z-20">
+        <div className="p-4 bg-white relative z-20">
           <div className="flex gap-2 items-center bg-gray-50 border border-gray-200 rounded-full px-2 py-2 shadow-inner focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
             <button 
                 onClick={() => fileInputRef.current?.click()}
@@ -195,7 +371,7 @@ export const GeminiChat: React.FC = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder={attachedImage ? "Ask about this image..." : "Type a message..."}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-sm placeholder-gray-400 text-gray-800"
+              className="flex-1 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-sm placeholder-gray-400 text-gray-800"
             />
             
             <button 
@@ -207,7 +383,7 @@ export const GeminiChat: React.FC = () => {
             </button>
           </div>
           <div className="text-center mt-2">
-             <p className="text-[10px] text-gray-400">Powered by Gemini AI • Information may be generated.</p>
+             <a href="https://sasewebsolutions.com/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-gray-400 hover:text-primary transition-colors">Powered by SaSe Web Solution AI</a>
           </div>
         </div>
       </div>

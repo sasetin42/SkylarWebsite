@@ -7,7 +7,7 @@ import {
 import { LOCATIONS } from '../constants';
 import { Button } from '../components/Button';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { getCourses, getSessions, addToCart } from '../services/storageService';
+import { getCourses, getSessions, addToCart, saveTicket } from '../services/storageService';
 import { Course, Session } from '../types';
 
 export const LocationDetail: React.FC = () => {
@@ -118,6 +118,20 @@ export const LocationDetail: React.FC = () => {
     e.preventDefault();
     if (!inquiryName || !inquiryEmail || !inquiryMessage) return;
     
+    // Save locally to Support Tickets in LocalStorage
+    const guestId = `guest|${inquiryName}|${inquiryEmail}`;
+    const newTicket = {
+      id: `tkt-${Date.now()}`,
+      studentId: guestId,
+      subject: `Campus Inquiry (${location.name}): ${inquirySubject}`,
+      message: inquiryMessage,
+      status: 'Open' as const,
+      priority: 'Medium' as const,
+      dateCreated: new Date().toISOString().split('T')[0],
+      lastUpdated: new Date().toISOString().split('T')[0]
+    };
+    saveTicket(newTicket);
+    
     setShowInquirySuccess(true);
     setTimeout(() => {
       setInquiryName('');
@@ -142,7 +156,7 @@ export const LocationDetail: React.FC = () => {
       
       {/* ─── Success Notification Toasts ──────────────────────────────── */}
       {bookingSuccessCourse && (
-        <div className="fixed bottom-6 right-6 z-50 bg-secondary text-white p-5 rounded-2xl shadow-2xl border border-accent/20 flex flex-col gap-2 max-w-sm animate-slide-in-right">
+        <div className="fixed bottom-24 right-6 z-50 bg-secondary text-white p-5 rounded-2xl shadow-2xl border border-accent/20 flex flex-col gap-2 max-w-sm animate-slide-in-right">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center flex-shrink-0">
               <Check size={16} />
@@ -277,9 +291,11 @@ export const LocationDetail: React.FC = () => {
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary/5 text-primary text-[10px] font-bold uppercase tracking-wider rounded-lg border border-primary/10">
                             {course.category}
                           </span>
-                          <h4 className="font-extrabold text-secondary text-base md:text-lg leading-tight group-hover:text-primary transition-colors">
-                            {course.title}
-                          </h4>
+                          <Link to={`/courses/${course.id}`}>
+                            <h4 className="font-extrabold text-secondary text-base md:text-lg leading-tight hover:text-primary transition-colors hover:underline decoration-accent decoration-2 underline-offset-4">
+                              {course.title}
+                            </h4>
+                          </Link>
                           <div className="flex flex-wrap gap-4 text-xs font-semibold text-gray-500">
                             <span className="flex items-center gap-1.5"><Calendar size={13} className="text-gray-400" /> {formattedStartDate} - {formattedEndDate}</span>
                             <span className="flex items-center gap-1.5"><Clock size={13} className="text-gray-400" /> {course.duration}</span>

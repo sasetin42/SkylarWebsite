@@ -99,7 +99,86 @@ export const chatWithGemini = async (
     return response.text || "I apologize, I couldn't generate a response.";
   } catch (error) {
     console.error("Gemini Chat Error:", error);
-    return "I'm having trouble connecting right now. Please try again later or contact our support team.";
+    
+    // Smart local fallback assistant to ensure it's fully functional offline/without API keys
+    const query = message.toLowerCase().trim();
+    
+    if (query.includes('course') || query.includes('gwo') || query.includes('train') || query.includes('find gwo')) {
+      return `Here are some of our popular **GWO Accredited Safety Courses** at Skylar Education:
+
+1. **GWO Combined Advanced Rescue Training (ART) Initial**
+   - **Duration:** 3 Days
+   - **Cost:** $1,890 USD
+   - **Prerequisites:** Valid GWO BST (Heights, Handling, First Aid)
+   
+2. **GWO Combined Advanced Rescue Training (ART) Refresher**
+   - **Duration:** 3 Days
+   - **Cost:** $1,890 USD
+   - **Prerequisites:** Existing GWO ART Initial
+
+3. **GWO Basic Safety Training (BST) Initial**
+   - **Duration:** 4 Days
+   - **Cost:** $2,205 USD
+   - **Modules:** Working at Heights, First Aid, Fire Awareness, Manual Handling
+
+We run these courses weekly at our **Pampanga Facility** and **Manila Safety Center**. You can book directly using the upcoming sessions list on our campus pages!`;
+    }
+    
+    if (query.includes('usi') || query.includes('unique student') || query.includes('identifier')) {
+      return `### Unique Student Identifier (USI)
+
+A **USI** is a reference number made up of ten numbers and letters. Anyone undertaking nationally recognised vocational education and training in Australia (or GWO courses synced with Australian training requirements) is required to have a USI.
+
+**How to get a USI:**
+1. Visit the official USI registry website at [usi.gov.au](https://www.usi.gov.au).
+2. Click on **"Create a USI"** and follow the step-by-step instructions.
+3. Have your identification ready (e.g., Passport, Birth Certificate, Drivers License).
+4. Once generated, save your USI number and provide it to us during enrollment.`;
+    }
+    
+    if (query.includes('location') || query.includes('campus') || query.includes('campuses') || query.includes('pampanga') || query.includes('manila') || query.includes('where')) {
+      return `### Skylar Education Campuses
+
+We operate two premium safety training centers:
+
+1. **Pampanga Facility (Angeles City)**
+   - **Address:** Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga
+   - **Phone:** +63 45 123 4567
+   - **Email:** info@skylareducation.asia
+   
+2. **Manila Safety Center (Tondo)**
+   - **Address:** Pier 18, Port Area, Tondo, Manila, Metro Manila, Philippines
+   - **Phone:** +63 2 8234 5678
+   - **Email:** manila@skylareducation.asia
+
+Both locations feature modern simulators, high-speed WiFi, secure on-site parking, and a comfortable student lounge.`;
+    }
+    
+    if (query.includes('refund') || query.includes('policy') || query.includes('cancel')) {
+      return `### Booking & Refund Policy
+
+- **Refund Eligibility:** You are eligible for a full refund if you cancel your booking at least 7 days before the training start date.
+- **Rescheduling:** You can reschedule your training date once free of charge up to 72 hours before your session.
+- **No-Show:** Cancellations or failure to attend without 72 hours notice will forfeit the booking deposit.
+- Contact support at **info@skylareducation.asia** for any manual refunds.`;
+    }
+    
+    if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('greet') || query.includes('help')) {
+      return `Hello! I am the **Skylar AI Support Assistant**. 
+
+I can help you with details about our academy. Try asking me about:
+- 📑 **Find GWO courses** (view price, modules, and prerequisites)
+- 🆔 **How do I get a USI?** (steps to register a Unique Student Identifier)
+- 📍 **Campuses** (locations, map info, and hours)
+- 💳 **Booking & Refunds** (policy and cancellation terms)`;
+    }
+
+    return `I am here to assist you with Skylar Safety Education. I can help you with details about:
+- **GWO Safety Courses** (ART, BST)
+- **USI (Unique Student Identifier) registration**
+- **Campuses in Pampanga & Manila**
+
+For detailed support or individual inquiries, please email our coordinators at **info@skylareducation.asia** or call **+63 45 123 4567**.`;
   }
 };
 

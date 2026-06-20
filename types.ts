@@ -67,7 +67,7 @@ export interface Location {
   email: string;
   image: string;
   coordinates: { lat: number; lng: number };
-  state: 'VIC' | 'NSW' | 'QLD' | 'WA' | 'SA' | 'ACT' | 'TAS' | 'NT';
+  state: string;
 }
 
 export interface BlogPost {
@@ -315,6 +315,7 @@ export interface SupportTicket {
   priority: 'Low' | 'Medium' | 'High';
   dateCreated: string;
   lastUpdated: string;
+  adminReply?: string;
 }
 
 export interface AuditLog {
