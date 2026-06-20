@@ -57,6 +57,85 @@ const SkeletonCard: React.FC = () => (
   </div>
 );
 
+interface CustomDropdownProps {
+  label: string;
+  value: string;
+  options: { value: string; label: string; icon?: React.ReactNode }[];
+  onChange: (value: string) => void;
+  icon?: React.ReactNode;
+}
+
+const CustomDropdown: React.FC<CustomDropdownProps> = ({ label, value, options, onChange, icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full sm:w-auto relative" ref={dropdownRef}>
+      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-100 hover:border-primary hover:bg-white text-sm font-bold text-gray-700 px-4 py-3 rounded-xl transition-all duration-300 w-full min-w-[200px] shadow-sm hover:shadow-md cursor-pointer focus:outline-none"
+      >
+        <div className="flex items-center gap-2.5">
+          {selectedOption.icon || icon}
+          <span className="text-secondary">{selectedOption.label}</span>
+        </div>
+        <ChevronDown size={15} className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : ''}`} />
+      </button>
+
+      <div
+        className={`absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] border border-gray-100 py-2 z-40 transition-all duration-300 transform origin-top ${
+          isOpen
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+        }`}
+      >
+        <div className="max-h-60 overflow-y-auto scrollbar-thin">
+          {options.map(opt => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 text-sm font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                  isSelected
+                    ? 'bg-primary/5 text-primary'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-secondary hover:pl-5'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </div>
+                {isSelected && (
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Courses: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,10 +195,48 @@ export const Courses: React.FC = () => {
   const categories = ['All', ...Object.values(CourseCategory)];
   const levels = ['All', ...Array.from(new Set(courses.map(c => c.level)))];
 
+  const categoryOptions = categories.map(cat => {
+    let icon = <BookOpen size={14} className="text-gray-400" />;
+    if (cat === CourseCategory.GWO) icon = <Wind size={14} className="text-blue-500" />;
+    else if (cat === CourseCategory.CONSTRUCTION) icon = <HardHat size={14} className="text-amber-500" />;
+    else if (cat === CourseCategory.RESCUE) icon = <LifeBuoy size={14} className="text-red-500" />;
+    else if (cat === CourseCategory.SAFETY) icon = <Flame size={14} className="text-orange-500" />;
+    else if (cat === CourseCategory.FIRST_AID) icon = <HeartPulse size={14} className="text-emerald-500" />;
+    else if (cat === CourseCategory.WORKSAFE) icon = <ShieldCheck size={14} className="text-indigo-500" />;
+    else if (cat === CourseCategory.ELECTRICAL) icon = <Zap size={14} className="text-yellow-500" />;
+    return {
+      value: cat,
+      label: cat === 'All' ? 'All Categories' : cat,
+      icon: icon
+    };
+  });
+
+  const levelOptions = levels.map(l => ({
+    value: l,
+    label: l === 'All' ? 'All Levels' : l,
+    icon: <Award size={14} className="text-indigo-500" />
+  }));
+
+  const durationOptions = [
+    { value: 'All', label: 'Any Duration', icon: <Clock size={14} className="text-gray-400" /> },
+    { value: 'Short', label: 'Short (< 3 days)', icon: <Clock size={14} className="text-emerald-500" /> },
+    { value: 'Medium', label: 'Medium (3-5 days)', icon: <Clock size={14} className="text-blue-500" /> },
+    { value: 'Long', label: 'Long (> 5 days)', icon: <Clock size={14} className="text-indigo-500" /> },
+  ];
+
+  const priceOptions = [
+    { value: 'All', label: 'Any Price', icon: <DollarSign size={14} className="text-gray-400" /> },
+    { value: 'Low', label: 'Under $500', icon: <DollarSign size={14} className="text-emerald-500" /> },
+    { value: 'Medium', label: '$500 – $1,500', icon: <DollarSign size={14} className="text-blue-500" /> },
+    { value: 'High', label: 'Over $1,500', icon: <DollarSign size={14} className="text-indigo-500" /> },
+  ];
+
   const filteredCourses = courses
     .filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            course.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase());
+                            course.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            course.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (course.prerequisites && course.prerequisites.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())));
       const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
       let matchesPrice = true;
@@ -202,30 +319,50 @@ export const Courses: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* ─────────────────────────────────────────────────────────── */}
-
       <div className="container mx-auto px-4 md:px-8 mt-10 relative z-20">
 
-        {/* ─── Category Pills Row ─────────────────────────────────── */}
-        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
-          {categories.map(cat => {
-            const isActive = selectedCategory === cat;
-            const Icon = CATEGORY_ICONS[cat];
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold border transition-all duration-200 ${
-                  isActive
-                    ? 'bg-secondary text-white border-secondary shadow-lg scale-105'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                {Icon && <span>{Icon}</span>}
-                {cat === 'All' ? 'All Courses' : cat}
-              </button>
-            );
-          })}
+        {/* ─── Quick Stats Banner ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-all duration-300">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl">
+              <BookOpen className="w-5.5 h-5.5" />
+            </div>
+            <div>
+              <p className="text-xl font-extrabold text-secondary leading-none mb-1">{courses.length}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Courses</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-all duration-300">
+            <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
+              <Wind className="w-5.5 h-5.5" />
+            </div>
+            <div>
+              <p className="text-xl font-extrabold text-secondary leading-none mb-1">
+                {courses.filter(c => c.category === CourseCategory.GWO).length}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">GWO Modules</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-all duration-300">
+            <div className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+              <HardHat className="w-5.5 h-5.5" />
+            </div>
+            <div>
+              <p className="text-xl font-extrabold text-secondary leading-none mb-1">
+                {courses.filter(c => c.category === CourseCategory.CONSTRUCTION).length}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">High Risk Work</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-all duration-300">
+            <div className="p-3 bg-emerald-50 text-emerald-500 rounded-xl">
+              <DollarSign className="w-5.5 h-5.5" />
+            </div>
+            <div>
+              <p className="text-xl font-extrabold text-secondary leading-none mb-1">${avgPrice}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Avg Investment</p>
+            </div>
+          </div>
         </div>
 
         {/* ─── Controls Bar ───────────────────────────────────────── */}
@@ -307,42 +444,33 @@ export const Courses: React.FC = () => {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-3 items-end animate-fade-in">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Level</label>
-                <select
-                  className="bg-gray-50 border border-gray-100 text-sm font-bold text-gray-700 outline-none cursor-pointer px-4 py-2.5 rounded-xl min-w-[140px]"
-                  value={selectedLevel}
-                  onChange={(e) => setSelectedLevel(e.target.value)}
-                >
-                  {levels.map(l => <option key={l} value={l}>{l === 'All' ? 'All Levels' : l}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Duration</label>
-                <select
-                  className="bg-gray-50 border border-gray-100 text-sm font-bold text-gray-700 outline-none cursor-pointer px-4 py-2.5 rounded-xl min-w-[140px]"
-                  value={filterDuration}
-                  onChange={(e) => setFilterDuration(e.target.value)}
-                >
-                  {['All', 'Short', 'Medium', 'Long'].map(d => <option key={d} value={d}>{d === 'All' ? 'Any Duration' : d}</option>)}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Price Range</label>
-                <select
-                  className="bg-gray-50 border border-gray-100 text-sm font-bold text-gray-700 outline-none cursor-pointer px-4 py-2.5 rounded-xl min-w-[160px]"
-                  value={filterPriceRange}
-                  onChange={(e) => setFilterPriceRange(e.target.value)}
-                >
-                  <option value="All">Any Price</option>
-                  <option value="Low">Under $500</option>
-                  <option value="Medium">$500 – $1,500</option>
-                  <option value="High">Over $1,500</option>
-                </select>
-              </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4 items-end animate-fade-in">
+              <CustomDropdown
+                label="Category"
+                value={selectedCategory}
+                options={categoryOptions}
+                onChange={setSelectedCategory}
+              />
+              <CustomDropdown
+                label="Level"
+                value={selectedLevel}
+                options={levelOptions}
+                onChange={setSelectedLevel}
+              />
+              <CustomDropdown
+                label="Duration"
+                value={filterDuration}
+                options={durationOptions}
+                onChange={setFilterDuration}
+              />
+              <CustomDropdown
+                label="Price Range"
+                value={filterPriceRange}
+                options={priceOptions}
+                onChange={setFilterPriceRange}
+              />
               {hasActiveFilters && (
-                <button onClick={clearAll} className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 ml-auto border border-red-200 hover:border-red-300 px-4 py-2.5 rounded-xl transition-colors">
+                <button onClick={clearAll} className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 ml-auto border border-red-200 hover:border-red-300 px-5 py-3 rounded-xl transition-all cursor-pointer">
                   <X size={14} /> Clear All
                 </button>
               )}

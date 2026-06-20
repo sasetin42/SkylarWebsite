@@ -122,10 +122,23 @@ export const Locations: React.FC = () => {
                 </span>
               </div>
               <h1
-                className="font-heading font-bold text-white mb-4 drop-shadow-lg"
+                className="font-heading font-bold text-white mb-4 drop-shadow-lg animate-fade-in"
                 style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}
               >
-                {hero?.heading || 'Our'} <span className="text-accent">Campuses</span>
+                {hero?.heading ? (
+                  hero.heading.toLowerCase().includes('campuses') ? (
+                    <>
+                      {hero.heading.substring(0, hero.heading.toLowerCase().indexOf('campuses'))}
+                      <span className="text-accent">Campuses</span>
+                    </>
+                  ) : (
+                    <>
+                      {hero.heading} <span className="text-accent">Campuses</span>
+                    </>
+                  )
+                ) : (
+                  <>Our <span className="text-accent">Campuses</span></>
+                )}
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">

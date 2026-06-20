@@ -24,14 +24,14 @@ localStorage.setItem = (key: string, value: string) => {
 const SAVED_KEY = 'apex_saved_courses_v1';
 const RECENT_KEY = 'apex_recent_courses_v1';
 const REVIEWS_KEY = 'apex_course_reviews_v1';
-const COURSES_KEY = 'apex_courses_data_v1';
+const COURSES_KEY = 'apex_courses_data_v3';
 const STUDENTS_KEY = 'apex_students_data_v1';
 const SETTINGS_KEY = 'apex_settings_data_v1';
 const TRAINERS_KEY = 'apex_trainers_data_v1';
 const CLIENTS_KEY = 'apex_clients_data_v1';
 const MIGRATION_KEY = 'apex_migration_logs_v1';
 const SESSIONS_KEY = 'apex_sessions_data_v1';
-const SITE_PAGES_KEY = 'apex_site_pages_data_v2';
+const SITE_PAGES_KEY = 'apex_site_pages_data_v8';
 const CART_KEY = 'apex_cart_data_v1';
 const ADMIN_USERS_KEY = 'apex_admin_users_v1';
 const ROLES_KEY = 'apex_roles_data_v1';
@@ -68,14 +68,35 @@ export const isInCart = (courseId: string): boolean => {
   return getCart().includes(courseId);
 };
 
-// --- Course Management ---
 export const getCourses = (): Course[] => {
   const stored = localStorage.getItem(COURSES_KEY);
   if (!stored) {
     localStorage.setItem(COURSES_KEY, JSON.stringify(SEED_COURSES));
     return SEED_COURSES;
   }
-  return JSON.parse(stored);
+  const parsed = JSON.parse(stored) as Course[];
+  return parsed.map(c => {
+    const seed = SEED_COURSES.find(s => s.id === c.id);
+    if (!seed) return c;
+    return {
+      ...seed,
+      ...c,
+      courseBenefits: c.courseBenefits || seed.courseBenefits,
+      isThisCourseForMe: c.isThisCourseForMe || seed.isThisCourseForMe,
+      careerOpportunities: c.careerOpportunities || seed.careerOpportunities,
+      durationOfTraining: c.durationOfTraining || seed.durationOfTraining,
+      whereDelivered: c.whereDelivered || seed.whereDelivered,
+      accreditedUnitsRich: c.accreditedUnitsRich || seed.accreditedUnitsRich,
+      entryRequirementsRich: c.entryRequirementsRich || seed.entryRequirementsRich,
+      lln: c.lln || seed.lln,
+      assessment: c.assessment || seed.assessment,
+      certificationRecord: c.certificationRecord || seed.certificationRecord,
+      validityPeriod: c.validityPeriod || seed.validityPeriod,
+      whatToBringRich: c.whatToBringRich || seed.whatToBringRich,
+      costOfTraining: c.costOfTraining || seed.costOfTraining,
+      paymentOptions: c.paymentOptions || seed.paymentOptions,
+    };
+  });
 };
 
 export const getCourseById = (id: string): Course | undefined => {
@@ -129,7 +150,20 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   rtoId: "45000",
   operatingHours: "Mon-Fri 8am-5pm",
   siteAnnouncement: "",
-  enrollmentOpen: true
+  enrollmentOpen: true,
+  // New Default Branding & Extra Settings
+  lightLogoUrl: "",
+  darkLogoUrl: "",
+  faviconUrl: "",
+  defaultDarkMode: false,
+  brandColor: "#041024",
+  themePreset: "navy",
+  taxId: "ABN 84 920 184 721",
+  supportContactName: "Safety Admin Team",
+  supportHours: "Mon-Fri 8:00 AM - 5:00 PM (AEST)",
+  tuitionCurrency: "AUD",
+  classSizeLimit: 20,
+  passingScore: 80
 };
 
 export const getSettings = (): InstituteSettings => {
@@ -139,6 +173,7 @@ export const getSettings = (): InstituteSettings => {
 
 export const saveSettings = (settings: InstituteSettings) => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  window.dispatchEvent(new Event('themeUpdated'));
 };
 
 // --- Trainers ---
@@ -216,7 +251,30 @@ const SEED_PAGES: SitePage[] = [
                 description: "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
                 buttonText: "View All Courses",
                 buttonLink: "/courses",
-                image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920"
+                image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+                items: [
+                    { 
+                        title: "SAFETY TRAINING SPECIALISTS", 
+                        description: "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.", 
+                        image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+                        buttonText: "View All Courses",
+                        buttonLink: "/courses"
+                    },
+                    { 
+                        title: "GWO Global Standards", 
+                        description: "Internationally recognised safety training for the wind energy sector.", 
+                        image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
+                        buttonText: "View GWO Courses",
+                        buttonLink: "/courses?category=GWO"
+                    },
+                    { 
+                        title: "High Risk Work Licensing", 
+                        description: "Get licensed for Dogging, Rigging, and Forklift operations with expert trainers.", 
+                        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
+                        buttonText: "View Construction",
+                        buttonLink: "/courses?category=Construction"
+                    }
+                ]
             }
         },
         {
@@ -278,7 +336,7 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Empowering Safety Excellence in Wind Energy",
                 subheading: "TAILORED SAFETY TRAINING FOR THE WIND INDUSTRY",
                 description: "Skylar Education is a dedicated Registered Training Organisation (RTO 21647) specialising in wind safety training across Australia. With a focus on the Global Wind Organisation's (GWO) safety standards, we offer both initial and refresher courses designed to elevate the skills and safety practices of professionals in the wind energy sector.\n\nOur training centres are strategically located in key regions, providing accessible, top-tier education to ensure industry compliance and enhance career opportunities.",
-                image: "https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&q=80&w=1200"
+                image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200"
                 // partners removed per request
             }
         },
@@ -290,12 +348,12 @@ const SEED_PAGES: SitePage[] = [
                 items: [
                     { 
                         title: "Our Mission", 
-                        description: "To provide industry-leading safety training that equips wind energy professionals with the knowledge and skills to perform their roles safely and effectively, contributing to a safer work environment.", 
+                        description: "To empower the renewable energy industry through world-class training, workforce development, and operational competency.", 
                         icon: "Target" 
                     },
                     { 
                         title: "Our Vision", 
-                        description: "To be the leading provider of wind safety training in Australia, renowned for our commitment to quality, safety, and professional development.", 
+                        description: "To become Asia-Pacific’s leading provider of wind energy and high-risk industry workforce training.", 
                         icon: "Eye" 
                     },
                     { 
@@ -314,7 +372,7 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Your Partner in Professional Wind Safety Training",
                 subheading: "Excellence in Safety Training",
                 description: "Choose Skylar Education for comprehensive, practical training that meets global standards. Our programs are meticulously designed to ensure that every participant gains the skills necessary for safety and efficiency in the wind sector.\n\nWith state-of-the-art facilities, a curriculum that covers essential safety modules, and a track record of successful certifications, Skylar Education stands out as your best choice for advancing in the wind energy field.",
-                image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1200"
+                image: "/wind-turbine-worker.png"
             }
         },
         {
@@ -325,8 +383,27 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Our Expert Trainers",
                 description: "Meet the professionals who will guide you through your training.",
                 items: [
-                    { title: "Sarah Jenkins", description: "Senior Trainer | GWO Specialist", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" },
-                    { title: "Mike Ross", description: "Lead Instructor | High Risk Work", image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400" }
+                    { 
+                        title: "Sarah Jenkins", 
+                        description: "Senior Trainer | GWO Specialist", 
+                        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
+                        specialties: "GWO BST, Work at Height, First Aid",
+                        experience: "8 Years"
+                    },
+                    { 
+                        title: "Mike Ross", 
+                        description: "Lead Instructor | High Risk Work", 
+                        image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400",
+                        specialties: "Confined Spaces, Rigging/Slinging, Rescue",
+                        experience: "10 Years"
+                    },
+                    { 
+                        title: "David Vance", 
+                        description: "Wind Energy & Safety Expert", 
+                        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+                        specialties: "Blade Repair, GWO ART, Electrical Safety",
+                        experience: "7 Years"
+                    }
                 ]
             }
         },
@@ -657,9 +734,163 @@ const SEED_PAGES: SitePage[] = [
         }
     ] 
   },
-  { id: 'online-enrolments', name: 'Online Enrolments', lastUpdated: new Date().toISOString(), sections: [] },
-  { id: 'refund-policy', name: 'Refund Policy', lastUpdated: new Date().toISOString(), sections: [] },
-  { id: 'privacy-notice', name: 'Privacy Notice', lastUpdated: new Date().toISOString(), sections: [] },
+  { 
+    id: 'online-enrolments', 
+    name: 'Online Enrolments', 
+    lastUpdated: new Date().toISOString(), 
+    sections: [
+        {
+            id: 'hero',
+            label: 'Hero Section',
+            type: 'hero',
+            data: {
+                heading: "Enrol Anytime, Anywhere",
+                description: "Secure, fast, and accessible 24/7 from any device.",
+                image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1920"
+            }
+        },
+        {
+            id: 'content',
+            label: 'Portal Info',
+            type: 'content',
+            data: {
+                heading: "Online Enrollment Portal",
+                description: "Please select a course to begin the online enrollment process."
+            }
+        }
+    ] 
+  },
+  { 
+    id: 'refund-policy', 
+    name: 'Refund Policy', 
+    lastUpdated: new Date().toISOString(), 
+    sections: [
+        {
+            id: 'hero',
+            label: 'Hero Section',
+            type: 'hero',
+            data: {
+                heading: "Refund Policy & Procedure",
+                description: "Our commitment to fair trading and transparent financial processes for all students.",
+                image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1920"
+            }
+        },
+        {
+            id: 'details',
+            label: 'Overview Details',
+            type: 'content',
+            data: {
+                heading: "Overview",
+                description: "We strive to provide high-quality training and education to our students. We understand that sometimes circumstances change, and you may need to cancel or withdraw from your course. Our refund policy aims to provide a fair and transparent process for students who choose to withdraw from their course."
+            }
+        },
+        {
+            id: 'policy_accordions',
+            label: 'Policy Items Accordion',
+            type: 'accordion',
+            data: {
+                heading: "Details & Guidelines",
+                items: [
+                    {
+                        title: "TUITION FEES",
+                        description: `If you choose to withdraw from a face-to-face course, we will provide you with a full refund of any tuition fees paid if you notify us in writing at least 10 business days before the course commencement date.
+
+If you withdraw 5 business days or less prior to the commencement of a program you will be entitled to a refund of up to 50% of the course fees paid.
+
+If you withdraw within 24 hours of the course commencing, you will not be entitled to a refund.
+
+No refund will be provided if you withdraw after the course commencement date.`
+                    },
+                    {
+                        title: "REFUND PROCESSING",
+                        description: `Approved refund will be implemented within 10 business days. Refunds will be made to the bank account or credit card used for the initial payment. Please note that any non-refundable fees or charges associated with your payment method will not be refunded.
+
+We reserve the right to amend this refund policy from time to time. If we do, we will notify you by email and update the policy on our website.`
+                    }
+                ]
+            }
+        }
+    ] 
+  },
+  { 
+    id: 'privacy-notice', 
+    name: 'Privacy Notice', 
+    lastUpdated: new Date().toISOString(), 
+    sections: [
+        {
+            id: 'hero',
+            label: 'Hero Section',
+            type: 'hero',
+            data: {
+                heading: "Privacy Notice",
+                description: "How we protect and manage your personal information in accordance with National VET standards.",
+                image: "https://images.unsplash.com/photo-1575936123452-b67c3203c357?auto=format&fit=crop&q=80&w=1920"
+            }
+        },
+        {
+            id: 'policies',
+            label: 'Policy Overview',
+            type: 'content',
+            data: {
+                heading: "Privacy Policy Overview",
+                description: "We value your privacy and are committed to protecting your personal information. Under the VET Quality Framework, we collect and store student data securely for national reporting obligations."
+            }
+        },
+        {
+            id: 'privacy_accordions',
+            label: 'Compliance Accordions',
+            type: 'accordion',
+            data: {
+                heading: "Federal & State Disclosures",
+                items: [
+                    {
+                        title: "HOW WE USE YOUR PERSONAL INFORMATION",
+                        description: "We use your personal information to enable us to deliver VET courses to you, and otherwise, as needed, to comply with our obligations as an RTO."
+                    },
+                    {
+                        title: "HOW WE DISCLOSE YOUR PERSONAL INFORMATION",
+                        description: "We are required by law (under the National Vocational Education and Training Regulator Act 2011 (Cth) (NVETR Act)) to disclose the personal information we collect about you to the National VET Data Collection kept by the National Centre for Vocational Education Research Ltd (NCVER). The NCVER is responsible for collecting, managing, analysing and communicating research and statistics about the Australian VET sector.\n\nWe are also authorised by law (under the NVETR Act) to disclose your personal information to the relevant state or territory training authority."
+                    },
+                    {
+                        title: "HOW THE NCVER AND OTHER BODIES HANDLE YOUR PERSONAL INFORMATION",
+                        description: `The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.
+
+The NCVER is authorised to disclose information to the Australian Government Department of Education, Skills and Employment (DESE), Commonwealth authorities, State and Territory authorities (other than registered training organisations) that deal with matters relating to VET and VET regulators for the purposes of those bodies, including to enable:
+
+-administration of VET, including program administration, regulation, monitoring and evaluation
+-facilitation of statistics and research relating to education, including surveys and data linkage
+-understanding how the VET market operates, for policy, workforce planning and consumer information.
+
+The NCVER may also disclose personal information to persons engaged by NCVER to conduct research on NCVER’s behalf.
+
+The NCVER does not intend to disclose your personal information to any overseas recipients.
+
+For more information about how the NCVER will handle your personal information please refer to the NCVER’s Privacy Policy at www.ncver.edu.au/privacy.
+
+If you would like to seek access to or correct your information, in the first instance, please contact Skylar Education using the contact details listed below.
+
+DESE is authorised by law, including the Privacy Act and the NVETR Act, to collect, use and disclose your personal information to fulfil specified functions and activities. For more information about how the DESE will handle your personal information, please refer to the DESE VET Privacy Notice at https://www.dese.gov.au/national-vet-data/vet-privacy-notice
+
+Please refer to the additional State or Territory Authority Privacy Notice included in this application process should this be relevant to your application.`
+                    },
+                    {
+                        title: "SURVEYS",
+                        description: "You may receive a student survey which may be run by a government department or an NCVER employee, agent, third-party contractor or another authorised agency. Please note you may opt out of the survey at the time of being contacted."
+                    },
+                    {
+                        title: "CONTACT INFORMATION",
+                        description: `At any time, you may contact us to:
+
+o request access to your personal information
+o correct your personal information
+o make a complaint about how your personal information has been handled
+o ask a question about this Privacy Notice`
+                    }
+                ]
+            }
+        }
+    ] 
+  },
   { 
     id: 'complaints', 
     name: 'Complaints', 
@@ -686,7 +917,52 @@ const SEED_PAGES: SitePage[] = [
         }
     ] 
   },
-  { id: 'usi', name: 'USI Info', lastUpdated: new Date().toISOString(), sections: [] },
+  { 
+    id: 'usi', 
+    name: 'USI Info', 
+    lastUpdated: new Date().toISOString(), 
+    sections: [
+        {
+            id: 'hero',
+            label: 'Hero Section',
+            type: 'hero',
+            data: {
+                heading: "Unique Student Identifier (USI)",
+                description: "Your Key to Unlocking Opportunities in Vocational Education.",
+                image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1920"
+            }
+        },
+        {
+            id: 'intro',
+            label: 'USI Introduction',
+            type: 'content',
+            data: {
+                heading: "Unique Student Identifier",
+                description: `Every year almost four million Australians build and sharpen their skills by undertaking nationally recognised training. All students doing nationally recognised training need to have a Unique Student Identifier (USI). This includes students doing Vocational Education Training (VET) when they are still at school (VET for secondary students).
+
+From 1 January 2015 it is a requirement of the Federal Government that all students undertaking nationally recognised training will need to obtain a Unique Student Identifier (USI). This involves an easy online application. See the USI website for additional information.`
+            }
+        },
+        {
+            id: 'usi_accordions',
+            label: 'USI Guide Accordions',
+            type: 'accordion',
+            data: {
+                heading: "USI Help & Guides",
+                items: [
+                    {
+                        title: "WHAT IS A USI",
+                        description: "A Unique Student Identifier (USI) is a reference number that gives each student in Australia a unique identity for their educational achievements. It is a requirement for anyone studying a nationally recognised training course in Australia. The USI creates an online record of a student’s qualifications and achievements, allowing them to access their training records and transcripts from one central location. It also makes it easier for employers and educational institutions to verify a student’s qualifications and track their progress throughout their education and career. Creating a USI is free and can be done via the USI website."
+                    },
+                    {
+                        title: "ALREADY HAVE A USI?",
+                        description: "There are 4 ways to find your USI:\n\n1. Email address: Enter the email address saved on your USI account and click 'Submit' on the USI website. An email will be sent containing your USI details.\n\n2. Mobile number: Enter the mobile number saved on your USI account and your date of birth, and you will receive an SMS containing your USI.\n\n3. Personal details: Supply your name, date of birth, gender, and town of birth, then answer your check questions to display your USI on-screen."
+                    }
+                ]
+            }
+        }
+    ] 
+  },
 ];
 
 export const getSitePages = (): SitePage[] => {
@@ -695,7 +971,60 @@ export const getSitePages = (): SitePage[] => {
     localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(SEED_PAGES));
     return SEED_PAGES;
   }
-  return JSON.parse(stored);
+  const pages: SitePage[] = JSON.parse(stored);
+  let migrated = false;
+  pages.forEach(p => {
+    if (p.id === 'about') {
+      p.sections.forEach(s => {
+        if (s.id === 'safety_excellence' && s.data.image?.includes('photo-1516937941344-00b4e0337589')) {
+          s.data.image = "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200";
+          migrated = true;
+        }
+        if (s.id === 'mission_vision_credentials' && s.data.items) {
+          s.data.items.forEach(item => {
+            if (item.title === 'Our Mission' && !item.description.includes('empower the renewable energy')) {
+              item.description = "To empower the renewable energy industry through world-class training, workforce development, and operational competency.";
+              migrated = true;
+            }
+            if (item.title === 'Our Vision' && !item.description.includes('Asia-Pacific’s leading provider')) {
+              item.description = "To become Asia-Pacific’s leading provider of wind energy and high-risk industry workforce training.";
+              migrated = true;
+            }
+          });
+        }
+        if (s.id === 'team' && (!s.data.items || s.data.items.length < 3 || !s.data.items[0].specialties)) {
+          s.data.items = [
+            { 
+                title: "Sarah Jenkins", 
+                description: "Senior Trainer | GWO Specialist", 
+                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
+                specialties: "GWO BST, Work at Height, First Aid",
+                experience: "8 Years"
+            },
+            { 
+                title: "Mike Ross", 
+                description: "Lead Instructor | High Risk Work", 
+                image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400",
+                specialties: "Confined Spaces, Rigging/Slinging, Rescue",
+                experience: "10 Years"
+            },
+            { 
+                title: "David Vance", 
+                description: "Wind Energy & Safety Expert", 
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+                specialties: "Blade Repair, GWO ART, Electrical Safety",
+                experience: "7 Years"
+            }
+          ];
+          migrated = true;
+        }
+      });
+    }
+  });
+  if (migrated) {
+    localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(pages));
+  }
+  return pages;
 };
 
 export const getPageContent = (id: string): SitePage | undefined => {

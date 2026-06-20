@@ -13,6 +13,32 @@ export interface Course {
   prerequisites?: string[];
   isGwo?: boolean;
   modules?: string[];
+  code?: string;
+  certificationName?: string;
+  validityMonths?: number;
+  whatYouWillLearn?: string[];
+  entryRequirements?: string[];
+  targetAudience?: string[];
+  rtoCode?: string;
+  deliveryMode?: string;
+  accreditedUnits?: string[];
+  whatToBring?: string[];
+  depositAmount?: number;
+  // Collapsible Rich-Text Sections
+  courseBenefits?: string;
+  isThisCourseForMe?: string;
+  careerOpportunities?: string;
+  durationOfTraining?: string;
+  whereDelivered?: string;
+  accreditedUnitsRich?: string;
+  entryRequirementsRich?: string;
+  lln?: string;
+  assessment?: string;
+  certificationRecord?: string;
+  validityPeriod?: string;
+  whatToBringRich?: string;
+  costOfTraining?: string;
+  paymentOptions?: string;
 }
 
 export enum CourseCategory {
@@ -150,6 +176,19 @@ export interface InstituteSettings {
   currentTerm?: string;
   enrollmentOpen?: boolean;
   enrollmentDeadline?: string;
+  // New Branding & Extra Settings
+  lightLogoUrl?: string;
+  darkLogoUrl?: string;
+  faviconUrl?: string;
+  defaultDarkMode?: boolean;
+  brandColor?: string;
+  themePreset?: 'navy' | 'dark' | 'emerald' | 'crimson';
+  taxId?: string;
+  supportContactName?: string;
+  supportHours?: string;
+  tuitionCurrency?: string;
+  classSizeLimit?: number;
+  passingScore?: number;
 }
 
 // --- Admin Settings Types ---
@@ -203,6 +242,10 @@ export interface PageSectionItem {
   description: string;
   image?: string;
   icon?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  specialties?: string;
+  experience?: string;
 }
 
 export interface PageSection {

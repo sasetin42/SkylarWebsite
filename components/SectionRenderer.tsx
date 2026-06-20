@@ -609,19 +609,19 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
 
     case 'features':
       return (
-        <section className="py-16 bg-gray-50">
+        <section className="py-24 md:py-28 bg-gradient-to-b from-slate-50 to-white">
           <div className="container mx-auto px-4 md:px-8">
-            {section.data.heading && <h2 className="text-3xl font-heading font-bold text-center mb-12 text-secondary">{section.data.heading}</h2>}
-            <div className="grid md:grid-cols-3 gap-8">
+            {section.data.heading && <h2 className="text-3xl font-heading font-bold text-left mb-16 text-secondary border-l-4 border-accent pl-4">{section.data.heading}</h2>}
+            <div className="grid md:grid-cols-3 gap-10 lg:gap-12">
               {section.data.items?.map((item, idx) => {
                 const Icon = IconMap[item.icon || 'Award'] || Award;
                 return (
-                  <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center hover:-translate-y-1 transition-transform duration-300">
-                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Icon size={32} />
+                  <div key={idx} className="group bg-white p-8 rounded-3xl shadow-md hover:shadow-2xl border border-slate-100 text-left hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-start">
+                    <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:from-primary group-hover:to-primary group-hover:text-white transition-all duration-300">
+                      <Icon size={24} className="stroke-[1.75]" />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-secondary">{item.title}</h3>
-                    <p className="text-gray-600 whitespace-pre-line">{item.description}</p>
+                    <h3 className="text-[25px] font-bold mb-3 text-secondary tracking-tight leading-tight">{item.title}</h3>
+                    <p className="text-gray-600 text-[15px] leading-relaxed whitespace-pre-line">{item.description}</p>
                   </div>
                 );
               })}
@@ -670,27 +670,153 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
         </section>
       );
 
-    case 'team':
+    case 'cta':
       return (
-        <div className="py-16 bg-white">
-          <div className="container mx-auto px-4 md:px-8 text-center">
-            <h2 className="text-3xl font-heading font-bold mb-12 text-secondary">{section.data.heading}</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {section.data.items?.map((item, idx) => (
-                <div key={idx} className="bg-white rounded-xl shadow-lg overflow-hidden group">
-                  <div className="h-64 overflow-hidden">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110" />
+        <section className="py-20 md:py-24 bg-gradient-to-r from-accent to-yellow-400 relative overflow-hidden mx-4 my-8 rounded-3xl" aria-label="Call to Action">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+          <div className="container mx-auto px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 text-center md:text-left">
+            <div>
+              <h2 className="text-3xl md:text-5xl font-heading font-bold mb-4 text-secondary">{section.data.heading}</h2>
+              <p className="text-lg md:text-xl font-medium text-secondary/80">{section.data.subheading || section.data.description}</p>
+            </div>
+            {section.data.buttonText && (
+              <Link to={section.data.buttonLink || '#'} className="w-full md:w-auto">
+                <button className="bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 md:py-5 px-10 md:px-12 rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg uppercase tracking-wide border-4 border-transparent hover:border-secondary w-full md:w-auto">
+                  {section.data.buttonText}
+                </button>
+              </Link>
+            )}
+          </div>
+          <div className="absolute top-0 right-0 w-96 h-full bg-white/20 skew-x-12 transform translate-x-32" aria-hidden="true"></div>
+        </section>
+      );
+
+    case 'accordion': {
+      const AccordionSection: React.FC = () => {
+        const [openIndex, setOpenIndex] = useState<number | null>(null);
+        return (
+          <section className="py-16 bg-white">
+            <div className="container mx-auto px-4 md:px-8 max-w-4xl">
+              {section.data.heading && (
+                <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-10 text-secondary">{section.data.heading}</h2>
+              )}
+              <div className="space-y-4">
+                {section.data.items?.map((item, idx) => (
+                  <div key={idx} className="bg-white border border-gray-250 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                    <button
+                      onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                      className="w-full flex items-center justify-between p-5 md:p-6 text-left hover:bg-gray-50 transition-colors group"
+                    >
+                      <span className="font-heading font-bold text-secondary text-sm md:text-base pr-4 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </span>
+                      <span className="text-xl font-black leading-none select-none text-gray-500">
+                        {openIndex === idx ? '−' : '+'}
+                      </span>
+                    </button>
+                    {openIndex === idx && (
+                      <div className="p-5 md:p-6 pt-0 text-gray-500 text-sm leading-relaxed border-t border-gray-100 whitespace-pre-line bg-gray-50/50">
+                        {item.description}
+                      </div>
+                    )}
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-secondary">{item.title}</h3>
-                    <p className="text-primary font-medium text-sm">{item.description}</p>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      };
+      return <AccordionSection />;
+    }
+
+    case 'team': {
+      const rawItems = section.data.items || [];
+      const trainersList = [...rawItems];
+      
+      // Safeguard: Ensure at least 3 trainers exist in the UI list
+      if (trainersList.length < 3) {
+        if (!trainersList.find(t => t.title === 'David Vance')) {
+          trainersList.push({
+            title: "David Vance",
+            description: "Wind Energy & Safety Expert",
+            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+            specialties: "Blade Repair, GWO ART, Electrical Safety",
+            experience: "7 Years"
+          });
+        }
+      }
+      
+      return (
+        <div className="py-24 md:py-28 bg-white relative overflow-hidden">
+          {/* Subtle design grid lines background */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+          
+          <div className="container mx-auto px-4 md:px-8 text-center relative z-10">
+            <h2 className="text-3xl md:text-4xl font-heading font-extrabold mb-3 text-secondary tracking-tight">{section.data.heading}</h2>
+            <p className="text-gray-500 max-w-xl mx-auto mb-16 text-sm md:text-base font-medium">{section.data.description}</p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+              {trainersList.map((item, idx) => {
+                const experience = item.experience || (
+                  item.title === 'Sarah Jenkins' ? '8 Years' :
+                  item.title === 'Mike Ross' ? '10 Years' : '7 Years'
+                );
+                const specialties = item.specialties || (
+                  item.title === 'Sarah Jenkins' ? 'GWO BST, Work at Height, First Aid' :
+                  item.title === 'Mike Ross' ? 'Confined Spaces, Rigging/Slinging, Rescue' :
+                  item.title === 'David Vance' ? 'Blade Repair, GWO ART, Electrical Safety' : ''
+                );
+                
+                return (
+                  <div key={idx} className="bg-slate-50/40 rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 relative group flex flex-col justify-between">
+                    <div>
+                      {/* Experience Badge */}
+                      {experience && (
+                        <span className="absolute top-4 right-4 bg-secondary text-accent font-bold text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-xl shadow-md border border-white/10 z-10">
+                          {experience} Experience
+                        </span>
+                      )}
+                      <div className="h-72 overflow-hidden relative">
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-secondary/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                      </div>
+                      <div className="p-8 text-left">
+                        <h3 className="text-xl font-bold text-secondary mb-1 tracking-tight leading-tight">{item.title}</h3>
+                        <p className="text-primary font-semibold text-sm mb-4">{item.description}</p>
+                        
+                        {/* Specialties micro pills */}
+                        {specialties && (
+                          <div className="pt-4 border-t border-slate-100/80">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Areas of Expertise</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {specialties.split(',').map((spec: string) => (
+                                  <span key={spec} className="bg-white text-[11px] font-bold text-gray-700 px-2.5 py-1 rounded-lg border border-slate-200/60 shadow-sm transition-colors hover:border-accent/40">
+                                    {spec.trim()}
+                                  </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Interactive Button */}
+                    <div className="px-8 pb-8 pt-0">
+                      <button 
+                        onClick={() => alert(`Connecting you to ${item.title}. A support representative will coordinate your query.`)}
+                        className="w-full py-3 bg-secondary hover:bg-accent text-white hover:text-secondary font-bold text-xs uppercase tracking-widest rounded-xl transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
+                      >
+                        <span>Inquire Session</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       );
+    }
 
     default:
       return null;

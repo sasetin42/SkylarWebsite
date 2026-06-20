@@ -45,7 +45,13 @@ export const AdminDashboard: React.FC = () => {
     }
   ]);
 
-  const settings = getSettings();
+  const [settings, setSettings] = useState(getSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => setSettings(getSettings());
+    window.addEventListener('themeUpdated', handleUpdate);
+    return () => window.removeEventListener('themeUpdated', handleUpdate);
+  }, []);
 
   useEffect(() => {
     const isAuth = localStorage.getItem('isAdminAuthenticated');
@@ -106,12 +112,16 @@ export const AdminDashboard: React.FC = () => {
         <aside 
           className={`fixed md:relative z-30 h-full transition-all duration-300 ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-20'} bg-secondary dark:bg-gray-800 text-white shadow-2xl flex flex-col border-r border-white/5 dark:border-gray-700`}
         >
-          <div className="p-6 flex items-center gap-3 overflow-hidden whitespace-nowrap border-b border-white/10 dark:border-gray-700">
-            <img src={LOGO_URL} alt="Logo" className="h-8 w-auto" />
-            <div className={`transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 md:hidden'}`}>
-              <h1 className="font-heading font-bold text-lg text-white">Skylar Asia</h1>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Admin Portal</p>
-            </div>
+          <div className={`flex items-center justify-center border-b border-white/10 dark:border-gray-700 transition-all duration-300 ${sidebarOpen ? 'p-6' : 'p-4'}`}>
+            <img 
+              src={sidebarOpen ? (settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL) : (settings.faviconUrl || settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL)} 
+              alt="Logo" 
+              className={`transition-all duration-300 ${sidebarOpen ? 'h-8 w-auto max-w-full' : 'h-8 w-8 object-contain'} ${
+                !(sidebarOpen ? (settings.darkLogoUrl || settings.lightLogoUrl) : (settings.faviconUrl || settings.darkLogoUrl || settings.lightLogoUrl))
+                  ? 'brightness-0 invert'
+                  : ''
+              }`} 
+            />
           </div>
           
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">

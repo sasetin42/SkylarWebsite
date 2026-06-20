@@ -33,26 +33,29 @@ export const RefundPolicy: React.FC = () => {
 
   const hero = pageContent?.sections.find(s => s.id === 'hero')?.data;
   const details = pageContent?.sections.find(s => s.id === 'details')?.data;
+  const policyAccordions = pageContent?.sections.find(s => s.id === 'policy_accordions')?.data;
 
-  // Static policy items as requested
-  const policyItems = [
-    {
-      title: "TUITION FEES",
-      description: `If you choose to withdraw from a face-to-face course, we will provide you with a full refund of any tuition fees paid if you notify us in writing at least 10 business days before the course commencement date.
+  // Read items from CMS or fallback to defaults
+  const policyItems = policyAccordions?.items && policyAccordions.items.length > 0
+    ? policyAccordions.items
+    : [
+        {
+          title: "TUITION FEES",
+          description: `If you choose to withdraw from a face-to-face course, we will provide you with a full refund of any tuition fees paid if you notify us in writing at least 10 business days before the course commencement date.
 
-      If you withdraw 5 business days or less prior to the commencement of a program you will be entitled to a refund of up to 50% of the course fees paid.
+          If you withdraw 5 business days or less prior to the commencement of a program you will be entitled to a refund of up to 50% of the course fees paid.
 
-      If you withdraw within 24 hours of the course commencing, you will not be entitled to a refund.
+          If you withdraw within 24 hours of the course commencing, you will not be entitled to a refund.
 
-      No refund will be provided if you withdraw after the course commencement date.`
-    },
-    {
-      title: "REFUND PROCESSING",
-      description: `Approved refund will be implemented within 10 business days. Refunds will be made to the bank account or credit card used for the initial payment. Please note that any non-refundable fees or charges associated with your payment method will not be refunded.
+          No refund will be provided if you withdraw after the course commencement date.`
+        },
+        {
+          title: "REFUND PROCESSING",
+          description: `Approved refund will be implemented within 10 business days. Refunds will be made to the bank account or credit card used for the initial payment. Please note that any non-refundable fees or charges associated with your payment method will not be refunded.
 
-      We reserve the right to amend this refund policy from time to time. If we do, we will notify you by email and update the policy on our website.`
-    }
-  ];
+          We reserve the right to amend this refund policy from time to time. If we do, we will notify you by email and update the policy on our website.`
+        }
+      ];
 
   return (
     <div className="bg-white min-h-screen pb-24 font-sans text-gray-900">

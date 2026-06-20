@@ -38,8 +38,15 @@ export const PrivacyNotice: React.FC = () => {
 
   const hero = pageContent?.sections.find(s => s.id === 'hero')?.data;
   const policies = pageContent?.sections.find(s => s.id === 'policies')?.data;
+  const privacyAccordions = pageContent?.sections.find(s => s.id === 'privacy_accordions')?.data;
 
-  const complianceSections = [
+  const complianceSections = privacyAccordions?.items && privacyAccordions.items.length > 0
+    ? privacyAccordions.items.map((item, idx) => ({
+        id: `cms-acc-${idx}`,
+        title: item.title,
+        content: item.description
+      }))
+    : [
     {
         id: 'use',
         title: 'HOW WE USE YOUR PERSONAL INFORMATION',
@@ -101,7 +108,7 @@ o ask a question about this Privacy Notice`
           <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
-        <div className="relative z-10 pt-[120px] pb-14">
+        <div className="relative z-10 py-20">
           <div className="container mx-auto px-4 md:px-8">
             <div className="max-w-3xl animate-fade-in-up">
               <div className="flex flex-wrap gap-2.5 mb-6">

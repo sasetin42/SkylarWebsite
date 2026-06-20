@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, CreditCard, ShieldCheck, ArrowRight, CheckCircle, ShoppingCart } from 'lucide-react';
+import { Trash2, CreditCard, ShieldCheck, ArrowRight, CheckCircle, ShoppingCart, Clock } from 'lucide-react';
 import { getCart, getCourses, removeFromCart } from '../services/storageService';
 import { Course } from '../types';
 import { Button } from '../components/Button';
@@ -95,7 +95,7 @@ export const Checkout: React.FC = () => {
           <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95" />
         </div>
-        <div className="relative z-10 pt-[120px] pb-14">
+        <div className="relative z-10 py-12">
           <div className="container mx-auto px-4 md:px-8">
             <div className="max-w-3xl animate-fade-in-up">
               <div className="flex flex-wrap gap-2.5 mb-6">
@@ -118,7 +118,7 @@ export const Checkout: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 md:px-8">
+      <div className="container mx-auto px-4 md:px-8 pt-12">
         {cartItems.length === 0 ? (
            <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-200">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
@@ -136,33 +136,52 @@ export const Checkout: React.FC = () => {
               <div className="lg:col-span-2 space-y-8">
                  
                  {/* Cart Summary */}
-                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200">
+                 <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-200">
                     <h2 className="text-xl font-bold text-secondary mb-6 border-b border-gray-100 pb-4">Order Summary</h2>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                        {cartItems.map(item => (
-                          <div key={item.id} className="flex gap-4 items-center group">
-                             <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                          <div key={item.id} className="flex gap-4 items-center group py-3 border-b border-gray-50 last:border-b-0 last:pb-0">
+                             <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-100 shadow-sm">
                                 <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                              </div>
-                             <div className="flex-1">
-                                <h3 className="font-bold text-gray-800 group-hover:text-primary transition-colors">{item.title}</h3>
-                                <p className="text-sm text-gray-500">{item.duration} • {item.level}</p>
+                             <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-gray-800 text-sm md:text-base group-hover:text-primary transition-colors truncate">{item.title}</h3>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                   {item.code && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/5 text-primary border border-primary/10">
+                                         {item.code}
+                                      </span>
+                                   )}
+                                   <span className="inline-flex items-center text-[11px] text-gray-500 font-medium">
+                                      <Clock size={11} className="mr-0.5" /> {item.duration}
+                                   </span>
+                                   {item.deliveryMode && (
+                                      <span className="inline-flex items-center text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                                         <span className="w-1 h-1 rounded-full bg-gray-300 mx-1.5" />
+                                         {item.deliveryMode}
+                                      </span>
+                                   )}
+                                   <span className="inline-flex items-center text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                                      <span className="w-1 h-1 rounded-full bg-gray-300 mx-1.5" />
+                                      <span className="text-green-600 font-semibold">{item.level}</span>
+                                   </span>
+                                </div>
                              </div>
-                             <div className="text-right">
-                                <div className="font-bold text-lg text-secondary">${item.price}</div>
+                             <div className="text-right shrink-0">
+                                <div className="font-bold text-base md:text-lg text-secondary">${item.price.toLocaleString()}</div>
                                 <button 
                                    onClick={() => handleRemove(item.id)}
-                                   className="text-xs text-red-500 hover:text-red-700 flex items-center justify-end gap-1 mt-1 font-medium"
+                                   className="text-[10px] text-red-500 hover:text-red-700 flex items-center justify-end gap-1 mt-1 font-bold cursor-pointer"
                                 >
-                                   <Trash2 size={12} /> Remove
+                                   <Trash2 size={10} /> Remove
                                 </button>
                              </div>
                           </div>
                        ))}
                     </div>
-                    <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
-                       <span className="text-gray-500 font-medium">Total Amount</span>
-                       <span className="text-3xl font-heading font-bold text-primary">${calculateTotal()}</span>
+                    <div className="mt-6 pt-5 border-t border-gray-100 flex justify-between items-center">
+                       <span className="text-gray-500 font-bold text-sm">Total Amount</span>
+                       <span className="text-2xl md:text-3xl font-heading font-bold text-primary">${calculateTotal().toLocaleString()}</span>
                     </div>
                  </div>
 

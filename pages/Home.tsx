@@ -10,7 +10,7 @@ import {
 import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
 import { InteractiveMap } from '../components/InteractiveMap';
-import { TESTIMONIALS, BLOG_POSTS } from '../constants';
+import { TESTIMONIALS, BLOG_POSTS, LOCATIONS } from '../constants';
 import { getCourses, getPageContent, saveTicket } from '../services/storageService';
 import { Course, SitePage } from '../types';
 
@@ -26,10 +26,26 @@ interface NewsletterForm {
   email: string;
 }
 
+const SITE_PAGES = [
+  { id: 'about', title: 'About Skylar Education', path: '/about', description: 'Learn about our mission, values, and wind energy training expertise.', tags: 'about us team history safety company' },
+  { id: 'gwo-benefits', title: 'GWO Certification Benefits', path: '/about/gwo-benefits', description: 'Why GWO certifications are critical for global wind energy careers.', tags: 'gwo benefit advantage industry wind safety' },
+  { id: 'team', title: 'Our Training Instructors & Team', path: '/about/team', description: 'Meet the expert GWO and safety instructors at Skylar.', tags: 'team members staff trainers instructors experts' },
+  { id: 'locations', title: 'Skylar Campus Locations', path: '/locations', description: 'Find our state-of-the-art training facilities and campus contacts.', tags: 'campus locations map melbourne sydney brisbane perth adelaide addresses' },
+  { id: 'news', title: 'Industry Insights & News', path: '/news', description: 'Stay updated with renewable energy trends, training tips, and news.', tags: 'blog news insights articles updates safety standards' },
+  { id: 'usi', title: 'USI Information', path: '/student-info/usi', description: 'How to register or find your Unique Student Identifier (USI).', tags: 'usi student identifier unique number registration identity' },
+  { id: 'refund-policy', title: 'Fees and Refund Policy', path: '/student-info/refund-policy', description: 'Review our course fees, cooling-off periods, and refund procedures.', tags: 'refund policy fees payment cancellation terms condition' },
+  { id: 'privacy-notice', title: 'Student Privacy Notice', path: '/student-info/privacy-notice', description: 'How Skylar Education protects your personal information and student records.', tags: 'privacy notice data protection policy student files security' },
+  { id: 'online-enrolments', title: 'Online Enrolments Guide', path: '/student-info/online-enrolments', description: 'Step-by-step guide to enrolling online and submitting required identity documents.', tags: 'enrollment online process register application identity upload' },
+  { id: 'complaints', title: 'Complaints & Appeals Policy', path: '/student-info/complaints', description: 'Our commitment to a fair and transparent complaints resolution process.', tags: 'complaints appeals dispute resolution feedback issue support' },
+  { id: 'faq', title: 'Frequently Asked Questions (FAQ)', path: '/student-info/faq', description: 'Answers to common questions about GWO training, course bookings, and prerequisites.', tags: 'faq questions answers help support wind certification requirement' },
+  { id: 'contact', title: 'Contact Us', path: '/contact', description: 'Get in touch with our training coordinators, support team, or request a quote.', tags: 'contact email phone support map message quote inquiry office' }
+];
+
 const Home: React.FC = () => {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
   const [heroSearch, setHeroSearch] = useState('');
+  const [activeSearchTab, setActiveSearchTab] = useState<'all' | 'courses' | 'insights' | 'locations' | 'pages'>('all');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState<any[]>([]);
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -52,33 +68,44 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     const cmsHero = pageContent?.sections.find(s => s.id === 'hero')?.data;
-    const defaultSlides = [
-      {
-        id: 1,
-        image: cmsHero?.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
-        heading: cmsHero?.heading || "Safety Training Specialists",
-        description: cmsHero?.description || "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
-        buttonText: cmsHero?.buttonText || "View All Courses",
-        buttonLink: cmsHero?.buttonLink || "/courses"
-      },
-      {
-        id: 2,
-        image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
-        heading: "GWO Global Standards",
-        description: "Internationally recognised safety training for the wind energy sector.",
-        buttonText: "View GWO Courses",
-        buttonLink: "/courses?category=GWO"
-      },
-      {
-        id: 3,
-        image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
-        heading: "High Risk Work Licensing",
-        description: "Get licensed for Dogging, Rigging, and Forklift operations with expert trainers.",
-        buttonText: "View Construction",
-        buttonLink: "/courses?category=Construction"
-      }
-    ];
-    setSlides(defaultSlides);
+    if (cmsHero?.items && cmsHero.items.length > 0) {
+      setSlides(cmsHero.items.map((item: any, idx: number) => ({
+        id: idx + 1,
+        image: item.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+        heading: item.title || "Safety Training Specialists",
+        description: item.description || "",
+        buttonText: item.buttonText || "View All Courses",
+        buttonLink: item.buttonLink || "/courses"
+      })));
+    } else {
+      const defaultSlides = [
+        {
+          id: 1,
+          image: cmsHero?.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+          heading: cmsHero?.heading || "Safety Training Specialists",
+          description: cmsHero?.description || "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
+          buttonText: cmsHero?.buttonText || "View All Courses",
+          buttonLink: cmsHero?.buttonLink || "/courses"
+        },
+        {
+          id: 2,
+          image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
+          heading: "GWO Global Standards",
+          description: "Internationally recognised safety training for the wind energy sector.",
+          buttonText: "View GWO Courses",
+          buttonLink: "/courses?category=GWO"
+        },
+        {
+          id: 3,
+          image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
+          heading: "High Risk Work Licensing",
+          description: "Get licensed for Dogging, Rigging, and Forklift operations with expert trainers.",
+          buttonText: "View Construction",
+          buttonLink: "/courses?category=Construction"
+        }
+      ];
+      setSlides(defaultSlides);
+    }
   }, [pageContent]);
 
   useEffect(() => {
@@ -194,7 +221,8 @@ const Home: React.FC = () => {
     const allCourses = getCourses();
     const matchedCourses = allCourses.filter(c => 
       c.title.toLowerCase().includes(query) || 
-      c.description.toLowerCase().includes(query) ||
+      c.shortDescription.toLowerCase().includes(query) || 
+      c.fullDescription.toLowerCase().includes(query) || 
       c.category.toLowerCase().includes(query)
     );
 
@@ -211,11 +239,27 @@ const Home: React.FC = () => {
       post.category.toLowerCase().includes(query)
     );
 
+    // Filter LOCATIONS
+    const matchedLocations = LOCATIONS.filter(loc =>
+      loc.name.toLowerCase().includes(query) ||
+      loc.address.toLowerCase().includes(query) ||
+      loc.state.toLowerCase().includes(query)
+    );
+
+    // Filter SITE_PAGES
+    const matchedPages = SITE_PAGES.filter(p =>
+      p.title.toLowerCase().includes(query) ||
+      p.description.toLowerCase().includes(query) ||
+      p.tags.toLowerCase().includes(query)
+    );
+
     return {
-      courses: matchedCourses.slice(0, 5),
-      categories: matchedCategories.slice(0, 3),
-      insights: matchedInsights.slice(0, 4),
-      hasResults: matchedCourses.length > 0 || matchedCategories.length > 0 || matchedInsights.length > 0
+      courses: matchedCourses,
+      categories: matchedCategories,
+      insights: matchedInsights,
+      locations: matchedLocations,
+      pages: matchedPages,
+      hasResults: matchedCourses.length > 0 || matchedCategories.length > 0 || matchedInsights.length > 0 || matchedLocations.length > 0 || matchedPages.length > 0
     };
   }, [heroSearch]);
 
@@ -256,19 +300,6 @@ const Home: React.FC = () => {
             <div className="max-w-5xl">
               {slides.length > 0 && (
                 <div key={currentSlide} className="space-y-6 md:space-y-8 animate-fade-in-up">
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2.5 mb-0">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
-                      ★ 4.9/5 Rating
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                      GWO Certified
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                      WorkSafe Approved
-                    </span>
-                  </div>
-
                   {/* Main Heading */}
                   <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
                     {slides[currentSlide].heading}
@@ -381,88 +412,339 @@ const Home: React.FC = () => {
 
             {/* Live Search Popup */}
             {showSearchResults && searchResults && (
-              <div className="absolute left-0 right-0 top-full mt-3 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 p-6 z-50 text-left max-h-[480px] overflow-y-auto flex flex-col gap-6">
+              <div className="absolute left-0 right-0 top-full mt-3 bg-white rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.2)] border border-gray-100 p-5 md:p-6 z-50 text-left max-h-[520px] overflow-y-auto flex flex-col gap-5">
                 {!searchResults.hasResults ? (
-                  <div className="py-8 text-center">
-                    <AlertCircle className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium text-base">No results found for "{heroSearch}"</p>
-                    <p className="text-gray-400 text-xs mt-1">Try searching for GWO, Construction, safety or height.</p>
+                  <div className="py-10 text-center">
+                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3 animate-bounce" />
+                    <p className="text-gray-600 font-semibold text-lg">No results found for "{heroSearch}"</p>
+                    <p className="text-gray-400 text-sm mt-1 max-w-sm mx-auto">Try searching for generic terms like GWO, Safety, Working at Heights, Melbourne, or USI.</p>
                   </div>
                 ) : (
                   <>
-                    {/* Categories Section */}
-                    {searchResults.categories.length > 0 && (
-                      <div>
-                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-2 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
-                          <Target className="w-3.5 h-3.5" /> Course Categories
-                        </div>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {searchResults.categories.map((cat, index) => (
-                            <Link
-                              key={index}
-                              to={`/courses?category=${cat}`}
-                              onClick={() => setShowSearchResults(false)}
-                              className="px-3.5 py-1.5 rounded-lg bg-gray-50 border border-gray-100 hover:border-primary/30 hover:bg-primary/5 text-gray-700 hover:text-primary transition-all text-xs font-bold"
-                            >
-                              {cat} Training
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Category Filter Tabs */}
+                    <div className="flex flex-wrap gap-1.5 border-b border-gray-100 pb-3 -mx-1 px-1">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSearchTab('all')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeSearchTab === 'all'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-secondary'
+                        }`}
+                      >
+                        All
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${activeSearchTab === 'all' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                          {searchResults.courses.length + searchResults.insights.length + searchResults.locations.length + searchResults.pages.length}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSearchTab('courses')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeSearchTab === 'courses'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-secondary'
+                        }`}
+                      >
+                        Courses
+                        {searchResults.courses.length > 0 && (
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${activeSearchTab === 'courses' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                            {searchResults.courses.length}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSearchTab('insights')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeSearchTab === 'insights'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-secondary'
+                        }`}
+                      >
+                        Insights
+                        {searchResults.insights.length > 0 && (
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${activeSearchTab === 'insights' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                            {searchResults.insights.length}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSearchTab('locations')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeSearchTab === 'locations'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-secondary'
+                        }`}
+                      >
+                        Locations
+                        {searchResults.locations.length > 0 && (
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${activeSearchTab === 'locations' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                            {searchResults.locations.length}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSearchTab('pages')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeSearchTab === 'pages'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-secondary'
+                        }`}
+                      >
+                        Info Pages
+                        {searchResults.pages.length > 0 && (
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${activeSearchTab === 'pages' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                            {searchResults.pages.length}
+                          </span>
+                        )}
+                      </button>
+                    </div>
 
-                    {/* Courses Section */}
-                    {searchResults.courses.length > 0 && (
-                      <div>
-                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-3 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5" /> Courses
+                    <div className="flex flex-col gap-6 pt-1">
+                      {/* Course Categories (only shown in 'all' or 'courses') */}
+                      {(activeSearchTab === 'all' || activeSearchTab === 'courses') && searchResults.categories.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-accent uppercase tracking-widest mb-2 pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                            <Target className="w-3.5 h-3.5" /> Course Categories
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {searchResults.categories.map((cat, index) => (
+                              <Link
+                                key={index}
+                                to={`/courses?category=${cat}`}
+                                onClick={() => setShowSearchResults(false)}
+                                className="px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 hover:border-primary/30 hover:bg-primary/5 text-gray-700 hover:text-primary transition-all text-xs font-bold"
+                              >
+                                {cat} Training
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          {searchResults.courses.map((course) => (
-                            <Link
-                              key={course.id}
-                              to={`/courses/${course.id}`}
-                              onClick={() => setShowSearchResults(false)}
-                              className="group p-2.5 -mx-2.5 rounded-xl hover:bg-gray-50 flex justify-between items-center transition-colors"
-                            >
-                              <div className="text-left pr-4">
-                                <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">{course.title}</div>
-                                <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">{course.description}</div>
-                              </div>
-                              <span className="text-xs text-gray-400 font-bold shrink-0 bg-gray-100 px-2 py-0.5 rounded uppercase">{course.category}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Insights Section */}
-                    {searchResults.insights.length > 0 && (
-                      <div>
-                        <div className="text-xs font-bold text-accent uppercase tracking-wider mb-3 border-b border-gray-100 pb-1.5 flex items-center gap-1.5">
-                          <FileText className="w-3.5 h-3.5" /> Industry Insights & Blog
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {searchResults.insights.map((post) => (
-                            <Link
-                              key={post.id}
-                              to="/news"
-                              onClick={() => setShowSearchResults(false)}
-                              className="group p-2.5 -mx-2.5 rounded-xl hover:bg-gray-50 flex items-start gap-3 transition-colors"
-                            >
-                              <img src={post.image} className="w-12 h-12 object-cover rounded-lg shrink-0 border border-gray-100 animate-fade-in" alt="" />
-                              <div className="text-left">
-                                <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1 leading-snug">{post.title}</div>
-                                <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                  <span className="text-accent font-bold uppercase text-[9px] tracking-wider bg-accent/5 px-1.5 py-0.5 rounded">{post.category}</span>
-                                  <span>{post.date}</span>
+                      {/* Courses Section */}
+                      {(activeSearchTab === 'all' || activeSearchTab === 'courses') && searchResults.courses.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-accent uppercase tracking-widest mb-3 pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5" /> Courses ({searchResults.courses.length})
+                          </div>
+                          <div className="flex flex-col gap-2.5">
+                            {searchResults.courses.slice(0, activeSearchTab === 'all' ? 4 : 10).map((course) => (
+                              <Link
+                                key={course.id}
+                                to={`/courses/${course.id}`}
+                                onClick={() => setShowSearchResults(false)}
+                                className="group p-2 -mx-2 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-all duration-200 border border-transparent hover:border-gray-100/70"
+                              >
+                                <div className="w-16 h-10 md:w-20 md:h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 relative border border-gray-100">
+                                  <img
+                                    src={course.image}
+                                    alt=""
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
                                 </div>
-                              </div>
-                            </Link>
-                          ))}
+                                <div className="text-left flex-grow min-w-0 pr-2">
+                                  <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">
+                                    {course.title}
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+                                    <span className="bg-gray-100 text-gray-500 font-bold uppercase text-[9px] px-1.5 py-0.5 rounded tracking-wide">
+                                      {course.category.split(' ')[0]}
+                                    </span>
+                                    {course.duration && (
+                                      <span className="flex items-center gap-0.5">
+                                        <Clock className="w-3 h-3 shrink-0" /> {course.duration}
+                                      </span>
+                                    )}
+                                    {course.level && <span>• {course.level}</span>}
+                                  </div>
+                                </div>
+                                <div className="shrink-0 text-right pr-2">
+                                  <div className="text-xs font-bold text-primary bg-primary/5 border border-primary/10 px-2.5 py-1 rounded-full uppercase">
+                                    View
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                            {activeSearchTab === 'all' && searchResults.courses.length > 4 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveSearchTab('courses')}
+                                className="text-xs font-bold text-primary hover:text-secondary transition-colors self-start pl-1 flex items-center gap-0.5 mt-1"
+                              >
+                                See all {searchResults.courses.length} courses <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {/* Insights Section */}
+                      {(activeSearchTab === 'all' || activeSearchTab === 'insights') && searchResults.insights.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-accent uppercase tracking-widest mb-3 pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Industry Insights & Blog ({searchResults.insights.length})
+                          </div>
+                          <div className="flex flex-col gap-2.5">
+                            {searchResults.insights.slice(0, activeSearchTab === 'all' ? 3 : 8).map((post) => (
+                              <Link
+                                key={post.id}
+                                to="/news"
+                                onClick={() => setShowSearchResults(false)}
+                                className="group p-2 -mx-2 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-all duration-200 border border-transparent hover:border-gray-100/70"
+                              >
+                                <div className="w-16 h-10 md:w-20 md:h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 relative border border-gray-100">
+                                  <img
+                                    src={post.image}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    alt=""
+                                  />
+                                </div>
+                                <div className="text-left flex-grow min-w-0 pr-2">
+                                  <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">
+                                    {post.title}
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+                                    <span className="bg-accent/10 text-accent font-bold uppercase text-[9px] px-1.5 py-0.5 rounded tracking-wide">
+                                      {post.category}
+                                    </span>
+                                    {post.date && (
+                                      <span className="flex items-center gap-0.5">
+                                        <Calendar className="w-3 h-3 shrink-0" /> {post.date}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="shrink-0 text-right pr-2">
+                                  <div className="text-xs font-bold text-accent bg-accent/5 border border-accent/10 px-2.5 py-1 rounded-full uppercase">
+                                    Read
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                            {activeSearchTab === 'all' && searchResults.insights.length > 3 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveSearchTab('insights')}
+                                className="text-xs font-bold text-primary hover:text-secondary transition-colors self-start pl-1 flex items-center gap-0.5 mt-1"
+                              >
+                                See all {searchResults.insights.length} articles <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Locations Section */}
+                      {(activeSearchTab === 'all' || activeSearchTab === 'locations') && searchResults.locations.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-accent uppercase tracking-widest mb-3 pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5" /> Training Campus Locations ({searchResults.locations.length})
+                          </div>
+                          <div className="flex flex-col gap-2.5">
+                            {searchResults.locations.slice(0, activeSearchTab === 'all' ? 2 : 6).map((loc) => (
+                              <Link
+                                key={loc.id}
+                                to={`/locations/${loc.id}`}
+                                onClick={() => setShowSearchResults(false)}
+                                className="group p-2 -mx-2 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-all duration-200 border border-transparent hover:border-gray-100/70"
+                              >
+                                <div className="w-16 h-10 md:w-20 md:h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 relative border border-gray-100">
+                                  <img
+                                    src={loc.image}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    alt=""
+                                  />
+                                </div>
+                                <div className="text-left flex-grow min-w-0 pr-2">
+                                  <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">
+                                    {loc.name}
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-1 flex items-center gap-2 truncate">
+                                    <span className="bg-secondary/10 text-secondary font-bold uppercase text-[9px] px-1.5 py-0.5 rounded tracking-wide shrink-0">
+                                      {loc.state}
+                                    </span>
+                                    <span className="truncate">{loc.address}</span>
+                                  </div>
+                                </div>
+                                <div className="shrink-0 text-right pr-2">
+                                  <div className="text-xs font-bold text-secondary bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-full uppercase">
+                                    Map
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                            {activeSearchTab === 'all' && searchResults.locations.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveSearchTab('locations')}
+                                className="text-xs font-bold text-primary hover:text-secondary transition-colors self-start pl-1 flex items-center gap-0.5 mt-1"
+                              >
+                                See all {searchResults.locations.length} campus locations <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Info Pages Section */}
+                      {(activeSearchTab === 'all' || activeSearchTab === 'pages') && searchResults.pages.length > 0 && (
+                        <div>
+                          <div className="text-[10px] font-bold text-accent uppercase tracking-widest mb-3 pb-1 border-b border-gray-100 flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5" /> Information Pages ({searchResults.pages.length})
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {searchResults.pages.slice(0, activeSearchTab === 'all' ? 3 : 12).map((p) => (
+                              <Link
+                                key={p.id}
+                                to={p.path}
+                                onClick={() => setShowSearchResults(false)}
+                                className="group p-2.5 -mx-2.5 rounded-xl hover:bg-gray-50 flex items-start gap-3 transition-colors border border-transparent hover:border-gray-100/70"
+                              >
+                                <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary group-hover:bg-primary/5 transition-colors shrink-0 border border-gray-100">
+                                  <FileText className="w-4 h-4" />
+                                </div>
+                                <div className="text-left flex-grow min-w-0 pr-2">
+                                  <div className="font-bold text-secondary text-sm group-hover:text-primary transition-colors line-clamp-1">
+                                    {p.title}
+                                  </div>
+                                  <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                                    {p.description}
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                            {activeSearchTab === 'all' && searchResults.pages.length > 3 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveSearchTab('pages')}
+                                className="text-xs font-bold text-primary hover:text-secondary transition-colors self-start pl-1 flex items-center gap-0.5 mt-1"
+                              >
+                                See all {searchResults.pages.length} pages <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fallback if current active tab has zero results */}
+                      {activeSearchTab !== 'all' && searchResults[activeSearchTab].length === 0 && (
+                        <div className="py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                          <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-500 font-medium text-xs">No matching {activeSearchTab} for "{heroSearch}"</p>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSearchTab('all')}
+                            className="text-xs text-primary font-bold mt-2 hover:underline"
+                          >
+                            View other results
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>

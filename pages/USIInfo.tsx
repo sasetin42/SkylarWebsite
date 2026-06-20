@@ -92,78 +92,91 @@ export const USIInfo: React.FC = () => {
 
             <div className="bg-white">
                 <h2 className="text-3xl font-heading font-bold text-secondary mb-6">
-                    Unique Student Identifier
+                    {intro?.heading || "Unique Student Identifier"}
                 </h2>
                 
-                <div className="prose prose-lg text-gray-600 max-w-none space-y-6 leading-relaxed">
-                    <p>
-                        Every year almost four million Australians build and sharpen their skills by undertaking nationally recognised training. All students doing nationally recognised training need to have a Unique Student Identifier (USI). This includes students doing Vocational Education Training (VET) when they are still at school (VET for secondary students).
-                    </p>
-                    <p>
-                        From 1 January 2015 it is a requirement of the Federal Government that all students undertaking nationally recognised training will need to obtain a Unique Student Identifier (USI). This involves an easy online application. See <a href="https://www.usi.gov.au/students/get-a-usi" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">USI Fact Sheet</a> for information on how to apply for a USI or see <a href="https://www.usi.gov.au" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">here</a> for additional information.
-                    </p>
+                <div className="prose prose-lg text-gray-600 max-w-none space-y-6 leading-relaxed whitespace-pre-line">
+                    {intro?.description ? (
+                        <p>{intro.description}</p>
+                    ) : (
+                        <>
+                            <p>
+                                Every year almost four million Australians build and sharpen their skills by undertaking nationally recognised training. All students doing nationally recognised training need to have a Unique Student Identifier (USI). This includes students doing Vocational Education Training (VET) when they are still at school (VET for secondary students).
+                            </p>
+                            <p>
+                                From 1 January 2015 it is a requirement of the Federal Government that all students undertaking nationally recognised training will need to obtain a Unique Student Identifier (USI). This involves an easy online application. See <a href="https://www.usi.gov.au/students/get-a-usi" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">USI Fact Sheet</a> for information on how to apply for a USI or see <a href="https://www.usi.gov.au" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">here</a> for additional information.
+                            </p>
+                        </>
+                    )}
                 </div>
             </div>
 
             {/* Accordion Section */}
             <div className="space-y-4">
-                {[
-                    {
-                        id: 'what-is',
-                        title: 'WHAT IS A USI',
-                        content: (
-                            <>
-                                A Unique Student Identifier (USI) is a reference number that gives each student in Australia a unique identity for their educational achievements. It is a requirement for anyone studying a nationally recognised training course in Australia. The USI creates an online record of a student’s qualifications and achievements, allowing them to access their training records and transcripts from one central location. It also makes it easier for employers and educational institutions to verify a student’s qualifications and track their progress throughout their education and career. Creating a USI is free and can be done via the <a href="https://www.usi.gov.au" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">usi website</a>
-                            </>
-                        )
-                    },
-                    {
-                        id: 'already-have',
-                        title: 'ALREADY HAVE A USI?',
-                        content: (
-                            <div>
-                                <h3 className="font-bold text-lg text-secondary mb-4">There are 4 ways to find your USI</h3>
-                                
-                                <div className="space-y-6">
-                                    <div>
-                                    <h4 className="font-bold text-primary mb-2">Email address</h4>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-                                        <li>Enter the email address saved on your USI account and click ‘Submit’.</li>
-                                        <li>An email will be sent to you containing your USI details.</li>
-                                        <li>Be sure to check your spam/junk mail folder if it doesn’t arrive in your inbox.</li>
-                                    </ul>
-                                    </div>
+                {(usiAccordionsSection?.items && usiAccordionsSection.items.length > 0
+                    ? usiAccordionsSection.items.map((item, idx) => ({
+                        id: `usi-acc-${idx}`,
+                        title: item.title,
+                        content: <div className="whitespace-pre-line text-sm text-gray-600 leading-relaxed">{item.description}</div>
+                    }))
+                    : [
+                        {
+                            id: 'what-is',
+                            title: 'WHAT IS A USI',
+                            content: (
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    A Unique Student Identifier (USI) is a reference number that gives each student in Australia a unique identity for their educational achievements. It is a requirement for anyone studying a nationally recognised training course in Australia. The USI creates an online record of a student’s qualifications and achievements, allowing them to access their training records and transcripts from one central location. It also makes it easier for employers and educational institutions to verify a student’s qualifications and track their progress throughout their education and career. Creating a USI is free and can be done via the <a href="https://www.usi.gov.au" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">usi website</a>
+                                </p>
+                            )
+                        },
+                        {
+                            id: 'already-have',
+                            title: 'ALREADY HAVE A USI?',
+                            content: (
+                                <div className="text-left">
+                                    <h3 className="font-bold text-lg text-secondary mb-4">There are 4 ways to find your USI</h3>
+                                    
+                                    <div className="space-y-6">
+                                        <div>
+                                        <h4 className="font-bold text-primary mb-2">Email address</h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                                            <li>Enter the email address saved on your USI account and click ‘Submit’.</li>
+                                            <li>An email will be sent to you containing your USI details.</li>
+                                            <li>Be sure to check your spam/junk mail folder if it doesn’t arrive in your inbox.</li>
+                                        </ul>
+                                        </div>
 
-                                    <div>
-                                    <h4 className="font-bold text-primary mb-2">Mobile number</h4>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-                                        <li>Enter the mobile number saved on your USI account and your date of birth and click ‘Submit’.</li>
-                                        <li>You will receive an SMS containing your USI details. If you do not receive an SMS, please contact us.</li>
-                                    </ul>
-                                    </div>
+                                        <div>
+                                        <h4 className="font-bold text-primary mb-2">Mobile number</h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                                            <li>Enter the mobile number saved on your USI account and your date of birth and click ‘Submit’.</li>
+                                            <li>You will receive an SMS containing your USI details. If you do not receive an SMS, please contact us.</li>
+                                        </ul>
+                                        </div>
 
-                                    <div>
-                                    <h4 className="font-bold text-primary mb-2">Personal details and check questions</h4>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-                                        <li>The USI Registry System asks you to fill out your Family Name, Date of Birth and Gender and at least one of the following: First/Given Name, Middle Name, or Town/City of Birth.</li>
-                                        <li>Click ‘Submit’. You will then have to answer your two check questions. The answers must have identical spelling to what you first used when setting your check questions.</li>
-                                        <li>Once answered correctly, your USI will appear on the screen.</li>
-                                    </ul>
-                                    </div>
+                                        <div>
+                                        <h4 className="font-bold text-primary mb-2">Personal details and check questions</h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                                            <li>The USI Registry System asks you to fill out your Family Name, Date of Birth and Gender and at least one of the following: First/Given Name, Middle Name, or Town/City of Birth.</li>
+                                            <li>Click ‘Submit’. You will then have to answer your two check questions. The answers must have identical spelling to what you first used when setting your check questions.</li>
+                                            <li>Once answered correctly, your USI will appear on the screen.</li>
+                                        </ul>
+                                        </div>
 
-                                    <div>
-                                    <h4 className="font-bold text-primary mb-2">Personal details and an ID document</h4>
-                                    <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-                                        <li>You must enter your First/Given and Family/Last Names, Date of Birth, Gender, Town/City of Birth, and either your Email Address, Mobile Number or Postal Address (Postal address appears after Country of Residence has been entered).</li>
-                                        <li>Click ‘Submit’. Select your ‘Document Type’. Click ‘Next’. Fill in your document details and click ‘Next’.</li>
-                                        <li>Your USI will appear on the screen.</li>
-                                    </ul>
+                                        <div>
+                                        <h4 className="font-bold text-primary mb-2">Personal details and an ID document</h4>
+                                        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                                            <li>You must enter your First/Given and Family/Last Names, Date of Birth, Gender, Town/City of Birth, and either your Email Address, Mobile Number or Postal Address (Postal address appears after Country of Residence has been entered).</li>
+                                            <li>Click ‘Submit’. Select your ‘Document Type’. Click ‘Next’. Fill in your document details and click ‘Next’.</li>
+                                            <li>Your USI will appear on the screen.</li>
+                                        </ul>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )
-                    }
-                ].map((item) => (
+                            )
+                        }
+                    ]
+                ).map((item) => (
                     <div key={item.id} className="border border-gray-300 rounded-md overflow-hidden bg-white shadow-sm">
                         <button 
                             onClick={() => toggleAccordion(item.id)}
@@ -177,7 +190,7 @@ export const USIInfo: React.FC = () => {
                             <span className="font-heading font-bold text-lg text-black tracking-wider uppercase">{item.title}</span>
                         </button>
                         <div 
-                            className={`transition-all duration-300 ease-in-out overflow-hidden ${activeAccordion === item.id ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+                            className={`transition-all duration-300 ease-in-out overflow-hidden ${activeAccordion === item.id ? 'max-h-[1200px] opacity-100' : 'max-h-0 opacity-0'}`}
                         >
                             <div className="p-6 pt-0 text-gray-600 leading-relaxed border-t border-transparent">
                                 {item.content}

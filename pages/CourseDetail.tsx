@@ -1,26 +1,35 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Clock, Calendar, DollarSign, CheckCircle, FileText, Star, User, ArrowLeft, Shield, ShoppingCart, Check, Loader } from 'lucide-react';
+import { Clock, Calendar, DollarSign, CheckCircle, FileText, Star, User, ArrowLeft, Shield, ShoppingCart, Check, Loader, Users, BookOpen, Award, Briefcase, ChevronDown } from 'lucide-react';
 import { Button } from '../components/Button';
 import { getCourseById, addToRecentCourses, addReview, getCourseReviews, addToCart, isInCart } from '../services/storageService';
 import { Review, Course } from '../types';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 
+const formatDescription = (desc: string) => {
+  if (!desc) return '';
+  if (desc.trim().startsWith('<')) return desc;
+  return desc
+    .split('\n\n')
+    .map(p => `<p class="mb-4">${p.replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+};
+
 export const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [course, setCourse] = useState<Course | undefined>(undefined);
+  const [course, setCourse] = useState<Course | undefined>(() => id ? getCourseById(id) : undefined);
   
   // Review State
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(() => id ? getCourseReviews(id) : []);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [userName, setUserName] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showStickyNav, setShowStickyNav] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(() => id ? isInCart(id) : false);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -123,35 +132,93 @@ export const CourseDetail: React.FC = () => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
                   {course.category}
                 </span>
+                {course.code && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
+                    Code: {course.code}
+                  </span>
+                )}
+                {course.isGwo && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/30 text-white text-xs font-bold uppercase tracking-wider border border-primary/40 backdrop-blur-sm">
+                    GWO Certified
+                  </span>
+                )}
               </div>
               <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
                 {course.title}
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
-              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg border-l-4 border-accent/50 pl-5 mb-8">
+              <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg border-l-4 border-accent/50 pl-5 mb-12">
                 {course.shortDescription}
               </p>
               
-              <div className="flex flex-col sm:flex-row flex-wrap gap-4 text-sm md:text-base">
-                <div className="flex items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 shadow-lg flex-1 sm:flex-none">
-                    <Clock className="w-6 h-6 mr-3 text-accent" />
+              <div className="flex flex-wrap gap-4 text-sm md:text-base">
+                {/* Duration Card */}
+                <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
+                    <div className="p-2.5 bg-blue-500/20 rounded-xl text-blue-400 mr-4 shrink-0 shadow-inner">
+                        <Clock className="w-5 h-5" />
+                    </div>
                     <div>
-                        <span className="block text-xs text-gray-300 uppercase tracking-wide">Duration</span>
-                        <span className="font-bold text-lg">{course.duration}</span>
+                        <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Duration</span>
+                        <span className="font-bold text-lg text-white font-heading">{course.duration}</span>
                     </div>
                 </div>
-                <div className="flex items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 shadow-lg flex-1 sm:flex-none">
-                    <DollarSign className="w-6 h-6 mr-3 text-accent" />
+
+                {/* Price Card */}
+                <div className="flex items-center bg-gradient-to-br from-emerald-500/10 to-emerald-600/25 backdrop-blur-md px-6 py-4 rounded-2xl border border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/20 transition-all duration-300 shadow-lg shadow-emerald-950/20 flex-1 min-w-[160px]">
+                    <div className="p-2.5 bg-emerald-500/25 rounded-xl text-emerald-400 mr-4 shrink-0 shadow-inner">
+                        <DollarSign className="w-5 h-5" />
+                    </div>
                     <div>
-                        <span className="block text-xs text-gray-300 uppercase tracking-wide">Course Fee</span>
-                        <span className="font-bold text-lg">${course.price}</span>
+                        <span className="block text-[10px] text-emerald-300 uppercase tracking-wider font-bold">Price</span>
+                        <span className="font-extrabold text-2xl text-emerald-400 font-heading">${course.price.toLocaleString()}</span>
                     </div>
                 </div>
-                <div className="flex items-center bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 shadow-lg flex-1 sm:flex-none">
-                    <Shield className="w-6 h-6 mr-3 text-accent" />
+
+                {/* Level Card */}
+                <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
+                    <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400 mr-4 shrink-0 shadow-inner">
+                        <Shield className="w-5 h-5" />
+                    </div>
                     <div>
-                        <span className="block text-xs text-gray-300 uppercase tracking-wide">Level</span>
-                        <span className="font-bold text-lg">{course.level}</span>
+                        <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Level</span>
+                        <span className="font-bold text-lg text-white font-heading">{course.level}</span>
+                    </div>
+                </div>
+
+                {/* Validity Card */}
+                {course.validityMonths && (
+                  <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
+                      <div className="p-2.5 bg-amber-500/20 rounded-xl text-amber-400 mr-4 shrink-0 shadow-inner">
+                          <Calendar className="w-5 h-5" />
+                      </div>
+                      <div>
+                          <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Validity</span>
+                          <span className="font-bold text-lg text-white font-heading">{course.validityMonths} Months</span>
+                      </div>
+                  </div>
+                )}
+
+                {/* RTO Code Card */}
+                {course.rtoCode && (
+                  <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
+                      <div className="p-2.5 bg-rose-500/20 rounded-xl text-rose-400 mr-4 shrink-0 shadow-inner">
+                          <Award className="w-5 h-5" />
+                      </div>
+                      <div>
+                          <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">RTO Code</span>
+                          <span className="font-bold text-lg text-white font-heading">{course.rtoCode}</span>
+                      </div>
+                  </div>
+                )}
+
+                {/* Delivery Mode Card */}
+                <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
+                    <div className="p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 mr-4 shrink-0 shadow-inner">
+                        <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <span className="block text-[10px] text-gray-400 tracking-wider uppercase font-bold">Delivery</span>
+                        <span className="font-bold text-lg text-white font-heading">{course.deliveryMode || 'Face-to-Face'}</span>
                     </div>
                 </div>
               </div>
@@ -159,55 +226,113 @@ export const CourseDetail: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 -mt-8 md:-mt-16 relative z-20">
-        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+ 
+      <div className="container mx-auto px-4 md:px-8 relative z-20" style={{ marginTop: '0px', paddingTop: '2.5rem', paddingBottom: '3rem' }}>
+        <div className="grid lg:grid-cols-3" style={{ gap: '2.5rem' }}>
           
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8 pb-10">
             
-            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100">
-                <section className="mb-12">
-                <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><FileText size={24} className="md:w-7 md:h-7" /></div>
-                    Course Overview
-                </h2>
-                <p className="text-gray-600 leading-relaxed text-base md:text-lg">
-                    {course.fullDescription}
-                </p>
-                </section>
-
-                <section className="mb-12">
-                <h2 className="text-xl md:text-2xl font-heading font-bold text-secondary mb-6 flex items-center gap-3">
-                    <div className="p-2 bg-green-50 rounded-lg text-green-600"><CheckCircle size={24} className="md:w-7 md:h-7" /></div>
-                    What You Will Learn
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                    {[
-                    "Industry best practices and safety standards",
-                    "Practical skills application in simulated environments",
-                    "Emergency response and hazard identification",
-                    "Use of specialized equipment and PPE"
-                    ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-4 p-5 bg-surface rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                        <CheckCircle className="text-green-500 w-5 h-5 md:w-6 md:h-6 mt-0.5 shrink-0" />
-                        <span className="text-gray-700 font-medium text-sm md:text-base">{item}</span>
-                    </div>
-                    ))}
-                </div>
-                </section>
-
+            {/* 1. Overview Section Card */}
+            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300">
                 <section>
-                <h2 className="text-xl md:text-2xl font-heading font-bold text-secondary mb-6">Entry Requirements</h2>
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                    <ul className="list-disc pl-5 space-y-3 text-gray-600 marker:text-accent text-sm md:text-base">
-                        <li>Completion of Year 10 or equivalent (or relevant industry experience).</li>
-                        <li>Minimum age of 16 years (18 for High Risk Work licenses).</li>
-                        <li>Basic Language, Literacy and Numeracy (LLN) assessment.</li>
-                        <li>Unique Student Identifier (USI).</li>
-                    </ul>
-                </div>
+                  <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><FileText size={24} className="md:w-7 md:h-7" /></div>
+                      Course Overview
+                  </h2>
+                  <div 
+                    className="prose max-w-none text-gray-600 leading-relaxed text-base md:text-lg space-y-4 html-description"
+                    dangerouslySetInnerHTML={{ __html: formatDescription(course.fullDescription) }}
+                  />
                 </section>
+            </div>
+
+            {/* 2. Certification Award Banner Card */}
+            {course.certificationName && (
+              <div className="bg-gradient-to-br from-[#041024]/5 to-[#041024]/10 p-6 md:p-8 rounded-3xl border border-[#041024]/10 flex items-start gap-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="p-3 bg-secondary text-white rounded-2xl shadow-lg shrink-0">
+                  <Shield size={28} className="text-accent" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Certification Awarded</h3>
+                  <p className="text-secondary font-bold text-xl mt-1">{course.certificationName}</p>
+                  {course.validityMonths && (
+                    <p className="text-xs text-gray-500 mt-1">This certification is industry-compliant and valid for {course.validityMonths} months.</p>
+                  )}
+                </div>
+              </div>
+            )}
+ 
+            {/* 3. What You Will Learn Card */}
+            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300">
+                <section>
+                  <h2 className="text-xl md:text-2xl font-heading font-bold text-secondary mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-green-50 rounded-lg text-green-600"><CheckCircle size={24} className="md:w-7 md:h-7" /></div>
+                      What You Will Learn
+                  </h2>
+                  <div className="grid md:grid-cols-2 gap-4">
+                      {(course.whatYouWillLearn || [
+                        "Industry best practices and safety standards",
+                        "Practical skills application in simulated environments",
+                        "Emergency response and hazard identification",
+                        "Use of specialized equipment and PPE"
+                      ]).map((item, i) => (
+                      <div key={i} className="flex items-start gap-4 p-5 bg-surface rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
+                          <CheckCircle className="text-green-500 w-5 h-5 md:w-6 md:h-6 mt-0.5 shrink-0" />
+                          <span className="text-gray-700 font-medium text-sm md:text-base">{item}</span>
+                      </div>
+                      ))}
+                  </div>
+                </section>
+            </div>
+ 
+            {/* 4. Collapsible Course Information Accordion (Separated Premium Cards) */}
+            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300">
+              <h2 className="text-xl md:text-2xl font-heading font-bold text-secondary mb-6">Course Specifications & Details</h2>
+              <div className="space-y-4">
+                {[
+                  { id: 'courseBenefits', title: 'Course Benefits', content: course?.courseBenefits },
+                  { id: 'isThisCourseForMe', title: 'Is this course for me?', content: course?.isThisCourseForMe },
+                  { id: 'careerOpportunities', title: 'Career Opportunities', content: course?.careerOpportunities },
+                  { id: 'durationOfTraining', title: 'What is the duration of training?', content: course?.durationOfTraining },
+                  { id: 'whereDelivered', title: 'Where is the training delivered?', content: course?.whereDelivered },
+                  { id: 'accreditedUnitsRich', title: 'Accredited Units', content: course?.accreditedUnitsRich },
+                  { id: 'entryRequirementsRich', title: 'What are the entry requirements?', content: course?.entryRequirementsRich },
+                  { id: 'lln', title: 'Language, Literacy & Numeracy (LLN)', content: course?.lln },
+                  { id: 'assessment', title: 'Assessment', content: course?.assessment },
+                  { id: 'certificationRecord', title: 'Certification/Training Record', content: course?.certificationRecord },
+                  { id: 'validityPeriod', title: 'Validity Period', content: course?.validityPeriod },
+                  { id: 'whatToBringRich', title: 'What to bring?', content: course?.whatToBringRich },
+                  { id: 'costOfTraining', title: 'What is the cost of training?', content: course?.costOfTraining },
+                  { id: 'paymentOptions', title: 'What are the payment options?', content: course?.paymentOptions },
+                ].map((section) => {
+                  if (!section.content) return null;
+                  const isOpen = expandedSection === section.id;
+                  return (
+                    <div 
+                      key={section.id} 
+                      className={`rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'shadow-xl ring-1 ring-black/5 bg-[#041024]' : 'bg-[#041024] hover:shadow-lg'}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSection(isOpen ? null : section.id)}
+                        className="w-full flex items-center gap-4 px-6 py-5 text-left font-bold text-white hover:bg-[#081a36] transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-[#041024] font-bold text-sm shrink-0 transition-transform duration-300">
+                          {isOpen ? '−' : '+'}
+                        </span>
+                        <span className="text-sm md:text-base font-semibold select-none flex-1">{section.title}</span>
+                      </button>
+                      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[800px] bg-white text-gray-800 p-6 border-t border-gray-100 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.15)]' : 'max-h-0'}`}>
+                        <div 
+                          className="prose max-w-none text-gray-700 text-sm leading-relaxed html-description"
+                          dangerouslySetInnerHTML={{ __html: section.content }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Reviews Section */}
@@ -306,24 +431,24 @@ export const CourseDetail: React.FC = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 sticky top-24 shadow-2xl z-20">
-              <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-4" style={{ marginBottom: '24px' }}>
                  <Calendar className="text-primary w-6 h-6"/>
                  <h3 className="text-xl font-bold text-secondary">Upcoming Intakes</h3>
               </div>
               
-              <div className="space-y-3 mb-8">
+              <div className="flex flex-wrap gap-2.5" style={{ marginBottom: '24px' }}>
                 {course.upcomingDates.map((date, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-accent hover:bg-white hover:shadow-md transition-all group cursor-pointer">
-                    <span className="font-bold text-gray-700 group-hover:text-primary">{date}</span>
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div key={idx} className="flex-1 min-w-[120px] flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-accent hover:bg-white hover:shadow-md transition-all group cursor-pointer">
+                    <span className="font-bold text-xs text-gray-700 group-hover:text-primary whitespace-nowrap">{date}</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 ml-1.5"></div>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-4">
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <Button 
                   onClick={handleEnrollNow}
-                  className="w-full text-lg py-4 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all bg-secondary text-white hover:bg-primary border-none uppercase tracking-wide"
+                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-secondary text-white hover:bg-primary border-none uppercase tracking-wide whitespace-nowrap"
                 >
                   Enroll Now
                 </Button>
@@ -331,13 +456,19 @@ export const CourseDetail: React.FC = () => {
                     variant="outline" 
                     onClick={handleAddToCart}
                     disabled={addedToCart}
-                    className={`w-full font-bold border-2 py-4 ${addedToCart ? 'bg-green-50 border-green-500 text-green-700 cursor-default' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
+                    className={`flex-1 font-bold border-2 py-3.5 text-sm ${addedToCart ? 'bg-green-50 border-green-500 text-green-700 cursor-default' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
                 >
-                  {addedToCart ? <span className="flex items-center gap-2"><Check size={18} /> Added to Cart</span> : <span className="flex items-center gap-2"><ShoppingCart size={18} /> Add to Cart</span>}
+                  {addedToCart ? <span className="flex items-center justify-center gap-1.5"><Check size={16} /> Added</span> : <span className="flex items-center justify-center gap-1.5"><ShoppingCart size={16} /> + Cart</span>}
                 </Button>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-gray-100 text-center">
+              {course.depositAmount && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl text-center text-xs text-gray-500 font-medium leading-relaxed" style={{ marginTop: '20px', padding: '12px' }}>
+                  To secure your spot, a deposit of <span className="font-bold text-secondary">${course.depositAmount}</span> is required before course commencement.
+                </div>
+              )}
+
+              <div className="border-t border-gray-100 text-center" style={{ marginTop: '28px', paddingTop: '28px' }}>
                 <p className="text-gray-500 text-sm mb-2 font-medium uppercase tracking-wide">Have questions?</p>
                 <a href="tel:1300333883" className="text-primary font-bold hover:text-accent text-2xl transition-colors font-heading">1300 333 883</a>
               </div>
@@ -361,7 +492,7 @@ export const CourseDetail: React.FC = () => {
              <div className="flex flex-col md:flex-row md:items-center">
                 <span className="text-xs text-gray-500 md:hidden uppercase font-bold tracking-wide">Course Fee</span>
                 <div className="text-xl md:text-2xl font-bold text-primary mr-0 md:mr-4 font-heading">
-                    ${course.price}
+                    ${course.price.toLocaleString()}
                 </div>
              </div>
              <Button onClick={handleEnrollNow} className="bg-secondary text-white hover:bg-primary font-bold px-6 py-3 md:px-8 shadow-lg text-sm md:text-base">

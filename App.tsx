@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { HashRouter as Router, Routes, Route, Outlet, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
@@ -42,7 +42,7 @@ import { SupportManager } from './pages/admin/SupportManager'; // New
 import { ScrollToTop } from './components/ScrollToTop';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
-import { getThemeSettings, getPageContent, initializeSupabase } from './services/storageService';
+import { getThemeSettings, getPageContent, initializeSupabase, getSettings } from './services/storageService';
 import { ThemeSettings } from './types';
 
 // Helper to map route paths to CMS Page IDs
@@ -64,8 +64,9 @@ const ThemeEngine: React.FC = () => {
 
   useEffect(() => {
     const applyTheme = () => {
-      // 1. Get Global Theme
+      // 1. Get Global Theme and Institute Settings
       const globalTheme = getThemeSettings();
+      const settings = getSettings();
       
       // 2. Determine Current Page & Check for Overrides
       const pageId = getPageIdFromPath(location.pathname);
@@ -77,6 +78,11 @@ const ThemeEngine: React.FC = () => {
         ...(pageContent?.themeOverrides || {})
       };
 
+      // Apply primary brand color override from settings if present
+      if (settings.brandColor) {
+        activeTheme.colorPrimary = settings.brandColor;
+      }
+
       // 4. Apply to DOM
       const root = document.documentElement;
       root.style.setProperty('--color-primary', activeTheme.colorPrimary);
@@ -87,6 +93,16 @@ const ThemeEngine: React.FC = () => {
       root.style.setProperty('--font-heading', activeTheme.fontHeading);
       root.style.setProperty('--radius-base', `${activeTheme.borderRadius}px`);
       root.style.setProperty('--font-size-base', `${activeTheme.baseFontSize}px`);
+
+      // 5. Update Favicon dynamically (completely replace elements to force browser tab refresh)
+      const existingIcons = document.querySelectorAll("link[rel*='icon']");
+      existingIcons.forEach(el => el.parentNode?.removeChild(el));
+
+      const link = document.createElement('link');
+      link.type = 'image/x-icon';
+      link.rel = 'shortcut icon';
+      link.href = settings.faviconUrl || '/favicon.ico';
+      document.head.appendChild(link);
     };
 
     applyTheme();
@@ -148,6 +164,7 @@ const App: React.FC = () => {
   }, []);
 
   if (loading) {
+    const LOGO_URL = "/skylar-logo.svg"; // Fallback import inline
     return (
       <div style={{
         minHeight: '100vh',
@@ -155,30 +172,112 @@ const App: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0b1e36',
+        backgroundColor: '#192436',
         color: '#ffffff',
-        fontFamily: "'Maven Pro', sans-serif"
+        fontFamily: "'Maven Pro', sans-serif",
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Glow Effects */}
         <div style={{
-          width: '50px',
-          height: '50px',
-          border: '4px solid rgba(255, 255, 255, 0.1)',
-          borderTopColor: '#FFC107',
+          position: 'absolute',
+          top: '-10%',
+          right: '-5%',
+          width: '400px',
+          height: '400px',
+          background: 'rgba(255, 193, 7, 0.05)',
           borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '20px'
+          filter: 'blur(80px)',
+          pointerEvents: 'none'
         }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '-10%',
+          left: '-5%',
+          width: '300px',
+          height: '300px',
+          background: 'rgba(11, 30, 54, 0.5)',
+          borderRadius: '50%',
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }}></div>
+
+        {/* Content Container */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          zIndex: 10,
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          {/* Logo with white filter */}
+          <img
+            src={LOGO_URL}
+            alt="Skylar Education"
+            style={{
+              height: '56px',
+              width: 'auto',
+              marginBottom: '24px',
+              filter: 'brightness(0) invert(1)',
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}
+          />
+
+          {/* Spinner */}
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid rgba(255, 255, 255, 0.08)',
+            borderTopColor: '#FFC107',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            marginBottom: '24px'
+          }}></div>
+
+          <h2 style={{
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            letterSpacing: '0.15em',
+            color: '#ffffff',
+            margin: 0,
+            textTransform: 'uppercase'
+          }}>
+            Skylar Education Asia
+          </h2>
+          
+          <p style={{
+            fontSize: '0.85rem',
+            color: '#8fa0b5',
+            marginTop: '10px',
+            letterSpacing: '0.05em'
+          }}>
+            Connecting to database...
+          </p>
+        </div>
+
+        {/* Legal/Detail Footer */}
+        <div style={{
+          position: 'absolute',
+          bottom: '24px',
+          fontSize: '0.75rem',
+          color: 'rgba(255, 255, 255, 0.3)',
+          letterSpacing: '0.05em',
+          textAlign: 'center',
+          width: '100%'
+        }}>
+          RTO #45000 &nbsp;|&nbsp; ISO 9001 Certified
+        </div>
+
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }
           }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+          }
         `}</style>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', letterSpacing: '0.05em', color: '#f4f7fb', margin: 0 }}>
-          SKYLAR EDUCATION ASIA
-        </h2>
-        <p style={{ fontSize: '0.875rem', color: '#8fa0b5', marginTop: '8px' }}>
-          Connecting to database...
-        </p>
       </div>
     );
   }

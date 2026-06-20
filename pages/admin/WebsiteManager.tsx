@@ -78,6 +78,51 @@ export const WebsiteManager: React.FC = () => {
         }
     };
 
+    const moveSection = (sectionIndex: number, direction: 'up' | 'down') => {
+        if (!editingPage) return;
+        const newSections = [...editingPage.sections];
+        if (direction === 'up' && sectionIndex === 0) return;
+        if (direction === 'down' && sectionIndex === newSections.length - 1) return;
+
+        const targetIndex = direction === 'up' ? sectionIndex - 1 : sectionIndex + 1;
+        const temp = newSections[sectionIndex];
+        newSections[sectionIndex] = newSections[targetIndex];
+        newSections[targetIndex] = temp;
+
+        setEditingPage({ ...editingPage, sections: newSections });
+        setHasUnsavedChanges(true);
+    };
+
+    const addSection = (type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'accordion') => {
+        if (!editingPage) return;
+        const sectionId = `${type}_${Date.now()}`;
+        const newSection: PageSection = {
+            id: sectionId,
+            label: `${type.toUpperCase()} Section`,
+            type: type,
+            data: {
+                heading: 'New Section Title',
+                description: 'Description text for the section goes here.',
+                ...(type === 'hero' || type === 'content' || type === 'cta' ? { buttonText: 'Learn More', buttonLink: '#' } : {}),
+                ...(type === 'features' || type === 'team' || type === 'accordion' ? { items: [{ title: 'New Item', description: 'Item description text.' }] } : {}),
+                ...(type === 'hero' || type === 'content' || type === 'team' ? { image: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=800' } : {})
+            }
+        };
+        setEditingPage({
+            ...editingPage,
+            sections: [...editingPage.sections, newSection]
+        });
+        setHasUnsavedChanges(true);
+    };
+
+    const deleteSection = (sectionIndex: number) => {
+        if (!editingPage) return;
+        if (!window.confirm("Are you sure you want to delete this section?")) return;
+        const newSections = editingPage.sections.filter((_, idx) => idx !== sectionIndex);
+        setEditingPage({ ...editingPage, sections: newSections });
+        setHasUnsavedChanges(true);
+    };
+
     const updateSectionData = (sectionIndex: number, field: string, value: any) => {
         if (!editingPage) return;
         const newSections = [...editingPage.sections];
@@ -228,8 +273,35 @@ export const WebsiteManager: React.FC = () => {
                             {editingPage.sections.map((section, idx) => (
                                 <div key={section.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-gray-900/50">
                                     <div className="bg-gray-100/80 dark:bg-gray-700/80 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                        <span className="font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wide">{section.label}</span>
-                                        <span className="text-[10px] bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded uppercase">{section.type}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wide">{section.label}</span>
+                                            <span className="text-[10px] bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 px-2 py-0.5 rounded uppercase">{section.type}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <button 
+                                                onClick={() => moveSection(idx, 'up')} 
+                                                disabled={idx === 0} 
+                                                className="p-1 hover:bg-gray-250 dark:hover:bg-gray-600 rounded text-gray-500 dark:text-gray-400 disabled:opacity-30 transition-colors"
+                                                title="Move Up"
+                                            >
+                                                <ArrowLeft size={14} className="rotate-90" />
+                                            </button>
+                                            <button 
+                                                onClick={() => moveSection(idx, 'down')} 
+                                                disabled={idx === editingPage.sections.length - 1} 
+                                                className="p-1 hover:bg-gray-250 dark:hover:bg-gray-600 rounded text-gray-500 dark:text-gray-400 disabled:opacity-30 transition-colors"
+                                                title="Move Down"
+                                            >
+                                                <ArrowLeft size={14} className="-rotate-90" />
+                                            </button>
+                                            <button 
+                                                onClick={() => deleteSection(idx)} 
+                                                className="p-1 hover:bg-red-500 hover:text-white rounded text-red-500 transition-colors"
+                                                title="Delete Section"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="p-4 space-y-4">
                                         {/* SPECIAL HANDLING FOR COURSE LIST */}
@@ -460,6 +532,28 @@ export const WebsiteManager: React.FC = () => {
                                                                             onChange={(e) => updateSectionItemData(idx, itemIdx, 'icon', e.target.value)}
                                                                         />
                                                                     </div>
+                                                                    <div className="grid grid-cols-2 gap-2 mt-1">
+                                                                        <div>
+                                                                            <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Text</label>
+                                                                            <input
+                                                                                type="text"
+                                                                                placeholder="Button Text"
+                                                                                className="w-full p-1 border border-gray-205 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-[11px]"
+                                                                                value={item.buttonText || ''}
+                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'buttonText', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Link</label>
+                                                                            <input
+                                                                                type="text"
+                                                                                placeholder="Button Link"
+                                                                                className="w-full p-1 border border-gray-205 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-[11px]"
+                                                                                value={item.buttonLink || ''}
+                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'buttonLink', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -470,6 +564,22 @@ export const WebsiteManager: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Add Section Controls */}
+                            <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 bg-gray-50/50 dark:bg-gray-900/10 text-center space-y-3">
+                                <span className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Add New Content Section</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(['hero', 'content', 'features', 'cta', 'team', 'accordion'] as const).map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => addSection(type)}
+                                            className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-blue-400 hover:text-primary dark:hover:text-blue-400 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 shadow-sm hover:shadow transition-all"
+                                        >
+                                            + {type.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

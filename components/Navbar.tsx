@@ -7,10 +7,11 @@ import {
   FileText, HelpCircle, Laptop, CreditCard, Lock, AlertCircle,
   Sun, Moon
 } from 'lucide-react';
-import { getCart } from '../services/storageService';
+import { getCart, getSettings } from '../services/storageService';
 import { LOGO_URL } from '../constants';
 
 export const Navbar: React.FC = () => {
+  const [settings, setSettings] = useState(getSettings());
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -46,6 +47,14 @@ export const Navbar: React.FC = () => {
       setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
     }
+  }, []);
+
+  useEffect(() => {
+    const handleThemeUpdate = () => {
+      setSettings(getSettings());
+    };
+    window.addEventListener('themeUpdated', handleThemeUpdate);
+    return () => window.removeEventListener('themeUpdated', handleThemeUpdate);
   }, []);
 
   const toggleTheme = () => {
@@ -123,44 +132,44 @@ export const Navbar: React.FC = () => {
       >
         <div className="container mx-auto px-4 md:px-8">
           <nav className="flex items-center justify-between">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group z-50">
               <img
-                src={LOGO_URL}
+                src={isSolid ? (settings.darkLogoUrl || LOGO_URL) : (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)}
                 alt="Skylar Education"
-                className={`h-8 md:h-10 w-auto transition-all duration-300 ${isSolid ? 'brightness-0' : ''}`}
+                className={`h-5.5 md:h-[26px] w-auto transition-all duration-300 ${isSolid && !settings.darkLogoUrl ? 'brightness-0' : ''}`}
               />
-              <div className="flex flex-col">
-                <span className={`font-heading font-bold text-xl leading-none transition-colors ${isSolid ? 'text-secondary' : 'text-white'}`}>Skylar</span>
-                <span className={`text-[10px] uppercase tracking-widest font-bold transition-colors ${isSolid ? 'text-gray-500' : 'text-gray-300'}`}>Education</span>
-              </div>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path || (link.subItems && link.subItems.some(sub => location.pathname === sub.path));
                 return (
                   <div
                     key={link.name}
-                    className="relative group py-2 flex items-center"
+                    className="relative group py-4 flex items-center"
                   >
                     <Link
                       to={link.path}
-                      className={`text-xs font-bold uppercase tracking-wider transition-all duration-300 relative flex items-center gap-1 py-1.5 px-3 rounded-lg ${
+                      className={`text-xs font-semibold uppercase tracking-widest transition-all duration-300 relative flex items-center gap-1 py-1.5 px-3 rounded-lg ${
                         isActive
-                          ? (isSolid ? 'text-primary bg-slate-100/60 dark:bg-slate-800/40' : 'text-white bg-white/10')
-                          : linkColorClass
-                      } hover:bg-slate-100/40 dark:hover:bg-slate-800/20`}
+                          ? (isSolid ? 'text-primary' : 'text-accent')
+                          : (isSolid ? 'text-secondary hover:text-primary' : 'text-white/90 hover:text-accent')
+                      }`}
                     >
-                      {link.name}
-                      {link.subItems && <ChevronDown size={12} className="transition-transform duration-300 group-hover:rotate-180" />}
+                      <span>{link.name}</span>
+                      {link.subItems && <ChevronDown size={11} className="transition-transform duration-300 group-hover:rotate-180 opacity-75" />}
+                      
+                      {/* Active & Hover Slider Line */}
+                      <span className={`absolute bottom-[-16px] left-3 right-3 h-[2px] bg-accent transform transition-transform duration-300 origin-center ${
+                        isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                      }`} />
                     </Link>
 
                     {/* Dropdown Menu */}
                     {link.subItems && (
                       <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out translate-y-2 group-hover:translate-y-0 z-50 pointer-events-none group-hover:pointer-events-auto">
-                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl dark:shadow-black/20 border border-slate-100/80 dark:border-slate-800/80 overflow-hidden p-2">
+                        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl shadow-black/10 border border-slate-100 overflow-hidden p-2">
                           {link.subItems.map((subItem) => {
                             const isSubActive = location.pathname === subItem.path;
                             return (
@@ -168,20 +177,20 @@ export const Navbar: React.FC = () => {
                                 key={subItem.path}
                                 to={subItem.path}
                                 className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-300 group/item ${
-                                  isSubActive ? 'bg-slate-50 dark:bg-slate-850/60' : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
+                                  isSubActive ? 'bg-secondary text-white' : 'hover:bg-secondary text-slate-700'
                                 }`}
                               >
                                 <div className={`p-2 rounded-lg transition-all duration-300 ${
                                   isSubActive
-                                    ? 'bg-secondary text-accent dark:bg-slate-800'
-                                    : 'bg-slate-100 dark:bg-slate-800/50 text-secondary dark:text-slate-300 group-hover/item:bg-secondary dark:group-hover/item:bg-accent group-hover/item:text-accent dark:group-hover/item:text-secondary'
+                                    ? 'bg-white/20 text-accent'
+                                    : 'bg-slate-100 text-secondary group-hover/item:bg-white/20 group-hover/item:text-white'
                                 }`}>
                                   {subItem.icon && <subItem.icon size={16} className="transition-transform duration-300 group-hover/item:scale-110" />}
                                 </div>
                                 <span className={`text-sm font-semibold transition-colors duration-300 ${
                                   isSubActive
-                                    ? 'text-secondary dark:text-accent font-bold'
-                                    : 'text-slate-700 dark:text-slate-300 group-hover/item:text-secondary dark:group-hover/item:text-white'
+                                    ? 'text-white font-bold'
+                                    : 'text-slate-700 group-hover/item:text-white'
                                 }`}>
                                   {subItem.name}
                                 </span>

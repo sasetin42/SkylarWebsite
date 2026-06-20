@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { getSettings } from '../../services/storageService';
 import { LOGO_URL } from '../../constants';
 
 export const AdminLogin: React.FC = () => {
+  const settings = getSettings();
   const [email, setEmail] = useState('admin@skylareducation.asia');
   const [password, setPassword] = useState('admin');
   const [error, setError] = useState('');
@@ -103,7 +105,7 @@ export const AdminLogin: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 mb-8 w-fit hover:opacity-90 transition-opacity" title="Return Home">
               <img
-                src={LOGO_URL}
+                src={settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL}
                 alt="Skylar Education"
                 className="h-14 w-auto"
               />
