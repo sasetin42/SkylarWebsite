@@ -179,6 +179,7 @@ export interface InstituteSettings {
   // New Branding & Extra Settings
   lightLogoUrl?: string;
   darkLogoUrl?: string;
+  loadingLogoUrl?: string;
   faviconUrl?: string;
   defaultDarkMode?: boolean;
   brandColor?: string;

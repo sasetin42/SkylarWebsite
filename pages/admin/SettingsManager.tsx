@@ -64,7 +64,7 @@ export const SettingsManager: React.FC = () => {
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon') => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading') => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file size (< 2MB to keep localStorage clean)
@@ -79,6 +79,7 @@ export const SettingsManager: React.FC = () => {
           const next = { ...prev };
           if (type === 'light') next.lightLogoUrl = base64;
           else if (type === 'dark') next.darkLogoUrl = base64;
+          else if (type === 'loading') next.loadingLogoUrl = base64;
           else next.faviconUrl = base64;
           saveSettings(next);
           return next;
@@ -94,6 +95,7 @@ export const SettingsManager: React.FC = () => {
         ...settings,
         lightLogoUrl: '',
         darkLogoUrl: '',
+        loadingLogoUrl: '',
         faviconUrl: '',
         brandColor: '#041024',
         themePreset: 'navy' as const
@@ -505,7 +507,7 @@ export const SettingsManager: React.FC = () => {
                   </div>
 
                   {/* Logo Uploaders */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Light Mode Logo */}
                     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900/20 flex flex-col justify-between">
                       <div>
@@ -548,6 +550,29 @@ export const SettingsManager: React.FC = () => {
                         <label className="block text-center cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 hover:dark:bg-gray-600 py-1.5 px-3 border border-gray-300 dark:border-gray-600 rounded text-xs font-semibold dark:text-white">
                           Change Logo File
                           <input type="file" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Loading Screen Logo */}
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900/20 flex flex-col justify-between">
+                      <div>
+                        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-1">
+                          <Image size={16} /> Loading Screen Logo
+                        </h5>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-4">Displayed on initial connection/loading page.</p>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="h-20 bg-[#192436] rounded flex items-center justify-center p-2 border border-dashed border-gray-600">
+                          {settings.loadingLogoUrl ? (
+                            <img src={settings.loadingLogoUrl} alt="Loading logo preview" className="max-h-full object-contain" />
+                          ) : (
+                            <span className="text-[10px] text-gray-400">Default Logo Active</span>
+                          )}
+                        </div>
+                        <label className="block text-center cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 hover:dark:bg-gray-600 py-1.5 px-3 border border-gray-300 dark:border-gray-600 rounded text-xs font-semibold dark:text-white">
+                          Change Logo File
+                          <input type="file" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'loading')} />
                         </label>
                       </div>
                     </div>

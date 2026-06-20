@@ -31,7 +31,7 @@ const TRAINERS_KEY = 'apex_trainers_data_v1';
 const CLIENTS_KEY = 'apex_clients_data_v1';
 const MIGRATION_KEY = 'apex_migration_logs_v1';
 const SESSIONS_KEY = 'apex_sessions_data_v1';
-const SITE_PAGES_KEY = 'apex_site_pages_data_v8';
+const SITE_PAGES_KEY = 'apex_site_pages_data_v9';
 const CART_KEY = 'apex_cart_data_v1';
 const ADMIN_USERS_KEY = 'apex_admin_users_v1';
 const ROLES_KEY = 'apex_roles_data_v1';
@@ -154,6 +154,7 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   // New Default Branding & Extra Settings
   lightLogoUrl: "",
   darkLogoUrl: "",
+  loadingLogoUrl: "",
   faviconUrl: "",
   defaultDarkMode: false,
   brandColor: "#041024",
@@ -544,9 +545,9 @@ const SEED_PAGES: SitePage[] = [
             label: 'Hero Section',
             type: 'hero',
             data: {
-                heading: 'Our Campuses',
-                description: 'Modern training facilities located centrally for your convenience.',
-                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1920'
+                heading: 'Our Training Locations',
+                description: 'Globally aligned wind energy and safety training delivered through purpose-built facilities across the Asia-Pacific region.',
+                image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920'
             }
         },
         {
@@ -1016,6 +1017,14 @@ export const getSitePages = (): SitePage[] => {
                 experience: "7 Years"
             }
           ];
+          migrated = true;
+        }
+      });
+    }
+    if (p.id === 'locations') {
+      p.sections.forEach(s => {
+        if (s.id === 'hero' && (s.data.image?.includes('photo-1486406146926') || s.data.image?.includes('photo-1486325212027'))) {
+          s.data.image = "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920";
           migrated = true;
         }
       });

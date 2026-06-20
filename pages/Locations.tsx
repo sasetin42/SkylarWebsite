@@ -90,7 +90,7 @@ export const Locations: React.FC = () => {
   const hero = pageContent?.sections.find(s => s.id === 'hero')?.data;
   const aiSection = pageContent?.sections.find(s => s.id === 'ai_section')?.data;
 
-  const heroBg = hero?.image || 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&q=80&w=1920';
+  const heroBg = hero?.image || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920';
 
   return (
     <div className="bg-white min-h-screen">
@@ -121,23 +121,23 @@ export const Locations: React.FC = () => {
                   Centrally Located
                 </span>
               </div>
-              <h1
-                className="font-heading font-bold text-white mb-4 drop-shadow-lg animate-fade-in"
-                style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}
-              >
+              <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg animate-fade-in" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
                 {hero?.heading ? (
-                  hero.heading.toLowerCase().includes('campuses') ? (
+                  hero.heading.toLowerCase().includes('locations') ? (
+                    <>
+                      {hero.heading.substring(0, hero.heading.toLowerCase().indexOf('locations'))}
+                      <span className="text-accent">Locations</span>
+                    </>
+                  ) : hero.heading.toLowerCase().includes('campuses') ? (
                     <>
                       {hero.heading.substring(0, hero.heading.toLowerCase().indexOf('campuses'))}
                       <span className="text-accent">Campuses</span>
                     </>
                   ) : (
-                    <>
-                      {hero.heading} <span className="text-accent">Campuses</span>
-                    </>
+                    hero.heading
                   )
                 ) : (
-                  <>Our <span className="text-accent">Campuses</span></>
+                  <>Our Training <span className="text-accent">Locations</span></>
                 )}
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />

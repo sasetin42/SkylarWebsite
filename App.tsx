@@ -164,7 +164,10 @@ const App: React.FC = () => {
   }, []);
 
   if (loading) {
-    const LOGO_URL = "/skylar-logo.svg"; // Fallback import inline
+    const settings = getSettings();
+    const logoSrc = settings.loadingLogoUrl || settings.lightLogoUrl || "/skylar-logo.svg";
+    const hasCustomLogo = !!(settings.loadingLogoUrl || settings.lightLogoUrl);
+
     return (
       <div style={{
         minHeight: '100vh',
@@ -211,15 +214,15 @@ const App: React.FC = () => {
           textAlign: 'center',
           padding: '20px'
         }}>
-          {/* Logo with white filter */}
+          {/* Logo with optional white filter */}
           <img
-            src={LOGO_URL}
+            src={logoSrc}
             alt="Skylar Education"
             style={{
               height: '56px',
               width: 'auto',
               marginBottom: '24px',
-              filter: 'brightness(0) invert(1)',
+              filter: hasCustomLogo ? 'none' : 'brightness(0) invert(1)',
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
             }}
           />
