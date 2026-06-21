@@ -41,6 +41,22 @@ const SITE_PAGES = [
   { id: 'contact', title: 'Contact Us', path: '/contact', description: 'Get in touch with our training coordinators, support team, or request a quote.', tags: 'contact email phone support map message quote inquiry office' }
 ];
 
+const getIconComponent = (iconName: string) => {
+  switch (iconName) {
+    case 'Award': return Award;
+    case 'Fan': return Fan;
+    case 'Users': return Users;
+    case 'ShieldCheck': return ShieldCheck;
+    case 'Globe': return Globe;
+    case 'Search': return Search;
+    case 'Calendar': return Calendar;
+    case 'FileText': return FileText;
+    case 'CheckCircle': return CheckCircle;
+    case 'Zap': return Zap;
+    default: return ShieldCheck;
+  }
+};
+
 const Home: React.FC = () => {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
@@ -264,7 +280,11 @@ const Home: React.FC = () => {
   }, [heroSearch]);
 
   const accreditation = pageContent?.sections.find(s => s.id === 'accreditation')?.data;
+  const aboutIntro = pageContent?.sections.find(s => s.id === 'about_intro')?.data;
   const coursesIntro = pageContent?.sections.find(s => s.id === 'courses_intro')?.data;
+  const enrolmentSteps = pageContent?.sections.find(s => s.id === 'enrolment_steps')?.data;
+  const stats = pageContent?.sections.find(s => s.id === 'stats')?.data;
+  const cta = pageContent?.sections.find(s => s.id === 'cta')?.data;
 
   return (
     <div className="animate-fade-in bg-surface">
@@ -800,45 +820,29 @@ const Home: React.FC = () => {
       <section className="py-16 bg-[#F8FAFC] border-b border-gray-100">
         <div className="container mx-auto px-4 md:px-8">
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary text-center mb-12">
-            Industry-Leading Skills and Support
+            {accreditation?.heading || "Excellence in Safety Training - Industry-Leading Skills & Support"}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-            {[
-              {
-                icon: Globe,
-                title: "Global Network Excellence",
-                desc: "Connecting you with world-class training standards globally."
-              },
-              {
-                icon: Award,
-                title: "Industry-Recognised GWO Standards",
-                desc: "Training aligned with global safety requirements."
-              },
-              {
-                icon: Users,
-                title: "Experienced Instructors",
-                desc: "Learn from industry veterans with years of field experience."
-              },
-              {
-                icon: Zap,
-                title: "Flexibility in Training Solutions",
-                desc: "Tailored programs to meet your specific operational needs."
-              }
-            ].map((card, idx) => {
-              const Icon = card.icon;
+            {(accreditation?.items || [
+              { title: "NRT Accredited (RTO 21647)", description: "Accredited courses, nationally recognised certifications.", icon: "Award" },
+              { title: "GWO Standard Alignment", description: "Meets Global Wind Organisation's stringent industry standards.", icon: "Fan" },
+              { title: "Experienced Instructors", description: "Delivered by industry-experienced professional trainers.", icon: "Users" },
+              { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
+            ]).map((card: any, idx: number) => {
+              const IconComponent = getIconComponent(card.icon);
               return (
                 <div 
                   key={idx} 
                   className="bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center"
                 >
-                  <div className="w-16 h-16 rounded-full bg-[#EFF6FF] flex items-center justify-center mb-6 text-secondary">
-                    <Icon size={24} />
+                  <div className="w-16 h-16 rounded-full bg-[#EFF6FF] flex items-center justify-center mb-6 text-[#1C64B4]">
+                    <IconComponent size={24} />
                   </div>
                   <h3 className="text-lg font-bold text-secondary mb-3 leading-snug">
                     {card.title}
                   </h3>
                   <p className="text-gray-500 text-sm leading-relaxed max-w-[240px]">
-                    {card.desc}
+                    {card.description || card.desc}
                   </p>
                 </div>
               );
@@ -854,7 +858,7 @@ const Home: React.FC = () => {
             {/* Left side: Image */}
             <div className="md:w-1/2 relative min-h-[300px] md:min-h-[400px]">
               <img
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800"
+                src={aboutIntro?.image || "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=1200"}
                 alt="Leading Safety Training"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -863,36 +867,41 @@ const Home: React.FC = () => {
             
             {/* Right side: Content with grid background pattern */}
             <div className="md:w-1/2 bg-gradient-to-br from-[#1C64B4] to-[#2E8CD6] p-8 md:p-14 lg:p-16 flex flex-col justify-between text-white relative overflow-hidden">
-              {/* Subtle blueprint grid overlay */}
               <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
               
               <div className="relative z-10">
                 <span className="text-[#FBBF24] font-bold tracking-widest text-xs md:text-sm uppercase mb-3 block">
-                  WHY SKYLAR ASIA?
+                  {aboutIntro?.subheading || "TAILORED SAFETY TRAINING"}
                 </span>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading font-bold mb-5 leading-tight">
-                  Leading Safety Training and Services for a Sustainable Future
+                  {aboutIntro?.heading || "Leading Safety Training and Services for a Sustainable Future"}
                 </h2>
                 <p className="text-white/90 text-sm md:text-base leading-relaxed mb-8 font-light max-w-xl">
-                  Our diverse digital capabilities define our approach. High-quality training is at the core of what we do, ensuring your workforce is safe, compliant, and ready for the future. We combine cutting-edge facilities with expert instruction to deliver the best learning outcomes.
+                  {aboutIntro?.description}
                 </p>
               </div>
 
-              <div className="relative z-10 border-t border-white/20 pt-6 mt-6 md:mt-8">
-                <span className="text-white/60 font-semibold tracking-wider text-[11px] uppercase mb-1 block">
-                  TRUSTED PARTNERS
-                </span>
-                <span className="text-lg font-bold text-white">
-                  GWO Certified
-                </span>
-              </div>
+              {aboutIntro?.buttonText && (
+                <div className="relative z-10 border-t border-white/20 pt-6 mt-6 md:mt-8 flex justify-between items-center">
+                  <div>
+                    <span className="text-white/60 font-semibold tracking-wider text-[11px] uppercase mb-1 block">
+                      TRUSTED PARTNERS
+                    </span>
+                    <span className="text-lg font-bold text-white">
+                      GWO Certified
+                    </span>
+                  </div>
+                  <Link to={aboutIntro.buttonLink || "/about"}>
+                    <Button variant="secondary" className="px-6 py-2 rounded-xl text-xs font-bold bg-[#FBBF24] text-secondary hover:bg-white hover:text-secondary">
+                      {aboutIntro.buttonText}
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
-
-
-
 
       {/* Easy 4-Step Enrolment */}
       <section className="py-24 bg-white relative overflow-hidden">
@@ -901,35 +910,81 @@ const Home: React.FC = () => {
             <span className="inline-block py-1 px-3 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
               Learning Hassle-Free
             </span>
-            <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-4">Easy 4-Step Enrolment</h2>
+            <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-4">
+              {enrolmentSteps?.heading || "Easy 4-Step Enrolment"}
+            </h2>
             <p className="text-gray-500 text-lg leading-relaxed">
-              Begin your learning adventure with Skylar Education through our streamlined 4-step enrolment process. Designed for ease and simplicity, our portal guides you smoothly from sign up to start.
+              {enrolmentSteps?.description || "Begin your learning adventure with Skylar Education through our streamlined 4-step enrolment process."}
             </p>
           </div>
           <div className="grid md:grid-cols-4 gap-8 relative">
             <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
-            {[
-              { step: "01", icon: Search, title: "Browse Online", desc: "Explore our extensive catalogue and select the ideal course." },
-              { step: "02", icon: Calendar, title: "Choose a Date", desc: "Pick a convenient session that fits your schedule." },
-              { step: "03", icon: FileText, title: "Complete Form", desc: "Fill out your details to secure your spot instantly." },
-              { step: "04", icon: Mail, title: "Get Confirmed", desc: "Receive immediate booking confirmation in your inbox." }
-            ].map((item, idx) => (
-              <div key={idx} className="flex flex-col items-center text-center group">
-                <div className="relative mb-6">
-                  <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-xl shadow-primary/20 transform group-hover:-translate-y-2 transition-transform duration-300">
-                    <item.icon className="text-white w-10 h-10" strokeWidth={1.5} />
+            {(enrolmentSteps?.items || [
+              { title: "Browse Online", description: "Explore our extensive catalogue and select the ideal course.", icon: "Search" },
+              { title: "Choose a Date", description: "Pick a convenient session that fits your schedule.", icon: "Calendar" },
+              { title: "Complete Form", description: "Fill out your details to secure your spot instantly.", icon: "FileText" },
+              { title: "Get Confirmed", description: "Receive immediate booking confirmation in your inbox.", icon: "CheckCircle" }
+            ]).map((item: any, idx: number) => {
+              const IconComponent = getIconComponent(item.icon);
+              return (
+                <div key={idx} className="flex flex-col items-center text-center group">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-xl shadow-primary/20 transform group-hover:-translate-y-2 transition-transform duration-300">
+                      <IconComponent className="text-white w-10 h-10" strokeWidth={1.5} />
+                    </div>
+                    <div className="absolute -top-3 -left-3 bg-secondary text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-xl border-2 border-white shadow-sm">
+                      {`0${idx + 1}`}
+                    </div>
                   </div>
-                  <div className="absolute -top-3 -left-3 bg-secondary text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-xl border-2 border-white shadow-sm">
-                    {item.step}
-                  </div>
+                  <h3 className="font-heading font-bold text-xl text-secondary mb-3">{item.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed px-4">{item.description || item.desc}</p>
                 </div>
-                <h3 className="font-heading font-bold text-xl text-secondary mb-3">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed px-4">{item.desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
+
+      {/* Nationwide Reach / Stats */}
+      {stats && (
+        <section className="py-20 bg-secondary text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none"></div>
+          <div className="container mx-auto px-4 md:px-8 relative z-10">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="text-left">
+                <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-3 block">
+                  Servicing Australia & Asia-Pacific
+                </span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-6 leading-tight">
+                  {stats.heading || "Training Across Key Locations"}
+                </h2>
+                <p className="text-gray-300 text-base md:text-lg leading-relaxed max-w-xl font-light">
+                  {stats.description}
+                </p>
+                <div className="mt-8">
+                  <Link to="/locations">
+                    <Button variant="secondary" className="px-8 py-3.5 rounded-xl font-bold bg-[#FBBF24] text-secondary hover:bg-white transition-all shadow-lg text-sm md:text-base">
+                      View All Locations <ArrowRight className="inline ml-1" size={16} />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-6">
+                {(stats.items || []).map((stat: any, idx: number) => (
+                  <div key={idx} className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-center flex flex-col justify-center h-40">
+                    <span className="text-3xl md:text-4xl lg:text-5xl font-heading font-black text-accent mb-2 block">
+                      {stat.title}
+                    </span>
+                    <span className="text-xs md:text-sm text-gray-300 font-medium">
+                      {stat.description}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Why Train With Skylar */}
       <section className="py-24 bg-white relative overflow-hidden">
@@ -958,7 +1013,7 @@ const Home: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div>
+            <div className="text-left">
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6">Why Train With Skylar?</h2>
               <p className="text-gray-600 text-lg mb-10 leading-relaxed">
                 We don't just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions.
@@ -1082,14 +1137,14 @@ const Home: React.FC = () => {
       <section className="py-20 md:py-24 bg-secondary text-white text-center relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-8 relative z-10 flex flex-col items-center justify-center">
           <h2 className="text-3xl md:text-[42px] font-heading font-bold mb-4 tracking-tight">
-            Elevate Your Safety Skills
+            {cta?.heading || "Ready to Advance Your Career?"}
           </h2>
           <p className="text-gray-300 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
-            Join thousands of professionals who trust Skylar Education for their safety training.
+            {cta?.subheading || "Upskill with Skylar today. Book your spot now - classes fill up quickly."}
           </p>
-          <Link to="/courses">
+          <Link to={cta?.buttonLink || "/courses"}>
             <button className="bg-accent text-secondary hover:bg-white hover:text-secondary font-bold py-4 px-8 md:px-10 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 text-sm md:text-base tracking-wide">
-              View Course Calendar
+              {cta?.buttonText || "Browse Courses Now"}
             </button>
           </Link>
         </div>

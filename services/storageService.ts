@@ -31,7 +31,7 @@ const TRAINERS_KEY = 'apex_trainers_data_v1';
 const CLIENTS_KEY = 'apex_clients_data_v1';
 const MIGRATION_KEY = 'apex_migration_logs_v1';
 const SESSIONS_KEY = 'apex_sessions_data_v1';
-const SITE_PAGES_KEY = 'apex_site_pages_data_v9';
+const SITE_PAGES_KEY = 'apex_site_pages_data_v10';
 const CART_KEY = 'apex_cart_data_v1';
 const ADMIN_USERS_KEY = 'apex_admin_users_v1';
 const ROLES_KEY = 'apex_roles_data_v1';
@@ -245,35 +245,35 @@ const SEED_PAGES: SitePage[] = [
     sections: [
         {
             id: 'hero',
-            label: 'Hero Section',
+            label: 'Hero Slider',
             type: 'hero',
             data: {
-                heading: 'SAFETY TRAINING SPECIALISTS',
-                description: "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
-                buttonText: "View All Courses",
-                buttonLink: "/courses",
-                image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+                heading: 'Skylar Education: Leading GWO Wind Safety Training',
+                description: 'Nationally Recognised RTO providing certified GWO and High Risk Work courses across key locations.',
+                buttonText: 'Browse Courses',
+                buttonLink: '/courses',
+                image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1920',
                 items: [
                     { 
-                        title: "SAFETY TRAINING SPECIALISTS", 
-                        description: "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.", 
-                        image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "View All Courses",
+                        title: "Skylar Education: Leading GWO Wind Safety Training", 
+                        description: "Leading safety training and services for a sustainable future. GWO accredited, nationally recognised, multiple locations.", 
+                        image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
+                        buttonText: "Browse Courses",
                         buttonLink: "/courses"
                     },
                     { 
-                        title: "GWO Global Standards", 
-                        description: "Internationally recognised safety training for the wind energy sector.", 
-                        image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "View GWO Courses",
-                        buttonLink: "/courses?category=GWO"
+                        title: "New Course! GWO Basic Technical Training (BTT)", 
+                        description: "Gain essential technical knowledge, practical skills, and safety awareness required for onshore and offshore wind turbines.", 
+                        image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+                        buttonText: "View GWO BTT Course",
+                        buttonLink: "/courses/gwo-btt"
                     },
                     { 
-                        title: "High Risk Work Licensing", 
-                        description: "Get licensed for Dogging, Rigging, and Forklift operations with expert trainers.", 
+                        title: "Nationally Recognised OHS & Safety Certifications", 
+                        description: "Accredited construction, high-risk work, and emergency warden training delivered by industry professionals.", 
                         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "View Construction",
-                        buttonLink: "/courses?category=Construction"
+                        buttonText: "Contact Us",
+                        buttonLink: "/contact"
                     }
                 ]
             }
@@ -283,12 +283,26 @@ const SEED_PAGES: SitePage[] = [
             label: 'Accreditation Bar',
             type: 'features',
             data: {
-                heading: "Nationally Recognised & Trusted By Industry Leaders",
+                heading: "Excellence in Safety Training - Industry-Leading Skills & Support",
                 items: [
-                    { title: "NRT", description: "Nationally Recognised Training", icon: "Award" },
-                    { title: "GWO", description: "Global Wind Organisation", icon: "Fan" },
-                    { title: "WorkSafe", description: "WorkSafe Approved", icon: "ShieldCheck" }
+                    { title: "NRT Accredited (RTO 21647)", description: "Accredited courses, nationally recognised certifications.", icon: "Award" },
+                    { title: "GWO Standard Alignment", description: "Meets Global Wind Organisation's stringent industry standards.", icon: "Fan" },
+                    { title: "Experienced Instructors", description: "Delivered by industry-experienced professional trainers.", icon: "Users" },
+                    { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
                 ]
+            }
+        },
+        {
+            id: 'about_intro',
+            label: 'Tailored Safety Training',
+            type: 'content',
+            data: {
+                heading: "Leading Safety Training and Services for a Sustainable Future",
+                subheading: "Tailored Safety Training for Diverse Industries",
+                description: "Skylar Education exists to lift the bar on safety training. By tailoring programs to each industry, we help clients meet and exceed standards while creating cultures where every worker goes home safe. Discover how Skylar Education provides customised, high-quality training and safety services that prioritise injury-free work environments and meet your unique needs.",
+                buttonText: "More About Us",
+                buttonLink: "/about",
+                image: "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=1200"
             }
         },
         {
@@ -296,9 +310,38 @@ const SEED_PAGES: SitePage[] = [
             label: 'Featured Courses Intro',
             type: 'content',
             data: {
-                heading: "Start Your Career",
+                heading: "Elevate Your Safety Skills",
                 subheading: "Popular Programs",
-                description: "Explore our most in-demand courses designed to get you job-ready for the wind and construction industries."
+                description: "Explore our most in-demand safety programs designed to get you job-ready for the wind and high-risk industries."
+            }
+        },
+        {
+            id: 'enrolment_steps',
+            label: 'Enrolment Steps',
+            type: 'features',
+            data: {
+                heading: "Easy 4-Step Enrolment - Learning Begins Here",
+                description: "Begin your learning adventure with Skylar Education through our streamlined 4-step enrollment process. Designed for ease and simplicity, our portal guides you smoothly from sign-up to start.",
+                items: [
+                    { title: "Browse Courses Online", description: "Explore our extensive course listings and select the best option for your career goals.", icon: "Search" },
+                    { title: "Choose a Date", description: "Pick a convenient date from the available sessions to fit your schedule.", icon: "Calendar" },
+                    { title: "Complete Enrolment Form", description: "Fill out the online enrolment form with your details to secure your spot.", icon: "FileText" },
+                    { title: "Receive Confirmation", description: "Get immediate confirmation and all the course details in your inbox.", icon: "CheckCircle" }
+                ]
+            }
+        },
+        {
+            id: 'stats',
+            label: 'Nationwide Reach Stats',
+            type: 'features',
+            data: {
+                heading: "Training Across Asia-Pacific's Key Locations",
+                description: "Skylar Education operates multiple training facilities, empowering thousands of students annually. Our comprehensive reach ensures that quality training is accessible, enhancing careers.",
+                items: [
+                    { title: "12+", description: "Number of Locations Across Key Facilities" },
+                    { title: "3,000+", description: "Students Trained Annually Across Our Facilities" },
+                    { title: "85%", description: "Of Wind Safety Industry Trained by Us" }
+                ]
             }
         },
         {
@@ -306,9 +349,9 @@ const SEED_PAGES: SitePage[] = [
             label: 'Call to Action',
             type: 'cta',
             data: {
-                heading: "Ready to Upskill?",
-                subheading: "Book your spot today. Classes fill up fast.",
-                buttonText: "Enroll Now",
+                heading: "Ready to Advance Your Career?",
+                subheading: "Upskill with Skylar today. Book your spot now - classes fill up quickly.",
+                buttonText: "Browse Courses Now",
                 buttonLink: "/courses"
             }
         }
