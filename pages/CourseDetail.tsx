@@ -163,17 +163,6 @@ export const CourseDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Price Card */}
-                <div className="flex items-center bg-gradient-to-br from-emerald-500/10 to-emerald-600/25 backdrop-blur-md px-6 py-4 rounded-2xl border border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/20 transition-all duration-300 shadow-lg shadow-emerald-950/20 flex-1 min-w-[160px]">
-                    <div className="p-2.5 bg-emerald-500/25 rounded-xl text-emerald-400 mr-4 shrink-0 shadow-inner">
-                        <DollarSign className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <span className="block text-[10px] text-emerald-300 uppercase tracking-wider font-bold">Price</span>
-                        <span className="font-extrabold text-2xl text-emerald-400 font-heading">${course.price.toLocaleString()}</span>
-                    </div>
-                </div>
-
                 {/* Level Card */}
                 <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
                     <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400 mr-4 shrink-0 shadow-inner">
@@ -241,7 +230,7 @@ export const CourseDetail: React.FC = () => {
                       Course Overview
                   </h2>
                   <div 
-                    className="prose max-w-none text-gray-600 leading-relaxed text-base md:text-lg space-y-4 html-description"
+                    className="prose max-w-none text-gray-600 leading-relaxed space-y-4 html-description overview-section-content"
                     dangerouslySetInnerHTML={{ __html: formatDescription(course.fullDescription) }}
                   />
                 </section>
@@ -355,6 +344,9 @@ export const CourseDetail: React.FC = () => {
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Your Name</label>
                       <input 
+                        id="review-name"
+                        name="reviewName"
+                        autocomplete="name"
                         type="text" 
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -380,6 +372,9 @@ export const CourseDetail: React.FC = () => {
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Comment</label>
                       <textarea 
+                        id="review-comment"
+                        name="reviewComment"
+                        autocomplete="off"
                         required
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -448,23 +443,15 @@ export const CourseDetail: React.FC = () => {
               <div style={{ display: 'flex', gap: '12px' }}>
                 <Button 
                   onClick={handleEnrollNow}
-                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-secondary text-white hover:bg-primary border-none uppercase tracking-wide whitespace-nowrap"
+                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-secondary text-white hover:bg-primary border-none uppercase tracking-wider whitespace-nowrap"
                 >
-                  Enroll Now
-                </Button>
-                <Button 
-                    variant="outline" 
-                    onClick={handleAddToCart}
-                    disabled={addedToCart}
-                    className={`flex-1 font-bold border-2 py-3.5 text-sm ${addedToCart ? 'bg-green-50 border-green-500 text-green-700 cursor-default' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
-                >
-                  {addedToCart ? <span className="flex items-center justify-center gap-1.5"><Check size={16} /> Added</span> : <span className="flex items-center justify-center gap-1.5"><ShoppingCart size={16} /> + Cart</span>}
+                  REGISTER NOW!
                 </Button>
               </div>
 
               {course.depositAmount && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl text-center text-xs text-gray-500 font-medium leading-relaxed" style={{ marginTop: '20px', padding: '12px' }}>
-                  To secure your spot, a deposit of <span className="font-bold text-secondary">${course.depositAmount}</span> is required before course commencement.
+                  Register now to secure your spot! Your invoice will be prepared and issued upon successful enrolment.
                 </div>
               )}
 
@@ -488,15 +475,9 @@ export const CourseDetail: React.FC = () => {
               <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Seats filling fast</span>
             </div>
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-             <div className="flex flex-col md:flex-row md:items-center">
-                <span className="text-xs text-gray-500 md:hidden uppercase font-bold tracking-wide">Course Fee</span>
-                <div className="text-xl md:text-2xl font-bold text-primary mr-0 md:mr-4 font-heading">
-                    ${course.price.toLocaleString()}
-                </div>
-             </div>
-             <Button onClick={handleEnrollNow} className="bg-secondary text-white hover:bg-primary font-bold px-6 py-3 md:px-8 shadow-lg text-sm md:text-base">
-                Enroll Now
+          <div className="flex items-center gap-4 w-full md:w-auto justify-end">
+             <Button onClick={handleEnrollNow} className="bg-secondary text-white hover:bg-primary font-bold px-6 py-3 md:px-8 shadow-lg text-sm md:text-base uppercase tracking-wider">
+                REGISTER NOW!
              </Button>
           </div>
         </div>

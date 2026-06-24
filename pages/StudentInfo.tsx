@@ -132,6 +132,9 @@ const StudentAIChat = () => {
       <div className="p-4 bg-white border-t border-gray-100">
         <div className="flex gap-2 relative">
           <input
+            id="student-chat-input"
+            name="chatInput"
+            autocomplete="off"
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -327,6 +330,9 @@ export const StudentInfo: React.FC = () => {
               
               <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl flex gap-2 border border-white/20 mb-8">
                 <input 
+                  id="news-search"
+                  name="newsSearch"
+                  autocomplete="off"
                   type="text" 
                   value={newsQuery}
                   onChange={(e) => setNewsQuery(e.target.value)}

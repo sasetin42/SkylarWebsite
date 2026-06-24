@@ -171,6 +171,9 @@ export const OnlineEnrolments: React.FC = () => {
                             <div className="group/field">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Email</label>
                                 <input 
+                                    id="enrol-email"
+                                    name="email"
+                                    autocomplete="email"
                                     type="email" 
                                     required 
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all text-sm placeholder-gray-400 focus:bg-white"
@@ -180,6 +183,9 @@ export const OnlineEnrolments: React.FC = () => {
                             <div className="group/field">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Message</label>
                                 <textarea 
+                                    id="enrol-message"
+                                    name="message"
+                                    autocomplete="off"
                                     rows={4}
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all text-sm resize-none placeholder-gray-400 focus:bg-white"
                                     placeholder="How can we help?" 

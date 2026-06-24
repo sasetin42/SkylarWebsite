@@ -111,6 +111,9 @@ export const FinanceManager: React.FC = () => {
                       <div>
                           <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Student</label>
                           <select 
+                            id="finance-student"
+                            name="financeStudent"
+                            autocomplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, studentId: e.target.value})}
                             required
@@ -123,6 +126,9 @@ export const FinanceManager: React.FC = () => {
                           <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Amount ($)</label>
                           <input 
                             type="number" 
+                            id="finance-amount"
+                            name="financeAmount"
+                            autocomplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, amount: parseFloat(e.target.value)})}
                             required
@@ -131,6 +137,9 @@ export const FinanceManager: React.FC = () => {
                       <div>
                           <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Type</label>
                           <select 
+                            id="finance-type"
+                            name="financeType"
+                            autocomplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, type: e.target.value as any})}
                             required

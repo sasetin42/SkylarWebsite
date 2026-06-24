@@ -399,6 +399,9 @@ const Home: React.FC = () => {
                   <Search className="w-5 h-5" />
                 </div>
                 <input
+                  id="hero-search"
+                  name="search"
+                  autocomplete="off"
                   type="text"
                   value={heroSearch}
                   onChange={(e) => {
@@ -1183,8 +1186,10 @@ const Home: React.FC = () => {
                 <form onSubmit={handleContactSubmit} className="space-y-5">
                   <div>
                     <input
+                      id="home-name"
                       type="text"
                       name="name"
+                      autocomplete="name"
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="Full Name"
@@ -1199,8 +1204,10 @@ const Home: React.FC = () => {
 
                   <div>
                     <input
+                      id="home-email"
                       type="email"
                       name="email"
+                      autocomplete="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Email Address"
@@ -1215,7 +1222,9 @@ const Home: React.FC = () => {
 
                   <div>
                     <textarea
+                      id="home-message"
                       name="message"
+                      autocomplete="off"
                       rows={4}
                       value={formData.message}
                       onChange={handleInputChange}
@@ -1234,6 +1243,8 @@ const Home: React.FC = () => {
                     <input
                       type="checkbox"
                       id="robot"
+                      name="robot"
+                      autocomplete="off"
                       checked={isRobotChecked}
                       onChange={(e) => {
                         setIsRobotChecked(e.target.checked);

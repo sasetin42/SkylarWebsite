@@ -141,6 +141,9 @@ export const DataMigration: React.FC = () => {
               <p className="text-gray-500 dark:text-gray-400 mb-8">Supports CSV, JSON, and XML exports from old SQL databases.</p>
               <input 
                 type="file" 
+                id="migration-file"
+                name="migrationFile"
+                autocomplete="off"
                 ref={fileInputRef} 
                 className="hidden" 
                 accept=".csv,.json"
@@ -180,6 +183,9 @@ export const DataMigration: React.FC = () => {
                         <div key={field.key} className="grid grid-cols-2 gap-4 items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-700">
                             <span className="font-bold text-gray-700 dark:text-gray-300">{field.label}</span>
                             <select 
+                                id="migration-field-map"
+                                name={`mapping-${field.key}`}
+                                autocomplete="off"
                                 className="p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50"
                                 onChange={(e) => setMapping({...mapping, [field.key]: e.target.value})}
                             >

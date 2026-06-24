@@ -184,8 +184,15 @@ export interface InstituteSettings {
   defaultDarkMode?: boolean;
   brandColor?: string;
   themePreset?: 'navy' | 'dark' | 'emerald' | 'crimson';
+  accentColor?: string;
+  borderRadius?: number;
+  sidebarTheme?: 'dark' | 'light' | 'color';
   taxId?: string;
   supportContactName?: string;
+  fontFamily?: string;
+  animationSpeed?: 'fast' | 'smooth' | 'disabled';
+  layoutStyle?: 'boxed' | 'wide';
+  customCss?: string;
   supportHours?: string;
   tuitionCurrency?: string;
   classSizeLimit?: number;
@@ -208,6 +215,7 @@ export interface Role {
   name: string;
   description: string;
   usersCount: number;
+  permissions?: string[];
 }
 
 export interface SystemModule {

@@ -322,6 +322,9 @@ export const WebsiteManager: React.FC = () => {
                                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Title</label>
                                                             <input
                                                                 type="text"
+                                                                id={`website-course-title-${course.id}`}
+                                                                name="websiteCourseTitle"
+                                                                autocomplete="off"
                                                                 className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-sm text-gray-900 dark:text-white"
                                                                 value={course.title}
                                                                 onChange={(e) => updateGlobalCourse(course.id, 'title', e.target.value)}
@@ -332,6 +335,9 @@ export const WebsiteManager: React.FC = () => {
                                                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
                                                                 <input
                                                                     type="number"
+                                                                    id={`website-course-price-${course.id}`}
+                                                                    name="websiteCoursePrice"
+                                                                    autocomplete="off"
                                                                     className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-sm text-gray-900 dark:text-white"
                                                                     value={course.price}
                                                                     onChange={(e) => updateGlobalCourse(course.id, 'price', Number(e.target.value))}
@@ -341,6 +347,9 @@ export const WebsiteManager: React.FC = () => {
                                                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Duration</label>
                                                                 <input
                                                                     type="text"
+                                                                    id={`website-course-duration-${course.id}`}
+                                                                    name="websiteCourseDuration"
+                                                                    autocomplete="off"
                                                                     className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-sm text-gray-900 dark:text-white"
                                                                     value={course.duration}
                                                                     onChange={(e) => updateGlobalCourse(course.id, 'duration', e.target.value)}
@@ -353,13 +362,16 @@ export const WebsiteManager: React.FC = () => {
                                                                 <div className="flex-1 relative">
                                                                     <input
                                                                         type="text"
+                                                                        id={`website-course-image-${course.id}`}
+                                                                        name="websiteCourseImage"
+                                                                        autocomplete="off"
                                                                         className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-xs font-mono text-gray-500 dark:text-gray-400 pr-8"
                                                                         value={course.image}
                                                                         onChange={(e) => updateGlobalCourse(course.id, 'image', e.target.value)}
                                                                     />
                                                                     <label className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-primary transition-colors">
                                                                         <UploadCloud size={12} />
-                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleCourseImageUpload(e, course.id)} />
+                                                                        <input type="file" id={`website-course-file-${course.id}`} name="websiteCourseFile" autocomplete="off" className="hidden" accept="image/*" onChange={(e) => handleCourseImageUpload(e, course.id)} />
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -367,6 +379,9 @@ export const WebsiteManager: React.FC = () => {
                                                         <div>
                                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Description</label>
                                                             <textarea
+                                                                id={`website-course-desc-${course.id}`}
+                                                                name="websiteCourseDescription"
+                                                                autocomplete="off"
                                                                 rows={2}
                                                                 className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-xs text-gray-900 dark:text-white"
                                                                 value={course.shortDescription}
@@ -384,6 +399,9 @@ export const WebsiteManager: React.FC = () => {
                                                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Heading</label>
                                                         <input
                                                             type="text"
+                                                            id={`website-heading-${idx}`}
+                                                            name="sectionHeading"
+                                                            autocomplete="off"
                                                             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                                             value={section.data.heading}
                                                             onChange={(e) => updateSectionData(idx, 'heading', e.target.value)}
@@ -395,6 +413,9 @@ export const WebsiteManager: React.FC = () => {
                                                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Subheading</label>
                                                         <input
                                                             type="text"
+                                                            id={`website-subheading-${idx}`}
+                                                            name="sectionSubheading"
+                                                            autocomplete="off"
                                                             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                                             value={section.data.subheading}
                                                             onChange={(e) => updateSectionData(idx, 'subheading', e.target.value)}
@@ -405,6 +426,9 @@ export const WebsiteManager: React.FC = () => {
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
                                                         <textarea
+                                                            id={`website-description-${idx}`}
+                                                            name="sectionDescription"
+                                                            autocomplete="off"
                                                             rows={3}
                                                             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                                             value={section.data.description}
@@ -418,6 +442,9 @@ export const WebsiteManager: React.FC = () => {
                                                         <div className="flex gap-2 mb-2">
                                                             <input
                                                                 type="text"
+                                                                id={`website-image-${idx}`}
+                                                                name="sectionImage"
+                                                                autocomplete="off"
                                                                 placeholder="Image URL"
                                                                 className="flex-1 p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                                                 value={section.data.image}
@@ -425,7 +452,7 @@ export const WebsiteManager: React.FC = () => {
                                                             />
                                                             <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-500 rounded-lg px-3 flex items-center justify-center transition-colors" title="Upload from device">
                                                                 <UploadCloud size={18} />
-                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, idx)} />
+                                                                <input type="file" id={`website-image-file-${idx}`} name="sectionImageFile" autocomplete="off" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, idx)} />
                                                             </label>
                                                         </div>
                                                         {section.data.image && (
@@ -449,6 +476,9 @@ export const WebsiteManager: React.FC = () => {
                                                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Text</label>
                                                                 <input
                                                                     type="text"
+                                                                    id={`website-btn-text-${idx}`}
+                                                                    name="sectionButtonText"
+                                                                    autocomplete="off"
                                                                     className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
                                                                     value={section.data.buttonText}
                                                                     onChange={(e) => updateSectionData(idx, 'buttonText', e.target.value)}
@@ -460,6 +490,9 @@ export const WebsiteManager: React.FC = () => {
                                                                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Link</label>
                                                                 <input
                                                                     type="text"
+                                                                    id={`website-btn-link-${idx}`}
+                                                                    name="sectionButtonLink"
+                                                                    autocomplete="off"
                                                                     className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
                                                                     value={section.data.buttonLink}
                                                                     onChange={(e) => updateSectionData(idx, 'buttonLink', e.target.value)}
@@ -486,12 +519,18 @@ export const WebsiteManager: React.FC = () => {
                                                                     </button>
                                                                     <input
                                                                         type="text"
+                                                                        id={`website-item-title-${idx}-${itemIdx}`}
+                                                                        name="sectionItemTitle"
+                                                                        autocomplete="off"
                                                                         placeholder="Title"
                                                                         className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-sm font-bold mb-1"
                                                                         value={item.title}
                                                                         onChange={(e) => updateSectionItemData(idx, itemIdx, 'title', e.target.value)}
                                                                     />
                                                                     <textarea
+                                                                        id={`website-item-desc-${idx}-${itemIdx}`}
+                                                                        name="sectionItemDescription"
+                                                                        autocomplete="off"
                                                                         rows={2}
                                                                         placeholder="Description"
                                                                         className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs"
@@ -504,6 +543,9 @@ export const WebsiteManager: React.FC = () => {
                                                                             <div className="flex-1 relative">
                                                                                 <input
                                                                                     type="text"
+                                                                                    id={`website-item-image-${idx}-${itemIdx}`}
+                                                                                    name="sectionItemImage"
+                                                                                    autocomplete="off"
                                                                                     placeholder="Item Image URL"
                                                                                     className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs font-mono text-gray-500 dark:text-gray-400 pr-8"
                                                                                     value={item.image}
@@ -511,7 +553,7 @@ export const WebsiteManager: React.FC = () => {
                                                                                 />
                                                                                 <label className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-gray-400 hover:text-primary transition-colors">
                                                                                     <UploadCloud size={12} />
-                                                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, idx, itemIdx)} />
+                                                                                    <input type="file" id={`website-item-file-${idx}-${itemIdx}`} name="sectionItemFile" autocomplete="off" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, idx, itemIdx)} />
                                                                                 </label>
                                                                             </div>
                                                                             {item.image && (
@@ -526,6 +568,9 @@ export const WebsiteManager: React.FC = () => {
                                                                         <span className="text-[10px] uppercase font-bold text-gray-400">Icon:</span>
                                                                         <input
                                                                             type="text"
+                                                                            id={`website-item-icon-${idx}-${itemIdx}`}
+                                                                            name="sectionItemIcon"
+                                                                            autocomplete="off"
                                                                             placeholder="e.g. CheckCircle, User, Star"
                                                                             className="flex-1 p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs font-mono text-gray-500 dark:text-gray-400"
                                                                             value={item.icon || ''}
@@ -537,6 +582,9 @@ export const WebsiteManager: React.FC = () => {
                                                                             <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Text</label>
                                                                             <input
                                                                                 type="text"
+                                                                                id={`website-item-btn-text-${idx}-${itemIdx}`}
+                                                                                name="sectionItemButtonText"
+                                                                                autocomplete="off"
                                                                                 placeholder="Button Text"
                                                                                 className="w-full p-1 border border-gray-205 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-[11px]"
                                                                                 value={item.buttonText || ''}
@@ -547,6 +595,9 @@ export const WebsiteManager: React.FC = () => {
                                                                             <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Link</label>
                                                                             <input
                                                                                 type="text"
+                                                                                id={`website-item-btn-link-${idx}-${itemIdx}`}
+                                                                                name="sectionItemButtonLink"
+                                                                                autocomplete="off"
                                                                                 placeholder="Button Link"
                                                                                 className="w-full p-1 border border-gray-205 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-[11px]"
                                                                                 value={item.buttonLink || ''}
@@ -670,27 +721,27 @@ export const WebsiteManager: React.FC = () => {
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Primary Color</label>
                                         <div className="flex gap-2">
-                                            <input type="color" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
-                                            <input type="text" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
+                                            <input type="color" id="website-primary-color" name="themePrimaryColor" autocomplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
+                                            <input type="text" id="website-primary-hex" name="themePrimaryHex" autocomplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Secondary Color</label>
                                         <div className="flex gap-2">
-                                            <input type="color" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
-                                            <input type="text" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
+                                            <input type="color" id="website-secondary-color" name="themeSecondaryColor" autocomplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
+                                            <input type="text" id="website-secondary-hex" name="themeSecondaryHex" autocomplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Accent Color</label>
                                         <div className="flex gap-2">
-                                            <input type="color" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
-                                            <input type="text" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
+                                            <input type="color" id="website-accent-color" name="themeAccentColor" autocomplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
+                                            <input type="text" id="website-accent-hex" name="themeAccentHex" autocomplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Border Radius (px)</label>
-                                        <input type="number" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2" value={theme.borderRadius} onChange={e => setTheme({ ...theme, borderRadius: Number(e.target.value) })} />
+                                        <input type="number" id="website-border-radius" name="themeBorderRadius" autocomplete="off" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2" value={theme.borderRadius} onChange={e => setTheme({ ...theme, borderRadius: Number(e.target.value) })} />
                                     </div>
                                 </div>
                             </div>

@@ -100,6 +100,9 @@ export const EnrollmentManager: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input 
                         type="text" 
+                        id="enroll-search"
+                        name="enrollSearch"
+                        autocomplete="off"
                         placeholder="Search applicants..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
@@ -237,6 +240,9 @@ export const EnrollmentManager: React.FC = () => {
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Assign Section (Optional)</label>
                                         <select 
+                                            id="enroll-section"
+                                            name="enrollSection"
+                                            autocomplete="off"
                                             className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                             value={assignSectionId}
                                             onChange={(e) => setAssignSectionId(e.target.value)}

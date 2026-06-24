@@ -304,9 +304,6 @@ export const LocationDetail: React.FC = () => {
 
                         <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between sm:justify-start md:justify-center gap-3.5 pt-3 md:pt-0 border-t border-dashed border-slate-200/60 md:border-t-0 flex-shrink-0">
                           <div className="text-left md:text-right">
-                            <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Course Fee</span>
-                            <span className="font-heading font-extrabold text-lg text-secondary">${course.price} USD</span>
-                            
                             {/* Capacity badge */}
                             <span className={`block text-[11px] font-bold mt-1 uppercase ${
                               isFull ? 'text-rose-500' : isAlmostFull ? 'text-amber-500' : 'text-emerald-500'
@@ -324,7 +321,7 @@ export const LocationDetail: React.FC = () => {
                                 : 'bg-primary hover:bg-accent text-white hover:text-secondary hover:shadow-lg'
                             }`}
                           >
-                            {isFull ? 'Sold Out' : 'Book Spot'}
+                            {isFull ? 'Sold Out' : 'REGISTER NOW!'}
                           </button>
                         </div>
                       </div>
@@ -367,6 +364,9 @@ export const LocationDetail: React.FC = () => {
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Your Name</label>
                         <input 
+                          id="inquiry-name"
+                          name="name"
+                          autocomplete="name"
                           type="text" 
                           required
                           value={inquiryName}
@@ -378,6 +378,9 @@ export const LocationDetail: React.FC = () => {
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Your Email</label>
                         <input 
+                          id="inquiry-email"
+                          name="email"
+                          autocomplete="email"
                           type="email" 
                           required
                           value={inquiryEmail}
@@ -392,6 +395,9 @@ export const LocationDetail: React.FC = () => {
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Inquiry Reason</label>
                         <select 
+                          id="inquiry-reason"
+                          name="reason"
+                          autocomplete="off"
                           value={inquirySubject}
                           onChange={(e) => setInquirySubject(e.target.value)}
                           className="w-full bg-slate-800 border border-white/10 text-white rounded-xl py-3 px-4 text-sm focus:border-accent outline-none transition-all"
@@ -412,6 +418,9 @@ export const LocationDetail: React.FC = () => {
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Your Message</label>
                       <textarea 
+                        id="inquiry-message"
+                        name="message"
+                        autocomplete="off"
                         rows={3} 
                         required
                         value={inquiryMessage}

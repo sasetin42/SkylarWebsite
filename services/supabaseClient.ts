@@ -1,5 +1,5 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
 
 const getHeaders = () => ({
   'apikey': SUPABASE_ANON_KEY,

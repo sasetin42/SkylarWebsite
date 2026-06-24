@@ -128,6 +128,9 @@ export const Footer: React.FC = () => {
             ) : (
               <form className="space-y-2.5" onSubmit={handleSubscribe}>
                 <input 
+                  id="subscribe-email"
+                  name="subscribeEmail"
+                  autocomplete="email"
                   type="email" 
                   required
                   placeholder="Your email address" 

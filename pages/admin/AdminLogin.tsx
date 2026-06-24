@@ -32,8 +32,8 @@ export const AdminLogin: React.FC = () => {
 
     // 2. Real Supabase Auth authentication
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
-      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
+      const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
+      const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
 
       const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: 'POST',
@@ -195,6 +195,9 @@ export const AdminLogin: React.FC = () => {
                 <div className="relative group/input">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-accent transition-colors w-5 h-5" />
                   <input
+                    id="login-email"
+                    name="email"
+                    autocomplete="email"
                     type="email"
                     className="w-full pl-12 pr-4 py-4 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-white placeholder-slate-600 shadow-inner"
                     placeholder="admin@skylareducation.asia"
@@ -209,6 +212,9 @@ export const AdminLogin: React.FC = () => {
                 <div className="relative group/input">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-accent transition-colors w-5 h-5" />
                   <input
+                    id="login-password"
+                    name="password"
+                    autocomplete="current-password"
                     type="password"
                     className="w-full pl-12 pr-4 py-4 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-white placeholder-slate-600 shadow-inner"
                     placeholder="•••••"
@@ -220,7 +226,7 @@ export const AdminLogin: React.FC = () => {
 
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center text-slate-400 cursor-pointer hover:text-white transition-colors">
-                  <input type="checkbox" className="mr-2 w-4 h-4 rounded bg-slate-800 border-white/10 text-accent focus:ring-offset-slate-900 focus:ring-accent" />
+                  <input type="checkbox" id="login-remember" name="remember" autocomplete="off" className="mr-2 w-4 h-4 rounded bg-slate-800 border-white/10 text-accent focus:ring-offset-slate-900 focus:ring-accent" />
                   Remember me
                 </label>
                 <a href="#" className="text-accent hover:text-yellow-300 transition-colors font-medium">Forgot Password?</a>

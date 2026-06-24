@@ -110,6 +110,9 @@ export const SupportManager: React.FC = () => {
                                           <button onClick={() => setReplyTicketId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
                                       </div>
                                       <textarea
+                                          id="support-reply"
+                                          name="supportReply"
+                                          autocomplete="off"
                                           rows={3}
                                           value={replyText}
                                           onChange={(e) => setReplyText(e.target.value)}

@@ -358,6 +358,9 @@ export const GeminiChat: React.FC = () => {
                 <Paperclip className="w-5 h-5" />
             </button>
             <input 
+                id="chat-image-upload"
+                name="chatImage"
+                autocomplete="off"
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
@@ -366,6 +369,9 @@ export const GeminiChat: React.FC = () => {
             />
             
             <input
+              id="chat-input"
+              name="chatInput"
+              autocomplete="off"
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}

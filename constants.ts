@@ -2,7 +2,7 @@ import { Course, CourseCategory, Location, Testimonial, BlogPost } from './types
 
 export const LOGO_URL = "/skylar-logo.svg";
 
-export const COURSES: Course[] = [
+export const COURSES: Course[] = ([
   {
     id: 'gwo-art-initial',
     title: 'GWO Combined Advanced Rescue Training (ART) Initial',
@@ -214,7 +214,7 @@ export const COURSES: Course[] = [
     image: 'https://images.unsplash.com/photo-1552083855-45233e8cd6e6?auto=format&fit=crop&q=80&w=800',
     upcomingDates: []
   }
-].map(course => ({
+] as Course[]).map((course) => ({
   ...course,
   courseBenefits: course.courseBenefits || `
     <div class="html-alert alert-info">

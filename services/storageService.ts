@@ -26,7 +26,7 @@ const RECENT_KEY = 'apex_recent_courses_v1';
 const REVIEWS_KEY = 'apex_course_reviews_v1';
 const COURSES_KEY = 'apex_courses_data_v3';
 const STUDENTS_KEY = 'apex_students_data_v1';
-const SETTINGS_KEY = 'apex_settings_data_v1';
+const SETTINGS_KEY = 'apex_settings_data_v2';
 const TRAINERS_KEY = 'apex_trainers_data_v1';
 const CLIENTS_KEY = 'apex_clients_data_v1';
 const MIGRATION_KEY = 'apex_migration_logs_v1';
@@ -159,12 +159,19 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   defaultDarkMode: false,
   brandColor: "#041024",
   themePreset: "navy",
+  accentColor: "#ffc107",
+  borderRadius: 12,
+  sidebarTheme: "dark",
   taxId: "ABN 84 920 184 721",
   supportContactName: "Safety Admin Team",
   supportHours: "Mon-Fri 8:00 AM - 5:00 PM (AEST)",
   tuitionCurrency: "AUD",
   classSizeLimit: 20,
-  passingScore: 80
+  passingScore: 80,
+  fontFamily: "Outfit",
+  animationSpeed: "smooth",
+  layoutStyle: "wide",
+  customCss: ""
 };
 
 export const getSettings = (): InstituteSettings => {
@@ -1244,17 +1251,16 @@ export const getThemeSettings = (): ThemeSettings => {
   } else {
     theme = JSON.parse(stored);
     if (typeof theme.baseFontSize === 'undefined') theme.baseFontSize = 15;
-    if (theme.fontHeading && (theme.fontHeading.includes('Poppins') || theme.fontHeading.includes('Inter'))) {
-      theme.fontHeading = "'Maven Pro', sans-serif";
-    }
-    if (theme.fontSans && (theme.fontSans.includes('Inter') || theme.fontSans.includes('Poppins'))) {
-      theme.fontSans = "'Maven Pro', sans-serif";
-    }
   }
+  // Enforce Maven Pro font always
+  theme.fontHeading = "'Maven Pro', sans-serif";
+  theme.fontSans = "'Maven Pro', sans-serif";
   return theme;
 };
 
 export const saveThemeSettings = (theme: ThemeSettings) => {
+  theme.fontHeading = "'Maven Pro', sans-serif";
+  theme.fontSans = "'Maven Pro', sans-serif";
   localStorage.setItem(THEME_KEY, JSON.stringify(theme));
   window.dispatchEvent(new Event('themeUpdated'));
 };

@@ -173,6 +173,9 @@ export const Locations: React.FC = () => {
 
           <div className="max-w-xl mx-auto flex gap-2 mb-8">
             <input 
+              id="locations-search"
+              name="locationSearch"
+              autocomplete="off"
               type="text" 
               value={placeQuery}
               onChange={(e) => setPlaceQuery(e.target.value)}

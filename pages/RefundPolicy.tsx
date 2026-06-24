@@ -151,10 +151,10 @@ export const RefundPolicy: React.FC = () => {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <input type="email" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" placeholder="student@email.com" />
+                                <input id="refund-email" name="email" autocomplete="email" type="email" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" placeholder="student@email.com" />
                             </div>
                             <div>
-                                <textarea rows={4} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none" placeholder="I have a question about..."></textarea>
+                                <textarea id="refund-message" name="message" autocomplete="off" rows={4} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none" placeholder="I have a question about..."></textarea>
                             </div>
                             <Button type="submit" className="w-full" disabled={formState === 'submitting'}>{formState === 'submitting' ? 'Submitting...' : 'Submit Request'}</Button>
                         </form>

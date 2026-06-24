@@ -64,40 +64,40 @@ export const SessionManager: React.FC = () => {
              <form onSubmit={handleSave} className="grid md:grid-cols-2 gap-6">
                 <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Course</label>
-                    <select className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.courseId || ''} onChange={e => setFormData({...formData, courseId: e.target.value})} required>
+                    <select id="session-course" name="sessionCourse" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.courseId || ''} onChange={e => setFormData({...formData, courseId: e.target.value})} required>
                         <option value="">Select Course...</option>
                         {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                     </select>
                 </div>
                 <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Trainer</label>
-                    <select className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.trainerId || ''} onChange={e => setFormData({...formData, trainerId: e.target.value})} required>
+                    <select id="session-trainer" name="sessionTrainer" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.trainerId || ''} onChange={e => setFormData({...formData, trainerId: e.target.value})} required>
                         <option value="">Select Trainer...</option>
                         {trainers.map(t => <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>)}
                     </select>
                 </div>
                 <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Location</label>
-                    <select className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.locationId || ''} onChange={e => setFormData({...formData, locationId: e.target.value})} required>
+                    <select id="session-location" name="sessionLocation" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.locationId || ''} onChange={e => setFormData({...formData, locationId: e.target.value})} required>
                         <option value="">Select Location...</option>
                         {LOCATIONS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
                 </div>
                 <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Capacity</label>
-                    <input type="number" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.capacity || 10} onChange={e => setFormData({...formData, capacity: Number(e.target.value)})} required />
+                    <input type="number" id="session-capacity" name="sessionCapacity" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.capacity || 10} onChange={e => setFormData({...formData, capacity: Number(e.target.value)})} required />
                 </div>
                 <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Start Date</label>
-                    <input type="date" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})} required />
+                    <input type="date" id="session-start-date" name="sessionStartDate" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})} required />
                 </div>
                  <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">End Date</label>
-                    <input type="date" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})} required />
+                    <input type="date" id="session-end-date" name="sessionEndDate" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})} required />
                 </div>
                  <div>
                     <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Status</label>
-                    <select className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.status || 'Scheduled'} onChange={e => setFormData({...formData, status: e.target.value as any})} required>
+                    <select id="session-status" name="sessionStatus" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.status || 'Scheduled'} onChange={e => setFormData({...formData, status: e.target.value as any})} required>
                         <option>Scheduled</option>
                         <option>In Progress</option>
                         <option>Completed</option>

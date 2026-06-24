@@ -112,12 +112,12 @@ export const AdminDashboard: React.FC = () => {
         <aside 
           className={`fixed md:relative z-30 h-full transition-all duration-300 ${sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:translate-x-0 md:w-20'} bg-secondary dark:bg-gray-800 text-white shadow-2xl flex flex-col border-r border-white/5 dark:border-gray-700`}
         >
-          <div className={`flex items-center justify-center border-b border-white/10 dark:border-gray-700 transition-all duration-300 ${sidebarOpen ? 'p-6' : 'p-4'}`}>
+          <div className={`flex items-center transition-all duration-300 border-b border-white/10 dark:border-gray-700 ${sidebarOpen ? 'justify-start pl-8 pr-6 py-6' : 'justify-center p-4'}`}>
             <img 
-              src={sidebarOpen ? (settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL) : (settings.faviconUrl || settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL)} 
+              src={sidebarOpen ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.faviconUrl || settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)} 
               alt="Logo" 
-              className={`transition-all duration-300 ${sidebarOpen ? 'h-8 w-auto max-w-full' : 'h-8 w-8 object-contain'} ${
-                !(sidebarOpen ? (settings.darkLogoUrl || settings.lightLogoUrl) : (settings.faviconUrl || settings.darkLogoUrl || settings.lightLogoUrl))
+              className={`transition-all duration-300 ${sidebarOpen ? 'h-11 w-auto max-w-full' : 'h-8 w-8 object-contain'} ${
+                !(sidebarOpen ? settings.lightLogoUrl : (settings.faviconUrl || settings.lightLogoUrl))
                   ? 'brightness-0 invert'
                   : ''
               }`} 
@@ -178,6 +178,9 @@ export const AdminDashboard: React.FC = () => {
                   <Search size={16} className="text-gray-400 dark:text-gray-500" />
                   <input 
                       type="text" 
+                      id="admin-search"
+                      name="adminSearch"
+                      autocomplete="off"
                       placeholder="Quick search..." 
                       className="bg-transparent border-none focus:ring-0 text-sm ml-2 w-48 text-gray-700 dark:text-gray-200 placeholder-gray-400"
                   />

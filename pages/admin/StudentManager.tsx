@@ -94,19 +94,19 @@ export const StudentManager: React.FC = () => {
                   <h4 className="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">Personal Info</h4>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">First Name</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.firstName || ''} onChange={e => setFormData({...formData, firstName: e.target.value})} required />
+                      <input id="student-first-name" name="firstName" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.firstName || ''} onChange={e => setFormData({...formData, firstName: e.target.value})} required />
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.lastName || ''} onChange={e => setFormData({...formData, lastName: e.target.value})} required />
+                      <input id="student-last-name" name="lastName" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.lastName || ''} onChange={e => setFormData({...formData, lastName: e.target.value})} required />
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                      <input id="student-email" name="email" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} required />
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Phone</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} required />
+                      <input id="student-phone" name="phone" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} required />
                   </div>
               </div>
 
@@ -114,22 +114,22 @@ export const StudentManager: React.FC = () => {
                   <h4 className="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">Enrollment Data</h4>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">USI (Optional)</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.usi || ''} onChange={e => setFormData({...formData, usi: e.target.value})} placeholder="10-digit USI" />
+                      <input id="student-usi" name="usi" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.usi || ''} onChange={e => setFormData({...formData, usi: e.target.value})} placeholder="10-digit USI" />
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">WINDA ID (Optional)</label>
-                      <input className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.windaId || ''} onChange={e => setFormData({...formData, windaId: e.target.value})} />
+                      <input id="student-winda-id" name="windaId" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.windaId || ''} onChange={e => setFormData({...formData, windaId: e.target.value})} />
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Enrolled Course</label>
-                      <select className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.enrolledCourseId || ''} onChange={e => setFormData({...formData, enrolledCourseId: e.target.value})} required>
+                      <select id="student-enrolled-course" name="enrolledCourseId" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.enrolledCourseId || ''} onChange={e => setFormData({...formData, enrolledCourseId: e.target.value})} required>
                           <option value="">Select Course...</option>
                           {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                       </select>
                   </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Status</label>
-                      <select className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.status || 'Active'} onChange={e => setFormData({...formData, status: e.target.value as any})}>
+                      <select id="student-status" name="status" autocomplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.status || 'Active'} onChange={e => setFormData({...formData, status: e.target.value as any})}>
                           <option>Active</option>
                           <option>Pending</option>
                           <option>Completed</option>
@@ -154,6 +154,9 @@ export const StudentManager: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input 
                 type="text" 
+                id="student-search"
+                name="studentSearch"
+                autocomplete="off"
                 placeholder="Search students..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
@@ -162,6 +165,9 @@ export const StudentManager: React.FC = () => {
             </div>
             <div className="flex gap-3 w-full md:w-auto">
               <select 
+                id="student-status-filter"
+                name="statusFilter"
+                autocomplete="off"
                 className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 font-bold text-gray-600 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-500 transition-all flex-1 md:flex-none"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}

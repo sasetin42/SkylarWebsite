@@ -82,6 +82,29 @@ const ThemeEngine: React.FC = () => {
       if (settings.brandColor) {
         activeTheme.colorPrimary = settings.brandColor;
       }
+      if (settings.accentColor) {
+        activeTheme.colorAccent = settings.accentColor;
+      }
+      if (settings.borderRadius !== undefined) {
+        activeTheme.borderRadius = settings.borderRadius;
+      }
+
+      // Apply Font Customization
+      if (settings.fontFamily) {
+        if (settings.fontFamily === 'Outfit') {
+          activeTheme.fontSans = "'Outfit', sans-serif";
+          activeTheme.fontHeading = "'Outfit', sans-serif";
+        } else if (settings.fontFamily === 'Poppins') {
+          activeTheme.fontSans = "'Poppins', sans-serif";
+          activeTheme.fontHeading = "'Poppins', sans-serif";
+        } else if (settings.fontFamily === 'Montserrat') {
+          activeTheme.fontSans = "'Montserrat', sans-serif";
+          activeTheme.fontHeading = "'Montserrat', sans-serif";
+        } else if (settings.fontFamily === 'System') {
+          activeTheme.fontSans = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+          activeTheme.fontHeading = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        }
+      }
 
       // 4. Apply to DOM
       const root = document.documentElement;
@@ -93,6 +116,15 @@ const ThemeEngine: React.FC = () => {
       root.style.setProperty('--font-heading', activeTheme.fontHeading);
       root.style.setProperty('--radius-base', `${activeTheme.borderRadius}px`);
       root.style.setProperty('--font-size-base', `${activeTheme.baseFontSize}px`);
+
+      // Apply custom user CSS
+      let styleTag = document.getElementById('dynamic-css-overrides') as HTMLStyleElement;
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'dynamic-css-overrides';
+        document.head.appendChild(styleTag);
+      }
+      styleTag.innerHTML = settings.customCss || '';
 
       // 5. Update Favicon dynamically (completely replace elements to force browser tab refresh)
       const existingIcons = document.querySelectorAll("link[rel*='icon']");

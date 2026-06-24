@@ -134,9 +134,9 @@ export const Navbar: React.FC = () => {
           <nav className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2 group z-50">
               <img
-                src={isSolid ? (settings.darkLogoUrl || LOGO_URL) : (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)}
+                src={(!isSolid || isDarkMode) ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.darkLogoUrl || LOGO_URL)}
                 alt="Skylar Education"
-                className={`h-5.5 md:h-[26px] w-auto transition-all duration-300 ${isSolid && !settings.darkLogoUrl ? 'brightness-0' : ''}`}
+                className={`h-10 md:h-[42px] -ml-2 md:-ml-4 w-auto transition-all duration-300 ${(!isSolid || isDarkMode) && !settings.lightLogoUrl ? 'brightness-0 invert' : (isSolid && !isDarkMode && !settings.darkLogoUrl ? 'brightness-0' : '')}`}
               />
             </Link>
 

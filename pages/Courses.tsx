@@ -23,11 +23,9 @@ const DEFAULT_SLIDES = [
 ];
 
 // Sort options
-type SortMode = 'popular' | 'price_asc' | 'price_desc' | 'az';
+type SortMode = 'popular' | 'az';
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'popular', label: 'Most Popular' },
-  { value: 'price_asc', label: 'Price: Low → High' },
-  { value: 'price_desc', label: 'Price: High → Low' },
   { value: 'az', label: 'A → Z' },
 ];
 
@@ -152,7 +150,6 @@ export const Courses: React.FC = () => {
   // Filters
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
   const [filterDuration, setFilterDuration] = useState<string>('All');
-  const [filterPriceRange, setFilterPriceRange] = useState<string>('All');
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -224,12 +221,7 @@ export const Courses: React.FC = () => {
     { value: 'Long', label: 'Long (> 5 days)', icon: <Clock size={14} className="text-indigo-500" /> },
   ];
 
-  const priceOptions = [
-    { value: 'All', label: 'Any Price', icon: <DollarSign size={14} className="text-gray-400" /> },
-    { value: 'Low', label: 'Under $500', icon: <DollarSign size={14} className="text-emerald-500" /> },
-    { value: 'Medium', label: '$500 – $1,500', icon: <DollarSign size={14} className="text-blue-500" /> },
-    { value: 'High', label: 'Over $1,500', icon: <DollarSign size={14} className="text-indigo-500" /> },
-  ];
+
 
   const filteredCourses = courses
     .filter(course => {
@@ -239,32 +231,25 @@ export const Courses: React.FC = () => {
                             (course.prerequisites && course.prerequisites.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())));
       const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
-      let matchesPrice = true;
-      if (filterPriceRange === 'Low') matchesPrice = course.price < 500;
-      if (filterPriceRange === 'Medium') matchesPrice = course.price >= 500 && course.price <= 1500;
-      if (filterPriceRange === 'High') matchesPrice = course.price > 1500;
       let matchesDuration = true;
       const d = course.duration?.toLowerCase() || '';
       if (filterDuration === 'Short') matchesDuration = d.includes('1 day') || d.includes('2 days') || d.includes('hour');
       if (filterDuration === 'Medium') matchesDuration = d.includes('3 days') || d.includes('4 days') || d.includes('5 days') || d.includes('week');
       if (filterDuration === 'Long') matchesDuration = d.includes('month') || (d.includes('days') && parseInt(d) > 5);
-      return matchesSearch && matchesCategory && matchesLevel && matchesPrice && matchesDuration;
+      return matchesSearch && matchesCategory && matchesLevel && matchesDuration;
     })
     .sort((a, b) => {
-      if (sortMode === 'price_asc') return a.price - b.price;
-      if (sortMode === 'price_desc') return b.price - a.price;
       if (sortMode === 'az') return a.title.localeCompare(b.title);
       return 0; // popular = default order
     });
 
-  const hasActiveFilters = selectedCategory !== 'All' || selectedLevel !== 'All' || filterDuration !== 'All' || filterPriceRange !== 'All' || searchTerm !== '';
+  const hasActiveFilters = selectedCategory !== 'All' || selectedLevel !== 'All' || filterDuration !== 'All' || searchTerm !== '';
 
   const clearAll = () => {
     setSearchTerm('');
     setSelectedCategory('All');
     setSelectedLevel('All');
     setFilterDuration('All');
-    setFilterPriceRange('All');
   };
 
   // Stats derived from course data
@@ -372,6 +357,9 @@ export const Courses: React.FC = () => {
             <div className="relative w-full lg:w-80 flex-shrink-0">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
+                id="courses-search"
+                name="courseSearch"
+                autocomplete="off"
                 type="text"
                 placeholder="Search courses…"
                 value={searchTerm}
@@ -463,12 +451,7 @@ export const Courses: React.FC = () => {
                 options={durationOptions}
                 onChange={setFilterDuration}
               />
-              <CustomDropdown
-                label="Price Range"
-                value={filterPriceRange}
-                options={priceOptions}
-                onChange={setFilterPriceRange}
-              />
+
               {hasActiveFilters && (
                 <button onClick={clearAll} className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 ml-auto border border-red-200 hover:border-red-300 px-5 py-3 rounded-xl transition-all cursor-pointer">
                   <X size={14} /> Clear All

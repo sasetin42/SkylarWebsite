@@ -114,10 +114,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 <Clock className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
                 <span>{course.duration}</span>
              </div>
-             <div className="font-bold text-primary flex items-center text-base" aria-label={`Price: ${course.price} dollars`}>
-                <DollarSign className="w-3.5 h-3.5" />
-                <span>{course.price}</span>
-             </div>
           </div>
           
           <div className="flex items-center justify-between gap-2 pt-2">
@@ -127,24 +123,18 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 </Button>
              </Link>
              <Button 
-                onClick={handleAddToCart}
-                disabled={addedToCart}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!addedToCart) {
+                    addToCart(course.id);
+                  }
+                  window.location.href = '/checkout';
+                }}
                 size="sm"
-                className={`flex-1 transition-all shadow-none flex items-center justify-center gap-1.5 text-xs font-bold rounded-[6px] py-2.5 ${
-                    addedToCart 
-                    ? 'bg-green-600 hover:bg-green-700 text-white border-transparent cursor-default ring-2 ring-green-600 ring-offset-1' 
-                    : 'bg-secondary text-white hover:bg-primary'
-                }`}
+                className="flex-1 transition-all shadow-none flex items-center justify-center gap-1.5 text-xs font-bold rounded-[6px] py-2.5 bg-secondary text-white hover:bg-primary uppercase tracking-wider"
              >
-                {addedToCart ? (
-                    <>
-                        <Check size={14} /> Added
-                    </>
-                ) : (
-                    <>
-                        <ShoppingCart size={14} /> Add
-                    </>
-                )}
+                REGISTER NOW!
              </Button>
           </div>
         </div>

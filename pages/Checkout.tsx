@@ -190,54 +190,69 @@ export const Checkout: React.FC = () => {
                     <h2 className="text-xl font-bold text-secondary mb-6 border-b border-gray-100 pb-4">Student Details</h2>
                     <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                             <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                             <input 
-                                required
-                                type="text" 
-                                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                value={formData.firstName}
-                                onChange={e => setFormData({...formData, firstName: e.target.value})}
-                             />
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
+                              <input 
+                                 required
+                                 id="checkout-firstname"
+                                 name="firstName"
+                                 autocomplete="given-name"
+                                 type="text" 
+                                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                 value={formData.firstName}
+                                 onChange={e => setFormData({...formData, firstName: e.target.value})}
+                              />
                           </div>
-                          <div>
-                             <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                             <input 
-                                required
-                                type="text" 
-                                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                value={formData.lastName}
-                                onChange={e => setFormData({...formData, lastName: e.target.value})}
-                             />
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                              <input 
+                                 required
+                                 id="checkout-lastname"
+                                 name="lastName"
+                                 autocomplete="family-name"
+                                 type="text" 
+                                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                 value={formData.lastName}
+                                 onChange={e => setFormData({...formData, lastName: e.target.value})}
+                              />
                           </div>
                        </div>
                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                             <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                             <input 
-                                required
-                                type="email" 
-                                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                value={formData.email}
-                                onChange={e => setFormData({...formData, email: e.target.value})}
-                             />
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                              <input 
+                                 required
+                                 id="checkout-email"
+                                 name="email"
+                                 autocomplete="email"
+                                 type="email" 
+                                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                 value={formData.email}
+                                 onChange={e => setFormData({...formData, email: e.target.value})}
+                              />
                           </div>
-                          <div>
-                             <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
-                             <input 
-                                required
-                                type="tel" 
-                                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                value={formData.phone}
-                                onChange={e => setFormData({...formData, phone: e.target.value})}
-                             />
+                           <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                              <input 
+                                 required
+                                 id="checkout-phone"
+                                 name="phone"
+                                 autocomplete="tel"
+                                 type="tel" 
+                                 className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                 value={formData.phone}
+                                 onChange={e => setFormData({...formData, phone: e.target.value})}
+                              />
                           </div>
                        </div>
                        <div>
                           <label className="block text-sm font-bold text-gray-700 mb-2">Unique Student Identifier (USI) <span className="font-normal text-gray-400">(Optional)</span></label>
-                          <input 
-                             type="text" 
-                             placeholder="Ex: 3BN88A992"
+                           <input 
+                              id="checkout-usi"
+                              name="usi"
+                              autocomplete="off"
+                              type="text" 
+                              placeholder="Ex: 3BN88A992"
                              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase"
                              value={formData.usi}
                              onChange={e => setFormData({...formData, usi: e.target.value})}
@@ -255,15 +270,17 @@ export const Checkout: React.FC = () => {
                     <h2 className="text-xl font-bold text-secondary mb-6">Payment Method</h2>
                     
                     <div className="space-y-4 mb-8">
-                       <label className="flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
-                          <input 
-                             type="radio" 
-                             name="payment" 
-                             value="credit_card"
-                             checked={formData.paymentMethod === 'credit_card'}
-                             onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                             className="w-5 h-5 text-primary focus:ring-primary"
-                          />
+                        <label className="flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                           <input 
+                              type="radio" 
+                              name="payment" 
+                              id="checkout-payment-1"
+                              autocomplete="off"
+                              value="credit_card"
+                              checked={formData.paymentMethod === 'credit_card'}
+                              onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
+                              className="w-5 h-5 text-primary focus:ring-primary"
+                           />
                           <div className="flex-1">
                              <span className="font-bold text-gray-800 block">Credit Card</span>
                              <span className="text-xs text-gray-500">Secure payment via Stripe</span>
@@ -271,15 +288,17 @@ export const Checkout: React.FC = () => {
                           <CreditCard className="text-gray-400" />
                        </label>
 
-                       <label className="flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
-                          <input 
-                             type="radio" 
-                             name="payment" 
-                             value="invoice"
-                             checked={formData.paymentMethod === 'invoice'}
-                             onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                             className="w-5 h-5 text-primary focus:ring-primary"
-                          />
+                        <label className="flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                           <input 
+                              type="radio" 
+                              name="payment" 
+                              id="checkout-payment-2"
+                              autocomplete="off"
+                              value="invoice"
+                              checked={formData.paymentMethod === 'invoice'}
+                              onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
+                              className="w-5 h-5 text-primary focus:ring-primary"
+                           />
                           <div className="flex-1">
                              <span className="font-bold text-gray-800 block">Send Invoice</span>
                              <span className="text-xs text-gray-500">Net 14 days for companies</span>

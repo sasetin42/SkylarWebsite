@@ -478,6 +478,9 @@ export const CourseManager: React.FC = () => {
             <div key={idx} className="flex gap-2">
               <input
                 type="text"
+                id={`course-list-item-${idx}`}
+                name={`listItem-${idx}`}
+                autocomplete="off"
                 value={item}
                 className="flex-grow p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white"
                 onChange={(e) => {
@@ -860,6 +863,9 @@ export const CourseManager: React.FC = () => {
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">Custom Intake Text</label>
                 <input
                   type="text"
+                  id="course-custom-intake"
+                  name="customIntake"
+                  autocomplete="off"
                   placeholder="e.g. 22 - 25 June 2026, 09:00 AM - 05:00 PM"
                   value={rawIntakeText}
                   onChange={(e) => setRawIntakeText(e.target.value)}
@@ -892,6 +898,9 @@ export const CourseManager: React.FC = () => {
                     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">{dateMode === 'range' ? 'Start Date' : 'Date'}</label>
                     <input
                       type="date"
+                      id="course-start-date"
+                      name="startDate"
+                      autocomplete="off"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -902,6 +911,9 @@ export const CourseManager: React.FC = () => {
                       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">End Date</label>
                       <input
                         type="date"
+                        id="course-end-date"
+                        name="endDate"
+                        autocomplete="off"
                         value={endDate}
                         min={startDate}
                         onChange={(e) => setEndDate(e.target.value)}
@@ -916,6 +928,9 @@ export const CourseManager: React.FC = () => {
                   <div>
                     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Shift / Time Preset</label>
                     <select
+                      id="course-time-preset"
+                      name="timePreset"
+                      autocomplete="off"
                       value={timePreset}
                       onChange={(e) => setTimePreset(e.target.value)}
                       className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -933,6 +948,9 @@ export const CourseManager: React.FC = () => {
                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
                         <input
                           type="time"
+                          id="course-start-time"
+                          name="startTime"
+                          autocomplete="off"
                           value={startTime}
                           onChange={(e) => setStartTime(e.target.value)}
                           className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -942,6 +960,9 @@ export const CourseManager: React.FC = () => {
                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">End Time</label>
                         <input
                           type="time"
+                          id="course-end-time"
+                          name="endTime"
+                          autocomplete="off"
                           value={endTime}
                           onChange={(e) => setEndTime(e.target.value)}
                           className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -999,6 +1020,9 @@ export const CourseManager: React.FC = () => {
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Course Title</label>
               <input 
                 type="text" 
+                id="course-title"
+                name="courseTitle"
+                autocomplete="off"
                 required
                 className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
                 value={formData.title || ''}
@@ -1008,6 +1032,9 @@ export const CourseManager: React.FC = () => {
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Category</label>
               <select 
+                id="course-category"
+                name="courseCategory"
+                autocomplete="off"
                 className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value as CourseCategory})}
@@ -1019,6 +1046,9 @@ export const CourseManager: React.FC = () => {
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Price ($)</label>
               <input 
                 type="number" 
+                id="course-price"
+                name="coursePrice"
+                autocomplete="off"
                 required
                 className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
                 value={formData.price || 0}
@@ -1029,6 +1059,9 @@ export const CourseManager: React.FC = () => {
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duration</label>
               <input 
                 type="text" 
+                id="course-duration"
+                name="courseDuration"
+                autocomplete="off"
                 required
                 placeholder="e.g. 5 Days"
                 className={`w-full p-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm ${durationError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'}`}
@@ -1070,7 +1103,7 @@ export const CourseManager: React.FC = () => {
 
                   <div className="flex-1 w-full">
                       <label className={`cursor-pointer flex flex-col items-center justify-center w-full h-32 p-4 border-2 border-dashed rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all group ${imageError ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'}`}>
-                          <input type="file" className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleImageUpload} />
+                          <input type="file" id="course-image" name="courseImage" autocomplete="off" className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleImageUpload} />
                           <div className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
                             <UploadCloud size={20} className="text-primary dark:text-blue-400" />
                           </div>
@@ -1099,6 +1132,9 @@ export const CourseManager: React.FC = () => {
                   </span>
                 </div>
                 <textarea 
+                  id="course-short-desc"
+                  name="courseShortDescription"
+                  autocomplete="off"
                   rows={4}
                   placeholder="Enter a brief, compelling summary for course cards and search outcomes..."
                   className="w-full h-[180px] p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm resize-none"
@@ -1284,6 +1320,9 @@ export const CourseManager: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Course Code</label>
                   <input 
                     type="text" 
+                    id="course-code"
+                    name="courseCode"
+                    autocomplete="off"
                     placeholder="e.g. GWO-ART-I"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.code || ''}
@@ -1293,6 +1332,9 @@ export const CourseManager: React.FC = () => {
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Level / Availability</label>
                   <select 
+                    id="course-level"
+                    name="courseLevel"
+                    autocomplete="off"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.level || 'Available'}
                     onChange={e => setFormData({...formData, level: e.target.value})}
@@ -1307,6 +1349,9 @@ export const CourseManager: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Official Certification Awarded</label>
                   <input 
                     type="text" 
+                    id="course-certification"
+                    name="courseCertification"
+                    autocomplete="off"
                     placeholder="e.g. GWO Advanced Rescue Training Certificate"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.certificationName || ''}
@@ -1317,6 +1362,9 @@ export const CourseManager: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Certification Validity (Months)</label>
                   <input 
                     type="number" 
+                    id="course-validity"
+                    name="courseValidity"
+                    autocomplete="off"
                     placeholder="e.g. 24"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.validityMonths || ''}
@@ -1327,6 +1375,8 @@ export const CourseManager: React.FC = () => {
                   <input 
                     type="checkbox"
                     id="isGwo"
+                    name="isGwo"
+                    autocomplete="off"
                     className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300 dark:bg-gray-950"
                     checked={!!formData.isGwo}
                     onChange={e => setFormData({...formData, isGwo: e.target.checked})}
@@ -1337,6 +1387,9 @@ export const CourseManager: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">RTO Code</label>
                   <input 
                     type="text" 
+                    id="course-rto-code"
+                    name="courseRtoCode"
+                    autocomplete="off"
                     placeholder="e.g. RTO 21647"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.rtoCode || ''}
@@ -1346,6 +1399,9 @@ export const CourseManager: React.FC = () => {
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Delivery Mode</label>
                   <select 
+                    id="course-delivery-mode"
+                    name="courseDeliveryMode"
+                    autocomplete="off"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.deliveryMode || 'Face-to-Face'}
                     onChange={e => setFormData({...formData, deliveryMode: e.target.value})}
@@ -1360,6 +1416,9 @@ export const CourseManager: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Required Deposit Amount ($)</label>
                   <input 
                     type="number" 
+                    id="course-deposit"
+                    name="courseDeposit"
+                    autocomplete="off"
                     placeholder="e.g. 1500"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.depositAmount || ''}
@@ -1484,6 +1543,9 @@ export const CourseManager: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Image Prompt</label>
                                 <textarea 
+                                    id="course-ai-prompt"
+                                    name="aiPrompt"
+                                    autocomplete="off"
                                     rows={3}
                                     placeholder="Describe the image you want (e.g. 'Technicians working on a wind turbine at sunset')"
                                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-accent transition-all dark:text-white"
@@ -1495,6 +1557,9 @@ export const CourseManager: React.FC = () => {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Aspect Ratio</label>
                                     <select 
+                                        id="course-ai-aspect-ratio"
+                                        name="aiAspectRatio"
+                                        autocomplete="off"
                                         className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white"
                                         value={genAspectRatio}
                                         onChange={e => setGenAspectRatio(e.target.value)}
@@ -1508,6 +1573,9 @@ export const CourseManager: React.FC = () => {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Quality</label>
                                     <select 
+                                        id="course-ai-quality"
+                                        name="aiQuality"
+                                        autocomplete="off"
                                         className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white"
                                         value={genSize}
                                         onChange={e => setGenSize(e.target.value)}
@@ -1563,6 +1631,9 @@ export const CourseManager: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input 
                         type="text" 
+                        id="course-search"
+                        name="courseSearch"
+                        autocomplete="off"
                         placeholder="Search courses..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -1574,6 +1645,9 @@ export const CourseManager: React.FC = () => {
             {/* Filters */}
             <div className="flex flex-wrap gap-2 w-full xl:w-auto">
                 <select 
+                    id="course-filter-category"
+                    name="filterCategory"
+                    autocomplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
@@ -1583,6 +1657,9 @@ export const CourseManager: React.FC = () => {
                 </select>
                 
                 <select 
+                    id="course-filter-price"
+                    name="filterPrice"
+                    autocomplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterPrice}
                     onChange={(e) => setFilterPrice(e.target.value)}
@@ -1594,6 +1671,9 @@ export const CourseManager: React.FC = () => {
                 </select>
 
                 <select 
+                    id="course-filter-duration"
+                    name="filterDuration"
+                    autocomplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterDuration}
                     onChange={(e) => setFilterDuration(e.target.value)}
@@ -1614,6 +1694,9 @@ export const CourseManager: React.FC = () => {
                         <th className="px-6 py-4 w-10">
                             <input 
                                 type="checkbox" 
+                                id="course-select-all"
+                                name="selectAll"
+                                autocomplete="off"
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                                 checked={selectedIds.length === filteredCourses.length && filteredCourses.length > 0}
                                 onChange={handleSelectAll}
@@ -1632,6 +1715,9 @@ export const CourseManager: React.FC = () => {
                             <td className="px-6 py-4">
                                 <input 
                                     type="checkbox" 
+                                    id={`course-row-${course.id}`}
+                                    name="selectedCourse"
+                                    autocomplete="off"
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                     checked={selectedIds.includes(course.id)}
                                     onChange={() => handleSelectRow(course.id)}
