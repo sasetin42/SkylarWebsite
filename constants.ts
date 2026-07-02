@@ -1,4 +1,14 @@
-import { Course, CourseCategory, Location, Testimonial, BlogPost } from './types';
+import { Course, Category, Location, Testimonial, BlogPost } from './types';
+
+export const SEED_CATEGORIES: Category[] = [
+  { id: 'cat_gwo', name: 'Global Wind Organisation', description: 'GWO certified training courses.' },
+  { id: 'cat_construction', name: 'Construction & High Risk Work', description: 'Accredited construction and high risk work courses.' },
+  { id: 'cat_rescue', name: 'Specialised Rescue', description: 'Advanced rescue techniques.' },
+  { id: 'cat_safety', name: 'Workplace Safety & Emergency Response', description: 'Safety and emergency response protocols.' },
+  { id: 'cat_first_aid', name: 'First Aid', description: 'First aid and CPR certifications.' },
+  { id: 'cat_worksafe', name: 'WorkSafe-Approved Courses', description: 'WorkSafe approved safety training.' },
+  { id: 'cat_electrical', name: 'Electrical & Utilities', description: 'Electrical safety and utilities training.' }
+];
 
 export const LOGO_URL = "/skylar-logo.svg";
 
@@ -6,7 +16,7 @@ export const COURSES: Course[] = ([
   {
     id: 'gwo-art-initial',
     title: 'GWO Combined Advanced Rescue Training (ART) Initial',
-    category: CourseCategory.GWO,
+    category: 'Global Wind Organisation',
     shortDescription: 'Discover the essential skills needed for advanced rescue operations in the wind industry.',
     fullDescription: 'Discover the essential skills needed for advanced rescue operations in the wind industry with our comprehensive GWO Combined Advanced Rescue Training Initial. Learn from experienced trainers in realistic scenarios to ensure your readiness for any emergency.',
     price: 1890,
@@ -40,7 +50,7 @@ export const COURSES: Course[] = ([
   {
     id: 'gwo-art-refresher',
     title: 'GWO Combined Advanced Rescue Training (ART) Refresher',
-    category: CourseCategory.GWO,
+    category: 'Global Wind Organisation',
     shortDescription: 'Refresh your critical rescue skills with the GWO Combined Advanced Rescue Training (ART) Refresher course.',
     fullDescription: 'Refresh your critical rescue skills with the GWO Combined Advanced Rescue Training (ART) Refresher course, specifically designed for wind industry personnel. This intensive program ensures you remain competent in executing advanced rescues in challenging environments.',
     price: 1890,
@@ -71,7 +81,7 @@ export const COURSES: Course[] = ([
   {
     id: 'gwo-bst-initial',
     title: 'GWO Basic Safety Training (BST) Initial',
-    category: CourseCategory.GWO,
+    category: 'Global Wind Organisation',
     shortDescription: 'Essential Safety Skills for the Wind Industry',
     fullDescription: 'The Global Wind Organisation Basic Safety Training (BST) Initial is a comprehensive training program designed specifically for individuals working in the global wind energy industry. It encompasses a series of modules aimed at providing essential safety knowledge and skills necessary for working safely and effectively in various roles within the wind sector, particularly those involved in wind turbine installation, maintenance, and other related activities.',
     price: 2205,
@@ -125,7 +135,7 @@ export const COURSES: Course[] = ([
   {
     id: 'gwo-bst-refresher',
     title: 'GWO Basic Safety Training (BST) Refresher',
-    category: CourseCategory.GWO,
+    category: 'Global Wind Organisation',
     shortDescription: 'Keep your wind industry safety skills sharp with Skylar Education’s GWO BST Refresher course.',
     fullDescription: 'Keep your wind industry safety skills sharp with Skylar Education’s GWO BST Refresher course. Update your certification and stay compliant with industry standards.',
     price: 1690,
@@ -154,7 +164,7 @@ export const COURSES: Course[] = ([
   {
     id: 'gwo-btt',
     title: 'GWO Basic Technical Training (BTT)',
-    category: CourseCategory.GWO,
+    category: 'Global Wind Organisation',
     shortDescription: 'Comprehensive technical training program for wind energy industry.',
     fullDescription: 'The Global Wind Organisation Basic Technical Training (BTT).',
     price: 3050,
@@ -169,7 +179,7 @@ export const COURSES: Course[] = ([
   {
     id: 'c-confined-spaces',
     title: 'Enter and Work in Confined Spaces',
-    category: CourseCategory.CONSTRUCTION,
+    category: 'Construction & High Risk Work',
     shortDescription: 'Skills and knowledge required to safely enter and work in confined spaces.',
     fullDescription: 'This unit of competency covers the skills and knowledge required to safely enter and work in confined spaces.',
     price: 0,
@@ -181,7 +191,7 @@ export const COURSES: Course[] = ([
   {
     id: 'c-work-at-heights',
     title: 'Work Safely at Heights',
-    category: CourseCategory.CONSTRUCTION,
+    category: 'Construction & High Risk Work',
     shortDescription: 'Work Safely at Heights course covering skills to work safely at heights.',
     fullDescription: 'This course covers the skills and knowledge required to work safely at heights in various work environments.',
     price: 0,
@@ -193,7 +203,7 @@ export const COURSES: Course[] = ([
   {
     id: 's-fire-extinguisher',
     title: 'Fire Extinguisher Training',
-    category: CourseCategory.SAFETY,
+    category: 'Workplace Safety & Emergency Response',
     shortDescription: 'Inspect, test, and maintain fire extinguishers and fire blankets.',
     fullDescription: 'Provides participants with the skills and knowledge required to inspect, test, and maintain fire extinguishers.',
     price: 0,
@@ -205,7 +215,7 @@ export const COURSES: Course[] = ([
   {
     id: 'fa-provide-first-aid',
     title: 'Provide First Aid',
-    category: CourseCategory.FIRST_AID,
+    category: 'First Aid',
     shortDescription: 'Equips participants with knowledge and skills for first aid response.',
     fullDescription: 'Designed to equip participants with the knowledge and skills required to provide a first aid response to a casualty.',
     price: 0,

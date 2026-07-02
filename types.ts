@@ -2,7 +2,8 @@
 export interface Course {
   id: string;
   title: string;
-  category: CourseCategory;
+  category: string;
+  subCategory?: string;
   shortDescription: string;
   fullDescription: string;
   price: number;
@@ -41,14 +42,11 @@ export interface Course {
   paymentOptions?: string;
 }
 
-export enum CourseCategory {
-  GWO = 'Global Wind Organisation',
-  CONSTRUCTION = 'Construction & High Risk Work',
-  RESCUE = 'Specialised Rescue',
-  SAFETY = 'Workplace Safety & Emergency Response',
-  FIRST_AID = 'First Aid',
-  WORKSAFE = 'WorkSafe-Approved Courses',
-  ELECTRICAL = 'Electrical & Utilities',
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  parentId?: string;
 }
 
 export interface Testimonial {
@@ -129,7 +127,7 @@ export interface Trainer {
   firstName: string;
   lastName: string;
   email: string;
-  specialties: CourseCategory[];
+  specialties: string[];
   qualifications: string[]; // e.g. TAE40116
   isActive: boolean;
 }

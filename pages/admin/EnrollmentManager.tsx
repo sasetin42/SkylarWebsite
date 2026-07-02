@@ -102,7 +102,7 @@ export const EnrollmentManager: React.FC = () => {
                         type="text" 
                         id="enroll-search"
                         name="enrollSearch"
-                        autocomplete="off"
+                        autoComplete="off"
                         placeholder="Search applicants..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
@@ -242,7 +242,7 @@ export const EnrollmentManager: React.FC = () => {
                                         <select 
                                             id="enroll-section"
                                             name="enrollSection"
-                                            autocomplete="off"
+                                            autoComplete="off"
                                             className="w-full p-2 text-sm border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                             value={assignSectionId}
                                             onChange={(e) => setAssignSectionId(e.target.value)}

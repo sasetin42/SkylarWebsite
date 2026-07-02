@@ -366,7 +366,7 @@ export const LocationDetail: React.FC = () => {
                         <input 
                           id="inquiry-name"
                           name="name"
-                          autocomplete="name"
+                          autoComplete="name"
                           type="text" 
                           required
                           value={inquiryName}
@@ -380,7 +380,7 @@ export const LocationDetail: React.FC = () => {
                         <input 
                           id="inquiry-email"
                           name="email"
-                          autocomplete="email"
+                          autoComplete="email"
                           type="email" 
                           required
                           value={inquiryEmail}
@@ -397,7 +397,7 @@ export const LocationDetail: React.FC = () => {
                         <select 
                           id="inquiry-reason"
                           name="reason"
-                          autocomplete="off"
+                          autoComplete="off"
                           value={inquirySubject}
                           onChange={(e) => setInquirySubject(e.target.value)}
                           className="w-full bg-slate-800 border border-white/10 text-white rounded-xl py-3 px-4 text-sm focus:border-accent outline-none transition-all"
@@ -420,7 +420,7 @@ export const LocationDetail: React.FC = () => {
                       <textarea 
                         id="inquiry-message"
                         name="message"
-                        autocomplete="off"
+                        autoComplete="off"
                         rows={3} 
                         required
                         value={inquiryMessage}

@@ -39,6 +39,7 @@ import { EnrollmentManager } from './pages/admin/EnrollmentManager';
 import { FinanceManager } from './pages/admin/FinanceManager'; // New
 import { SectionManager } from './pages/admin/SectionManager'; // New
 import { SupportManager } from './pages/admin/SupportManager'; // New
+import { CategoryManager } from './pages/admin/CategoryManager'; // New
 import { ScrollToTop } from './components/ScrollToTop';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
@@ -89,22 +90,9 @@ const ThemeEngine: React.FC = () => {
         activeTheme.borderRadius = settings.borderRadius;
       }
 
-      // Apply Font Customization
-      if (settings.fontFamily) {
-        if (settings.fontFamily === 'Outfit') {
-          activeTheme.fontSans = "'Outfit', sans-serif";
-          activeTheme.fontHeading = "'Outfit', sans-serif";
-        } else if (settings.fontFamily === 'Poppins') {
-          activeTheme.fontSans = "'Poppins', sans-serif";
-          activeTheme.fontHeading = "'Poppins', sans-serif";
-        } else if (settings.fontFamily === 'Montserrat') {
-          activeTheme.fontSans = "'Montserrat', sans-serif";
-          activeTheme.fontHeading = "'Montserrat', sans-serif";
-        } else if (settings.fontFamily === 'System') {
-          activeTheme.fontSans = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-          activeTheme.fontHeading = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-        }
-      }
+      // Force Font Customization to Maven Pro globally
+      activeTheme.fontSans = "'Maven Pro', sans-serif";
+      activeTheme.fontHeading = "'Maven Pro', sans-serif";
 
       // 4. Apply to DOM
       const root = document.documentElement;
@@ -246,15 +234,15 @@ const App: React.FC = () => {
           textAlign: 'center',
           padding: '20px'
         }}>
-          {/* Logo with optional white filter */}
+          {/* Logo with unconditional white filter for dark loading screen */}
           <img
             src={logoSrc}
-            alt="Skylar Education"
+            alt="RidersBUD Safety Solutions"
             style={{
-              height: '56px',
+              height: '96px',
               width: 'auto',
-              marginBottom: '24px',
-              filter: hasCustomLogo ? 'none' : 'brightness(0) invert(1)',
+              marginBottom: '32px',
+              filter: 'brightness(0) invert(1)',
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
             }}
           />
@@ -357,6 +345,7 @@ const App: React.FC = () => {
               <Route path="enrollments" element={<EnrollmentManager />} />
               <Route path="students" element={<StudentManager />} />
               <Route path="courses" element={<CourseManager />} />
+              <Route path="categories" element={<CategoryManager />} />
               <Route path="migration" element={<DataMigration />} />
               <Route path="corporate" element={<CorporateManager />} />
               <Route path="sessions" element={<SessionManager />} />

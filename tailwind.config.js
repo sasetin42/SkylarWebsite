@@ -11,6 +11,10 @@ export default {
     "./types/**/*.{ts,tsx}",
   ],
   theme: {
+    fontFamily: {
+      sans: ['"Maven Pro"', 'sans-serif'],
+      heading: ['"Maven Pro"', 'sans-serif'],
+    },
     extend: {
       colors: {
         primary: {
@@ -46,10 +50,6 @@ export default {
           900: '#0F172A',
           950: '#020617',
         }
-      },
-      fontFamily: {
-        sans: ['var(--font-sans)'],
-        heading: ['var(--font-heading)'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

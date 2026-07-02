@@ -165,7 +165,7 @@ export const Contact: React.FC = () => {
                     <input 
                       id="contact-name"
                       name="name"
-                      autocomplete="name"
+                      autoComplete="name"
                       value={formData.name}
                       onChange={handleChange}
                       type="text" 
@@ -179,7 +179,7 @@ export const Contact: React.FC = () => {
                     <input 
                       id="contact-email"
                       name="email"
-                      autocomplete="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={handleChange}
                       type="email" 
@@ -193,7 +193,7 @@ export const Contact: React.FC = () => {
                     <input 
                       id="contact-mobile"
                       name="mobile"
-                      autocomplete="tel"
+                      autoComplete="tel"
                       value={formData.mobile}
                       onChange={handleChange}
                       type="tel" 
@@ -206,7 +206,7 @@ export const Contact: React.FC = () => {
                     <textarea 
                       id="contact-message"
                       name="message"
-                      autocomplete="off"
+                      autoComplete="off"
                       value={formData.message}
                       onChange={handleChange}
                       required

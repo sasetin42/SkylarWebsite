@@ -112,7 +112,7 @@ export const SupportManager: React.FC = () => {
                                       <textarea
                                           id="support-reply"
                                           name="supportReply"
-                                          autocomplete="off"
+                                          autoComplete="off"
                                           rows={3}
                                           value={replyText}
                                           onChange={(e) => setReplyText(e.target.value)}

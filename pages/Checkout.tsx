@@ -196,7 +196,7 @@ export const Checkout: React.FC = () => {
                                  required
                                  id="checkout-firstname"
                                  name="firstName"
-                                 autocomplete="given-name"
+                                 autoComplete="given-name"
                                  type="text" 
                                  className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                  value={formData.firstName}
@@ -209,7 +209,7 @@ export const Checkout: React.FC = () => {
                                  required
                                  id="checkout-lastname"
                                  name="lastName"
-                                 autocomplete="family-name"
+                                 autoComplete="family-name"
                                  type="text" 
                                  className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                  value={formData.lastName}
@@ -224,7 +224,7 @@ export const Checkout: React.FC = () => {
                                  required
                                  id="checkout-email"
                                  name="email"
-                                 autocomplete="email"
+                                 autoComplete="email"
                                  type="email" 
                                  className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                  value={formData.email}
@@ -237,7 +237,7 @@ export const Checkout: React.FC = () => {
                                  required
                                  id="checkout-phone"
                                  name="phone"
-                                 autocomplete="tel"
+                                 autoComplete="tel"
                                  type="tel" 
                                  className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                  value={formData.phone}
@@ -250,7 +250,7 @@ export const Checkout: React.FC = () => {
                            <input 
                               id="checkout-usi"
                               name="usi"
-                              autocomplete="off"
+                              autoComplete="off"
                               type="text" 
                               placeholder="Ex: 3BN88A992"
                              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase"
@@ -275,7 +275,7 @@ export const Checkout: React.FC = () => {
                               type="radio" 
                               name="payment" 
                               id="checkout-payment-1"
-                              autocomplete="off"
+                              autoComplete="off"
                               value="credit_card"
                               checked={formData.paymentMethod === 'credit_card'}
                               onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
@@ -293,7 +293,7 @@ export const Checkout: React.FC = () => {
                               type="radio" 
                               name="payment" 
                               id="checkout-payment-2"
-                              autocomplete="off"
+                              autoComplete="off"
                               value="invoice"
                               checked={formData.paymentMethod === 'invoice'}
                               onChange={e => setFormData({...formData, paymentMethod: e.target.value})}

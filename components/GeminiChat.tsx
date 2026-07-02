@@ -360,7 +360,7 @@ export const GeminiChat: React.FC = () => {
             <input 
                 id="chat-image-upload"
                 name="chatImage"
-                autocomplete="off"
+                autoComplete="off"
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
@@ -371,7 +371,7 @@ export const GeminiChat: React.FC = () => {
             <input
               id="chat-input"
               name="chatInput"
-              autocomplete="off"
+              autoComplete="off"
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}

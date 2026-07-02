@@ -79,7 +79,7 @@ export const Navbar: React.FC = () => {
   const isSolid = !isHome || isScrolled;
 
   const navBackgroundClass = isSolid
-    ? 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 py-2'
+    ? 'bg-white/95 backdrop-blur-md shadow-md shadow-black/10 py-2'
     : 'bg-transparent py-4';
 
   const linkColorClass = isSolid
@@ -128,15 +128,15 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out h-20 flex items-center ${navBackgroundClass}`}
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out h-[72px] flex items-center ${navBackgroundClass}`}
       >
         <div className="container mx-auto px-4 md:px-8">
           <nav className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2 group z-50">
               <img
                 src={(!isSolid || isDarkMode) ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.darkLogoUrl || LOGO_URL)}
-                alt="Skylar Education"
-                className={`h-10 md:h-[42px] -ml-2 md:-ml-4 w-auto transition-all duration-300 ${(!isSolid || isDarkMode) && !settings.lightLogoUrl ? 'brightness-0 invert' : (isSolid && !isDarkMode && !settings.darkLogoUrl ? 'brightness-0' : '')}`}
+                alt="RidersBUD Safety Solutions"
+                className={`${isSolid ? 'h-10 md:h-[42px]' : 'h-14 md:h-[60px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 ${!isSolid ? 'logo-color-white' : 'logo-color-blue'}`}
               />
             </Link>
 

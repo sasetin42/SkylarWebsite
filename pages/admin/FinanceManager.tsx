@@ -113,7 +113,7 @@ export const FinanceManager: React.FC = () => {
                           <select 
                             id="finance-student"
                             name="financeStudent"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, studentId: e.target.value})}
                             required
@@ -128,7 +128,7 @@ export const FinanceManager: React.FC = () => {
                             type="number" 
                             id="finance-amount"
                             name="financeAmount"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, amount: parseFloat(e.target.value)})}
                             required
@@ -139,7 +139,7 @@ export const FinanceManager: React.FC = () => {
                           <select 
                             id="finance-type"
                             name="financeType"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onChange={e => setNewPayment({...newPayment, type: e.target.value as any})}
                             required

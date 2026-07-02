@@ -11,7 +11,7 @@ import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
 import { InteractiveMap } from '../components/InteractiveMap';
 import { TESTIMONIALS, BLOG_POSTS, LOCATIONS } from '../constants';
-import { getCourses, getPageContent, saveTicket } from '../services/storageService';
+import { getCourses, getPageContent, saveTicket, getCategories } from '../services/storageService';
 import { Course, SitePage } from '../types';
 
 interface FormErrors {
@@ -71,6 +71,8 @@ const Home: React.FC = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'success'>('idle');
   const [imageLoads, setImageLoads] = useState<Record<string, boolean>>({});
+  const [mainCategories, setMainCategories] = useState<{id: string, name: string, image: string, subCategories: any[]}[]>([]);
+  const [selectedCategoryModal, setSelectedCategoryModal] = useState<any>(null);
 
   const fanRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -80,29 +82,74 @@ const Home: React.FC = () => {
     setFeaturedCourses(courses.slice(0, 8));
     const content = getPageContent('home');
     if (content) setPageContent(content);
+
+    // Get top 3 categories dynamically
+    const allCats = getCategories();
+    const parentCats = allCats.filter(c => !c.parentId);
+    const top3 = parentCats.slice(0, 3);
+    
+    const getCatImage = (catName: string, index: number, isSub: boolean = false) => {
+      const courseWithImg = courses.find(c => (isSub ? c.subCategory === catName : c.category === catName) && c.image);
+      if (courseWithImg) return courseWithImg.image;
+      // Wind energy themed images for sub-categories (safety, rescue, technical training scenarios)
+      const subDefaults = [
+        "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // worker at wind turbine base
+        "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800", // safety harness / rope rescue
+        "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=800", // wind turbine close-up blades
+        "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=800", // renewable energy field
+        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm sunset
+        "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800", // offshore wind turbines
+      ];
+      // Wind energy themed images for main categories
+      const parentDefaults = [
+        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm at sunset (BST)
+        "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // wind turbine worker climbing (ART)
+        "/BTT-Image-1024x683.jpg", // Basic Technical Training (BTT) - locally uploaded image
+      ];
+      const defaults = isSub ? subDefaults : parentDefaults;
+      return defaults[index % defaults.length];
+    };
+
+    setMainCategories(top3.map((cat, idx) => {
+      const subs = allCats.filter(c => c.parentId === cat.id);
+      return {
+        id: cat.id,
+        name: cat.name,
+        image: getCatImage(cat.name, idx, false),
+        subCategories: subs.map((s, sIdx) => ({
+          name: s.name,
+          image: getCatImage(s.name, sIdx, true)
+        }))
+      };
+    }));
   }, []);
 
   useEffect(() => {
     const cmsHero = pageContent?.sections.find(s => s.id === 'hero')?.data;
+    
+    // Slide 1: Always use the top-level CMS fields
+    const mainSlide = {
+      id: 1,
+      image: cmsHero?.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+      heading: cmsHero?.heading || "Safety Training Specialists",
+      description: cmsHero?.description || "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
+      buttonText: cmsHero?.buttonText || "View All Courses",
+      buttonLink: cmsHero?.buttonLink || "/courses"
+    };
+
     if (cmsHero?.items && cmsHero.items.length > 0) {
-      setSlides(cmsHero.items.map((item: any, idx: number) => ({
-        id: idx + 1,
-        image: item.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
+      const extraSlides = cmsHero.items.map((item: any, idx: number) => ({
+        id: idx + 2,
+        image: item.image || "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
         heading: item.title || "Safety Training Specialists",
         description: item.description || "",
         buttonText: item.buttonText || "View All Courses",
         buttonLink: item.buttonLink || "/courses"
-      })));
+      }));
+      setSlides([mainSlide, ...extraSlides]);
     } else {
       const defaultSlides = [
-        {
-          id: 1,
-          image: cmsHero?.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
-          heading: cmsHero?.heading || "Safety Training Specialists",
-          description: cmsHero?.description || "Australia's premier provider of GWO, High Risk Work, and Industrial Safety training.",
-          buttonText: cmsHero?.buttonText || "View All Courses",
-          buttonLink: cmsHero?.buttonLink || "/courses"
-        },
+        mainSlide,
         {
           id: 2,
           image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
@@ -286,11 +333,19 @@ const Home: React.FC = () => {
   const stats = pageContent?.sections.find(s => s.id === 'stats')?.data;
   const cta = pageContent?.sections.find(s => s.id === 'cta')?.data;
 
+  const handleCategoryClick = (cat: any) => {
+    if (cat.subCategories && cat.subCategories.length > 0) {
+      setSelectedCategoryModal(cat);
+    } else {
+      navigate(`/courses?category=${encodeURIComponent(cat.name)}`);
+    }
+  };
+
   return (
     <div className="animate-fade-in bg-surface">
       <div className="relative">
         {/* ===== HERO SECTION ===== */}
-        <section className="relative h-[80vh] min-h-[600px] max-h-[850px] flex items-center overflow-hidden group border-b-4 border-accent bg-secondary" aria-label="Hero Slider">
+        <section className="relative h-[90vh] min-h-[700px] max-h-[1000px] flex items-center overflow-hidden group border-b-4 border-accent bg-secondary" aria-label="Hero Slider">
           {/* Sliding Background Layer */}
           <div
             className="absolute inset-0 flex transition-transform duration-1100 ease-in-out will-change-transform"
@@ -309,8 +364,8 @@ const Home: React.FC = () => {
                   onLoad={() => handleImageLoad(`slide-${idx}`)}
                 />
                 {/* Multi-layer overlay for depth and readability */}
-                <div className="absolute inset-0 bg-[#0b1e36]/75 mix-blend-multiply"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36] via-[#0b1e36]/90 to-transparent opacity-95"></div>
+                <div className="absolute inset-0 bg-[#0b1e36]/40 mix-blend-multiply"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e36]/90 via-[#0b1e36]/50 to-transparent opacity-90"></div>
               </div>
             ))}
           </div>
@@ -321,20 +376,28 @@ const Home: React.FC = () => {
               {slides.length > 0 && (
                 <div key={currentSlide} className="space-y-6 md:space-y-8 animate-fade-in-up">
                   {/* Main Heading */}
-                  <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
-                    {slides[currentSlide].heading}
+                  <h1 className="font-heading font-bold text-white mb-6 drop-shadow-xl tracking-tight leading-[1.1]" style={{ fontSize: 'clamp(40px, 6vw, 72px)' }}>
+                    {slides[currentSlide].heading.includes('Global Training') ? (
+                      <>
+                        {slides[currentSlide].heading.split('Global Training')[0]}
+                        <span style={{ color: '#FFC107' }}>Global Training</span>
+                        {slides[currentSlide].heading.split('Global Training')[1]}
+                      </>
+                    ) : (
+                      slides[currentSlide].heading
+                    )}
                   </h1>
 
                   {/* Yellow Accent Divider */}
-                  <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm"></div>
+                  <div className="w-24 h-2 bg-accent mb-6 rounded-full shadow-md"></div>
 
                   {/* Description */}
-                  <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
+                  <p className="text-gray-100 font-medium max-w-3xl leading-relaxed text-lg md:text-xl drop-shadow-md">
                     {slides[currentSlide].description}
                   </p>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 md:gap-5 pt-2 pointer-events-auto">
+                  <div className="flex flex-col sm:flex-row gap-4 md:gap-5 pt-4 pointer-events-auto">
                     <Link to={slides[currentSlide].buttonLink} className="w-full sm:w-auto">
                       <Button
                         variant="secondary"
@@ -401,7 +464,7 @@ const Home: React.FC = () => {
                 <input
                   id="hero-search"
                   name="search"
-                  autocomplete="off"
+                  autoComplete="off"
                   type="text"
                   value={heroSearch}
                   onChange={(e) => {
@@ -785,36 +848,30 @@ const Home: React.FC = () => {
           <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">Specialized Pathways</span>
           <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-12">Explore Our Training Programs</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Global Wind Organization Training */}
-            <Link to="/courses?category=GWO" className="relative group overflow-hidden rounded-2xl aspect-[4/3] md:aspect-[16/10] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-              <img 
-                src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800" 
-                alt="Global Wind Organization Training" 
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6 text-left">
-                <h3 className="text-white font-heading font-bold text-xl md:text-2xl leading-tight mb-2">
-                  Global Wind Organization Training
-                </h3>
-              </div>
-            </Link>
-
-            {/* Other */}
-            <Link to="/courses?category=Other" className="relative group overflow-hidden rounded-2xl aspect-[4/3] md:aspect-[16/10] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-              <img 
-                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800" 
-                alt="Other Training Programs" 
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6 text-left">
-                <h3 className="text-white font-heading font-bold text-xl md:text-2xl leading-tight mb-2">
-                  Other
-                </h3>
-              </div>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            {mainCategories.map((cat, index) => (
+              <button 
+                key={index} 
+                onClick={() => handleCategoryClick(cat)}
+                className="relative group block w-full text-left overflow-hidden rounded-3xl aspect-[4/3] md:aspect-[16/10] shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-transparent hover:border-primary/30"
+              >
+                <img 
+                  src={cat.image} 
+                  alt={cat.name} 
+                  className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent group-hover:from-[#041024]/80 transition-colors duration-500"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  <div className="w-8 h-1 bg-[#FDC70E] mb-4 rounded-full opacity-0 group-hover:opacity-100 group-hover:w-16 transition-all duration-500"></div>
+                  <h3 className="text-white font-heading font-bold text-2xl md:text-3xl leading-tight mb-2 drop-shadow-md">
+                    {cat.name}
+                  </h3>
+                  <p className="text-gray-300 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2">
+                    Explore Pathway <ArrowRight size={16} />
+                  </p>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -913,15 +970,14 @@ const Home: React.FC = () => {
             <span className="inline-block py-1 px-3 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
               Learning Hassle-Free
             </span>
-            <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-4">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-4">
               {enrolmentSteps?.heading || "Easy 4-Step Enrolment"}
             </h2>
             <p className="text-gray-500 text-lg leading-relaxed">
               {enrolmentSteps?.description || "Begin your learning adventure with Skylar Education through our streamlined 4-step enrolment process."}
             </p>
           </div>
-          <div className="grid md:grid-cols-4 gap-8 relative">
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
+          <div className="grid md:grid-cols-4 gap-6 md:gap-8 relative">
             {(enrolmentSteps?.items || [
               { title: "Browse Online", description: "Explore our extensive catalogue and select the ideal course.", icon: "Search" },
               { title: "Choose a Date", description: "Pick a convenient session that fits your schedule.", icon: "Calendar" },
@@ -930,17 +986,15 @@ const Home: React.FC = () => {
             ]).map((item: any, idx: number) => {
               const IconComponent = getIconComponent(item.icon);
               return (
-                <div key={idx} className="flex flex-col items-center text-center group">
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center shadow-xl shadow-primary/20 transform group-hover:-translate-y-2 transition-transform duration-300">
-                      <IconComponent className="text-white w-10 h-10" strokeWidth={1.5} />
-                    </div>
-                    <div className="absolute -top-3 -left-3 bg-secondary text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-xl border-2 border-white shadow-sm">
-                      {`0${idx + 1}`}
-                    </div>
+                <div key={idx} className="bg-white rounded-2xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col items-center text-center group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-2 relative mt-4">
+                  <div className="absolute -top-4 bg-secondary text-white text-xs font-bold w-10 h-10 flex items-center justify-center rounded-full shadow-md border-[3px] border-white">
+                    {`0${idx + 1}`}
                   </div>
-                  <h3 className="font-heading font-bold text-xl text-secondary mb-3">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed px-4">{item.description || item.desc}</p>
+                  <div className="w-20 h-20 bg-[#F8FAFC] rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors duration-300">
+                    <IconComponent className="text-primary group-hover:text-white w-8 h-8 transition-colors duration-300" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="font-heading font-bold text-lg md:text-xl text-secondary mb-3 group-hover:text-primary transition-colors duration-300">{item.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{item.description || item.desc}</p>
                 </div>
               );
             })}
@@ -990,63 +1044,65 @@ const Home: React.FC = () => {
       )}
 
       {/* Why Train With Skylar */}
-      <section className="py-24 bg-white relative overflow-hidden">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="py-24 md:py-32 bg-gray-50/50 relative overflow-hidden">
+        <div className="container mx-auto px-4 md:px-8 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
             <div className="relative">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                {!imageLoads['why-image'] && <div className="w-full h-96 bg-gray-200 animate-pulse" />}
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border-[8px] border-white">
+                {!imageLoads['why-image'] && <div className="w-full h-[500px] bg-gray-200 animate-pulse" />}
                 <img
-                  src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800"
-                  alt="Training Facility"
-                  className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoads['why-image'] ? 'opacity-100' : 'opacity-0'}`}
+                  src="/why-train-skylar.png"
+                  alt="Skylar Training Facility"
+                  className={`w-full h-[500px] object-cover transition-transform duration-700 hover:scale-105 ${imageLoads['why-image'] ? 'opacity-100' : 'opacity-0'}`}
                   onLoad={() => handleImageLoad('why-image')}
                 />
-                <div className="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
               </div>
-              <div className="absolute -bottom-8 -right-8 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 hidden md:block">
-                <div className="flex items-center gap-4">
-                  <div className="bg-green-100 p-3 rounded-full text-green-600">
-                    <TrendingUp size={24} />
+              <div className="absolute -bottom-6 right-0 md:-bottom-8 md:-right-4 lg:-right-6 bg-white p-6 md:p-8 rounded-3xl shadow-2xl border border-gray-100 hidden md:block">
+                <div className="flex items-center gap-5">
+                  <div className="bg-emerald-100 p-4 rounded-2xl text-emerald-600">
+                    <TrendingUp size={28} />
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs font-bold uppercase">Success Rate</p>
-                    <p className="text-3xl font-heading font-bold text-secondary">98%</p>
+                    <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">Success Rate</p>
+                    <p className="text-4xl font-heading font-extrabold text-secondary">98%</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="text-left">
-              <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6">Why Train With Skylar?</h2>
-              <p className="text-gray-600 text-lg mb-10 leading-relaxed">
-                We don't just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions.
+            <div className="text-left mt-8 lg:mt-0">
+              <span className="inline-block py-1 px-3 rounded bg-accent/10 text-accent text-xs font-bold uppercase tracking-widest mb-4">
+                Why Choose Us
+              </span>
+              <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-6 leading-tight">Why Train With Skylar?</h2>
+              <p className="text-gray-600 text-lg mb-12 leading-relaxed">
+                We don't just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions to ensure maximum readiness.
               </p>
-              <div className="space-y-8">
-                <div className="flex gap-4">
-                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
-                    <HardHat size={24} />
+              <div className="space-y-10">
+                <div className="flex gap-6 group">
+                  <div className="bg-primary/5 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm border border-primary/10">
+                    <HardHat size={28} strokeWidth={1.5} className="group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl text-secondary mb-2">Industry Experienced Trainers</h3>
-                    <p className="text-gray-500">Learn from professionals who have spent years in the field.</p>
+                    <h3 className="font-bold text-xl text-secondary mb-2 group-hover:text-primary transition-colors duration-300">Industry Experienced Trainers</h3>
+                    <p className="text-gray-500 leading-relaxed">Learn directly from professionals who have spent years in the field and understand the practical challenges.</p>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
-                    <Target size={24} />
+                <div className="flex gap-6 group">
+                  <div className="bg-primary/5 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm border border-primary/10">
+                    <Target size={28} strokeWidth={1.5} className="group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl text-secondary mb-2">State-of-the-Art Facilities</h3>
-                    <p className="text-gray-500">Train on modern equipment that meets current industry standards.</p>
+                    <h3 className="font-bold text-xl text-secondary mb-2 group-hover:text-primary transition-colors duration-300">State-of-the-Art Facilities</h3>
+                    <p className="text-gray-500 leading-relaxed">Train on modern, industry-standard equipment that replicates exact site conditions perfectly.</p>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-primary">
-                    <Award size={24} />
+                <div className="flex gap-6 group">
+                  <div className="bg-primary/5 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm border border-primary/10">
+                    <Award size={28} strokeWidth={1.5} className="group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl text-secondary mb-2">Nationally Recognised</h3>
-                    <p className="text-gray-500">Qualifications that are respected and accepted Australia-wide.</p>
+                    <h3 className="font-bold text-xl text-secondary mb-2 group-hover:text-primary transition-colors duration-300">Nationally Recognised</h3>
+                    <p className="text-gray-500 leading-relaxed">Gain qualifications that are highly respected, accredited, and universally accepted Australia-wide.</p>
                   </div>
                 </div>
               </div>
@@ -1137,32 +1193,75 @@ const Home: React.FC = () => {
       </section>
 
       {/* Elevate Your Safety Skills CTA */}
-      <section className="py-20 md:py-24 bg-secondary text-white text-center relative overflow-hidden">
-        <div className="container mx-auto px-4 md:px-8 relative z-10 flex flex-col items-center justify-center">
-          <h2 className="text-3xl md:text-[42px] font-heading font-bold mb-4 tracking-tight">
-            {cta?.heading || "Ready to Advance Your Career?"}
-          </h2>
-          <p className="text-gray-300 text-base md:text-lg mb-8 max-w-2xl leading-relaxed">
-            {cta?.subheading || "Upskill with Skylar today. Book your spot now - classes fill up quickly."}
-          </p>
-          <Link to={cta?.buttonLink || "/courses"}>
-            <button className="bg-accent text-secondary hover:bg-white hover:text-secondary font-bold py-4 px-8 md:px-10 rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 text-sm md:text-base tracking-wide">
-              {cta?.buttonText || "Browse Courses Now"}
-            </button>
-          </Link>
+      <section className="py-24 bg-secondary text-white relative overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-blue-600/10 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[150%] bg-accent/10 blur-[120px] rounded-full"></div>
+          {/* Subtle Grid Pattern overlay */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CiAgPHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPgogIDxwYXRoIGQ9Ik0wIDAuNWg0MCIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8cGF0aCBkPSJNMDAuNS41djQwIiBzdHJva2U9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-30"></div>
+        </div>
+
+        <div className="container mx-auto px-4 md:px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-16">
+          <div className="md:w-3/5 text-center md:text-left">
+            <span className="inline-block py-1 px-4 rounded-full bg-accent/20 text-accent text-sm font-bold uppercase tracking-widest mb-6 border border-accent/20">
+              Start Your Journey
+            </span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold mb-6 leading-tight">
+              {cta?.heading || "Ready to Advance Your Career?"}
+            </h2>
+            <p className="text-gray-300 text-lg md:text-xl mb-10 leading-relaxed max-w-2xl mx-auto md:mx-0">
+              {cta?.subheading || "Upskill with Skylar today. Get industry-leading training, state-of-the-art facilities, and real-world experience. Classes fill up quickly, secure your spot now."}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center md:justify-start justify-center gap-5">
+              <Link to={cta?.buttonLink || "/courses"} className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto bg-accent text-secondary hover:bg-white hover:text-secondary font-bold py-4 px-8 rounded-2xl shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 transform hover:-translate-y-1 text-lg flex items-center justify-center gap-3">
+                  {cta?.buttonText || "Browse Courses Now"}
+                  <ArrowRight size={22} strokeWidth={2.5} />
+                </button>
+              </Link>
+              <Link to="/contact" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20 font-semibold py-4 px-8 rounded-2xl transition-all duration-300 text-lg flex items-center justify-center gap-3">
+                  Contact Support
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="md:w-2/5 flex flex-col gap-6 w-full max-w-md mx-auto md:mx-0">
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl flex items-start gap-5 hover:bg-white/10 transition-colors duration-300 group">
+              <div className="bg-emerald-500/20 p-4 rounded-2xl text-emerald-400 shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                <CheckCircle size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xl mb-2 text-white">Nationally Recognised</h4>
+                <p className="text-gray-400 text-base leading-relaxed">All our courses are fully accredited and respected Australia-wide.</p>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl flex items-start gap-5 hover:bg-white/10 transition-colors duration-300 group">
+              <div className="bg-blue-500/20 p-4 rounded-2xl text-blue-400 shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
+                <ShieldCheck size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xl mb-2 text-white">Guaranteed Quality</h4>
+                <p className="text-gray-400 text-base leading-relaxed">Learn from real industry veterans in our realistic training environments.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Contact Us Section */}
       <section className="py-20 md:py-24 bg-gray-50 text-secondary">
-        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+        <div className="container mx-auto px-4 md:px-8 max-w-5xl">
           <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 flex flex-col md:flex-row min-h-[580px]">
             {/* Left Side: Image */}
-            <div className="md:w-1/2 relative min-h-[300px] md:min-h-full">
+            <div className="md:w-1/2 relative min-h-[300px] md:min-h-full bg-slate-900">
               <img
-                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=1200"
-                alt="Contact Us"
-                className="absolute inset-0 w-full h-full object-cover"
+                src="/contact-team.jpg"
+                alt="Our Team"
+                className="absolute inset-0 w-full h-full object-cover opacity-95"
               />
             </div>
             {/* Right Side: Form */}
@@ -1189,7 +1288,7 @@ const Home: React.FC = () => {
                       id="home-name"
                       type="text"
                       name="name"
-                      autocomplete="name"
+                      autoComplete="name"
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="Full Name"
@@ -1207,7 +1306,7 @@ const Home: React.FC = () => {
                       id="home-email"
                       type="email"
                       name="email"
-                      autocomplete="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Email Address"
@@ -1224,7 +1323,7 @@ const Home: React.FC = () => {
                     <textarea
                       id="home-message"
                       name="message"
-                      autocomplete="off"
+                      autoComplete="off"
                       rows={4}
                       value={formData.message}
                       onChange={handleInputChange}
@@ -1244,7 +1343,7 @@ const Home: React.FC = () => {
                       type="checkbox"
                       id="robot"
                       name="robot"
-                      autocomplete="off"
+                      autoComplete="off"
                       checked={isRobotChecked}
                       onChange={(e) => {
                         setIsRobotChecked(e.target.checked);
@@ -1316,6 +1415,68 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      {/* Category Modal */}
+      {selectedCategoryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#041024]/80 backdrop-blur-sm" onClick={() => setSelectedCategoryModal(null)}></div>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative z-10 animate-fade-in-up">
+            <div className="p-6 md:p-8 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+              <div>
+                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-1 block">Pathways</span>
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-secondary dark:text-white">
+                  {selectedCategoryModal.name}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedCategoryModal(null)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-white dark:bg-gray-700 rounded-full shadow-sm hover:shadow-md transition-all"
+              >
+                <X size={24} />
+              </button>
+            </div>
+                    <div className="p-6 md:p-8 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Link 
+                  to={`/courses?category=${encodeURIComponent(selectedCategoryModal.name)}`}
+                  className="relative group overflow-hidden rounded-2xl aspect-[4/3] shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-700 block bg-[#041024]"
+                >
+                  <img src={selectedCategoryModal.image} className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity duration-500" alt="All" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                    <span className="text-white font-bold text-xl drop-shadow-lg leading-tight">View All {selectedCategoryModal.name} Courses</span>
+                    <span className="text-gray-300 text-sm mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-1 font-medium">
+                      Explore Full Category <ChevronRight size={16} className="text-[#FDC70E]"/>
+                    </span>
+                  </div>
+                </Link>
+
+                {selectedCategoryModal.subCategories.map((sub: any, idx: number) => (
+                  <Link 
+                    key={idx}
+                    to={`/courses?category=${encodeURIComponent(selectedCategoryModal.name)}&subCategory=${encodeURIComponent(sub.name)}`}
+                    className="relative group overflow-hidden rounded-2xl aspect-[4/3] shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-700 block"
+                  >
+                    <img src={sub.image} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" alt={sub.name} />
+                    {/* Enhanced gradient for better readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/95 via-[#041024]/50 to-transparent group-hover:from-[#041024]/90 transition-colors duration-500"></div>
+                    
+                    <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                      <div className="w-8 h-1 bg-[#FDC70E] mb-3 rounded-full opacity-80 group-hover:w-16 group-hover:opacity-100 transition-all duration-500 shadow-[0_0_8px_rgba(253,199,14,0.5)]"></div>
+                      <h4 className="text-white font-bold text-xl md:text-2xl leading-tight drop-shadow-md mb-1">{sub.name}</h4>
+                      
+                      {/* Hidden details that slide up on hover */}
+                      <div className="overflow-hidden max-h-0 group-hover:max-h-20 transition-all duration-500 opacity-0 group-hover:opacity-100 flex items-center gap-2 text-gray-200 mt-2">
+                        <BookOpen size={16} className="text-[#FDC70E]" />
+                        <span className="text-sm font-medium">View Training Modules</span>
+                        <ChevronRight size={16} className="ml-auto text-[#FDC70E]" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

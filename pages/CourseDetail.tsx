@@ -346,7 +346,7 @@ export const CourseDetail: React.FC = () => {
                       <input 
                         id="review-name"
                         name="reviewName"
-                        autocomplete="name"
+                        autoComplete="name"
                         type="text" 
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -374,7 +374,7 @@ export const CourseDetail: React.FC = () => {
                       <textarea 
                         id="review-comment"
                         name="reviewComment"
-                        autocomplete="off"
+                        autoComplete="off"
                         required
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"

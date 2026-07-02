@@ -6,9 +6,9 @@ import {
   ChevronDown, SlidersHorizontal, BookOpen, ArrowUpDown
 } from 'lucide-react';
 import { CourseCard } from '../components/CourseCard';
-import { CourseCategory, Course } from '../types';
+import { Course, Category } from '../types';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { getCourses, getPageContent, addToCart } from '../services/storageService';
+import { getCourses, getPageContent, addToCart, getCategories } from '../services/storageService';
 import { Button } from '../components/Button';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -29,15 +29,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'az', label: 'A → Z' },
 ];
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  [CourseCategory.GWO]: <Wind size={14} />,
-  [CourseCategory.CONSTRUCTION]: <HardHat size={14} />,
-  [CourseCategory.RESCUE]: <LifeBuoy size={14} />,
-  [CourseCategory.SAFETY]: <Flame size={14} />,
-  [CourseCategory.FIRST_AID]: <HeartPulse size={14} />,
-  [CourseCategory.WORKSAFE]: <ShieldCheck size={14} />,
-  [CourseCategory.ELECTRICAL]: <Zap size={14} />,
-};
+
 
 // Skeleton card for loading state
 const SkeletonCard: React.FC = () => (
@@ -139,6 +131,7 @@ export const Courses: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [heroSlides, setHeroSlides] = useState<any[]>(DEFAULT_SLIDES);
   const [ctaContent, setCtaContent] = useState<any>(null);
@@ -189,24 +182,35 @@ export const Courses: React.FC = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const categories = ['All', ...Object.values(CourseCategory)];
+  const categoryList = getCategories();
+  const parentCategoryList = categoryList.filter(c => !c.parentId);
+  const categories = ['All', ...parentCategoryList.map(c => c.name)];
   const levels = ['All', ...Array.from(new Set(courses.map(c => c.level)))];
 
   const categoryOptions = categories.map(cat => {
     let icon = <BookOpen size={14} className="text-gray-400" />;
-    if (cat === CourseCategory.GWO) icon = <Wind size={14} className="text-blue-500" />;
-    else if (cat === CourseCategory.CONSTRUCTION) icon = <HardHat size={14} className="text-amber-500" />;
-    else if (cat === CourseCategory.RESCUE) icon = <LifeBuoy size={14} className="text-red-500" />;
-    else if (cat === CourseCategory.SAFETY) icon = <Flame size={14} className="text-orange-500" />;
-    else if (cat === CourseCategory.FIRST_AID) icon = <HeartPulse size={14} className="text-emerald-500" />;
-    else if (cat === CourseCategory.WORKSAFE) icon = <ShieldCheck size={14} className="text-indigo-500" />;
-    else if (cat === CourseCategory.ELECTRICAL) icon = <Zap size={14} className="text-yellow-500" />;
+    if (cat === 'Global Wind Organisation') icon = <Wind size={14} className="text-blue-500" />;
+    else if (cat === 'Construction & High Risk Work') icon = <HardHat size={14} className="text-amber-500" />;
+    else if (cat === 'Specialised Rescue') icon = <LifeBuoy size={14} className="text-red-500" />;
+    else if (cat === 'Workplace Safety & Emergency Response') icon = <Flame size={14} className="text-orange-500" />;
+    else if (cat === 'First Aid') icon = <HeartPulse size={14} className="text-emerald-500" />;
+    else if (cat === 'WorkSafe-Approved Courses') icon = <ShieldCheck size={14} className="text-indigo-500" />;
+    else if (cat === 'Electrical & Utilities') icon = <Zap size={14} className="text-yellow-500" />;
     return {
       value: cat,
       label: cat === 'All' ? 'All Categories' : cat,
       icon: icon
     };
   });
+
+  const selectedCatObj = parentCategoryList.find(c => c.name === selectedCategory);
+  const subCategoryList = selectedCatObj ? categoryList.filter(c => c.parentId === selectedCatObj.id) : [];
+  const subCategories = ['All', ...subCategoryList.map(c => c.name)];
+  const subCategoryOptions = subCategories.map(cat => ({
+    value: cat,
+    label: cat === 'All' ? 'All Sub Categories' : cat,
+    icon: <BookOpen size={14} className="text-gray-400" />
+  }));
 
   const levelOptions = levels.map(l => ({
     value: l,
@@ -230,24 +234,26 @@ export const Courses: React.FC = () => {
                             course.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (course.prerequisites && course.prerequisites.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())));
       const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
+      const matchesSubCategory = selectedSubCategory === 'All' || course.subCategory === selectedSubCategory;
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
       let matchesDuration = true;
       const d = course.duration?.toLowerCase() || '';
       if (filterDuration === 'Short') matchesDuration = d.includes('1 day') || d.includes('2 days') || d.includes('hour');
       if (filterDuration === 'Medium') matchesDuration = d.includes('3 days') || d.includes('4 days') || d.includes('5 days') || d.includes('week');
       if (filterDuration === 'Long') matchesDuration = d.includes('month') || (d.includes('days') && parseInt(d) > 5);
-      return matchesSearch && matchesCategory && matchesLevel && matchesDuration;
+      return matchesSearch && matchesCategory && matchesSubCategory && matchesLevel && matchesDuration;
     })
     .sort((a, b) => {
       if (sortMode === 'az') return a.title.localeCompare(b.title);
       return 0; // popular = default order
     });
 
-  const hasActiveFilters = selectedCategory !== 'All' || selectedLevel !== 'All' || filterDuration !== 'All' || searchTerm !== '';
+  const hasActiveFilters = selectedCategory !== 'All' || selectedSubCategory !== 'All' || selectedLevel !== 'All' || filterDuration !== 'All' || searchTerm !== '';
 
   const clearAll = () => {
     setSearchTerm('');
     setSelectedCategory('All');
+    setSelectedSubCategory('All');
     setSelectedLevel('All');
     setFilterDuration('All');
   };
@@ -323,7 +329,7 @@ export const Courses: React.FC = () => {
             </div>
             <div>
               <p className="text-xl font-extrabold text-secondary leading-none mb-1">
-                {courses.filter(c => c.category === CourseCategory.GWO).length}
+                {courses.filter(c => c.category === 'Global Wind Organisation').length}
               </p>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">GWO Modules</p>
             </div>
@@ -334,7 +340,7 @@ export const Courses: React.FC = () => {
             </div>
             <div>
               <p className="text-xl font-extrabold text-secondary leading-none mb-1">
-                {courses.filter(c => c.category === CourseCategory.CONSTRUCTION).length}
+                {courses.filter(c => c.category === 'Construction & High Risk Work').length}
               </p>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">High Risk Work</p>
             </div>
@@ -359,7 +365,7 @@ export const Courses: React.FC = () => {
               <input
                 id="courses-search"
                 name="courseSearch"
-                autocomplete="off"
+                autoComplete="off"
                 type="text"
                 placeholder="Search courses…"
                 value={searchTerm}
@@ -437,8 +443,16 @@ export const Courses: React.FC = () => {
                 label="Category"
                 value={selectedCategory}
                 options={categoryOptions}
-                onChange={setSelectedCategory}
+                onChange={(val) => { setSelectedCategory(val); setSelectedSubCategory('All'); }}
               />
+              {subCategoryList.length > 0 && (
+                <CustomDropdown
+                  label="Sub Category"
+                  value={selectedSubCategory}
+                  options={subCategoryOptions}
+                  onChange={setSelectedSubCategory}
+                />
+              )}
               <CustomDropdown
                 label="Level"
                 value={selectedLevel}

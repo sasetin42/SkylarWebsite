@@ -1,25 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 70" width="100%" height="100%">
-  <!-- Style for the text -->
   <style>
     .logo-text {
       font-family: 'Poppins', 'Maven Pro', 'Inter', 'Segoe UI', sans-serif;
-      font-size: 38px;
+      font-size: 34px;
       font-weight: 800;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.08em;
       fill: #ffffff;
     }
+    .logo-sub {
+      font-family: 'Poppins', 'Maven Pro', 'Inter', 'Segoe UI', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      fill: #EBB108;
+    }
   </style>
-  <text x="10" y="48" class="logo-text">SK</text>
-  <!-- Turbine Y -->
-  <g transform="translate(142, 35)" fill="#ffffff">
-    <!-- Top-left blade -->
-    <path d="M 0,0 C -5,-3 -13,-9 -20,-17 C -22,-19 -23,-21 -23,-23 C -21,-22 -19,-21 -17,-20 C -9,-13 -3,-5 0,0 Z" />
-    <!-- Top-right blade -->
-    <path d="M 0,0 C 5,-3 13,-9 20,-17 C 22,-19 23,-21 23,-23 C 21,-22 19,-21 17,-20 C 9,-13 3,-5 0,0 Z" />
-    <!-- Bottom blade (stem) -->
-    <path d="M 0,0 C 0,6 -2,16 -4,25 C -5,28 -5,30 -4,31 C -3,31 -2,30 0,28 C 4,19 5,9 0,0 Z" />
-    <!-- Small elegant hub center -->
-    <circle cx="0" cy="0" r="1.5" fill="#ffffff" />
-  </g>
-  <text x="180" y="48" class="logo-text">LAR</text>
+  <text x="50%" y="38" class="logo-text" text-anchor="middle" dominant-baseline="middle">RidersBUD</text>
+  <text x="50%" y="56" class="logo-sub" text-anchor="middle" dominant-baseline="middle">SAFETY SOLUTIONS</text>
 </svg>

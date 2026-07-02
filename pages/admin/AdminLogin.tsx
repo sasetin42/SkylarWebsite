@@ -106,7 +106,7 @@ export const AdminLogin: React.FC = () => {
             <Link to="/" className="flex items-center gap-3 mb-8 w-fit hover:opacity-90 transition-opacity" title="Return Home">
               <img
                 src={settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL}
-                alt="Skylar Education"
+                alt="RidersBUD Safety Solutions"
                 className="h-14 w-auto"
               />
               <div>
@@ -197,7 +197,7 @@ export const AdminLogin: React.FC = () => {
                   <input
                     id="login-email"
                     name="email"
-                    autocomplete="email"
+                    autoComplete="email"
                     type="email"
                     className="w-full pl-12 pr-4 py-4 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-white placeholder-slate-600 shadow-inner"
                     placeholder="admin@skylareducation.asia"
@@ -214,7 +214,7 @@ export const AdminLogin: React.FC = () => {
                   <input
                     id="login-password"
                     name="password"
-                    autocomplete="current-password"
+                    autoComplete="current-password"
                     type="password"
                     className="w-full pl-12 pr-4 py-4 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all text-white placeholder-slate-600 shadow-inner"
                     placeholder="•••••"
@@ -226,7 +226,7 @@ export const AdminLogin: React.FC = () => {
 
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center text-slate-400 cursor-pointer hover:text-white transition-colors">
-                  <input type="checkbox" id="login-remember" name="remember" autocomplete="off" className="mr-2 w-4 h-4 rounded bg-slate-800 border-white/10 text-accent focus:ring-offset-slate-900 focus:ring-accent" />
+                  <input type="checkbox" id="login-remember" name="remember" autoComplete="off" className="mr-2 w-4 h-4 rounded bg-slate-800 border-white/10 text-accent focus:ring-offset-slate-900 focus:ring-accent" />
                   Remember me
                 </label>
                 <a href="#" className="text-accent hover:text-yellow-300 transition-colors font-medium">Forgot Password?</a>

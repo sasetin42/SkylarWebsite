@@ -260,7 +260,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-institute-name"
                         name="instituteName"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.instituteName} 
                         onChange={e => setSettings({...settings, instituteName: e.target.value})} 
@@ -272,7 +272,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-rto-id"
                         name="rtoId"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.rtoId} 
                         onChange={e => setSettings({...settings, rtoId: e.target.value})} 
@@ -286,7 +286,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-tax-id"
                         name="taxId"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.taxId || ''} 
                         onChange={e => setSettings({...settings, taxId: e.target.value})} 
@@ -299,7 +299,7 @@ export const SettingsManager: React.FC = () => {
                         type="email"
                         id="settings-helpline-email"
                         name="contactEmail"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.contactEmail} 
                         onChange={e => setSettings({...settings, contactEmail: e.target.value})} 
@@ -314,7 +314,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-phone"
                         name="contactPhone"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.contactPhone} 
                         onChange={e => setSettings({...settings, contactPhone: e.target.value})} 
@@ -325,7 +325,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-hours"
                         name="operatingHours"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.operatingHours} 
                         onChange={e => setSettings({...settings, operatingHours: e.target.value})} 
@@ -339,7 +339,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-support-name"
                         name="supportContactName"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.supportContactName || ''} 
                         onChange={e => setSettings({...settings, supportContactName: e.target.value})} 
@@ -351,7 +351,7 @@ export const SettingsManager: React.FC = () => {
                       <input 
                         id="settings-support-schedule"
                         name="supportHours"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.supportHours || ''} 
                         onChange={e => setSettings({...settings, supportHours: e.target.value})} 
@@ -364,7 +364,7 @@ export const SettingsManager: React.FC = () => {
                     <input 
                       id="settings-address"
                       name="address"
-                      autocomplete="off"
+                      autoComplete="off"
                       className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                       value={settings.address} 
                       onChange={e => setSettings({...settings, address: e.target.value})} 
@@ -376,7 +376,7 @@ export const SettingsManager: React.FC = () => {
                     <textarea 
                       id="settings-announcement"
                       name="siteAnnouncement"
-                      autocomplete="off"
+                      autoComplete="off"
                       className="w-full p-3 h-24 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                       value={settings.siteAnnouncement} 
                       onChange={e => setSettings({...settings, siteAnnouncement: e.target.value})} 
@@ -420,7 +420,7 @@ export const SettingsManager: React.FC = () => {
                     <input 
                       id="settings-term"
                       name="currentTerm"
-                      autocomplete="off"
+                      autoComplete="off"
                       className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white" 
                       value={settings.currentTerm || ''} 
                       onChange={e => setSettings({...settings, currentTerm: e.target.value})}
@@ -434,7 +434,7 @@ export const SettingsManager: React.FC = () => {
                       type="date"
                       id="settings-cutoff-date"
                       name="enrollmentDeadline"
-                      autocomplete="off"
+                      autoComplete="off"
                       className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white" 
                       value={settings.enrollmentDeadline || ''} 
                       onChange={e => setSettings({...settings, enrollmentDeadline: e.target.value})}
@@ -447,7 +447,7 @@ export const SettingsManager: React.FC = () => {
                       <select
                         id="settings-currency"
                         name="tuitionCurrency"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white"
                         value={settings.tuitionCurrency || 'AUD'}
                         onChange={e => setSettings({...settings, tuitionCurrency: e.target.value})}
@@ -466,7 +466,7 @@ export const SettingsManager: React.FC = () => {
                         type="number"
                         id="settings-class-size"
                         name="classSizeLimit"
-                        autocomplete="off"
+                        autoComplete="off"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white" 
                         value={settings.classSizeLimit || 20} 
                         onChange={e => setSettings({...settings, classSizeLimit: parseInt(e.target.value) || 20})}
@@ -479,7 +479,7 @@ export const SettingsManager: React.FC = () => {
                         type="number"
                         id="settings-passing-score"
                         name="passingScore"
-                        autocomplete="off"
+                        autoComplete="off"
                         min="0"
                         max="100"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white" 
@@ -538,7 +538,7 @@ export const SettingsManager: React.FC = () => {
                               <select
                                 id="settings-theme-preset"
                                 name="themePreset"
-                                autocomplete="off"
+                                autoComplete="off"
                                 className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-semibold text-sm shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 value={settings.themePreset || 'navy'}
                                 onChange={e => {
@@ -563,7 +563,7 @@ export const SettingsManager: React.FC = () => {
                               <select
                                 id="settings-sidebar-theme"
                                 name="sidebarTheme"
-                                autocomplete="off"
+                                autoComplete="off"
                                 className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-semibold text-sm shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                 value={settings.sidebarTheme || 'dark'}
                                 onChange={e => setSettings({...settings, sidebarTheme: e.target.value as any})}
@@ -607,7 +607,7 @@ export const SettingsManager: React.FC = () => {
                                   type="color" 
                                   id="settings-primary-color"
                                   name="brandColor"
-                                  autocomplete="off"
+                                  autoComplete="off"
                                   value={settings.brandColor || '#041024'}
                                   onChange={e => setSettings({...settings, brandColor: e.target.value})}
                                   className="w-11 h-11 rounded-xl cursor-pointer border border-gray-200 dark:border-gray-600 shadow-sm transition-transform hover:scale-105"
@@ -617,7 +617,7 @@ export const SettingsManager: React.FC = () => {
                                 type="text" 
                                 id="settings-primary-hex"
                                 name="brandColorHex"
-                                autocomplete="off"
+                                autoComplete="off"
                                 value={settings.brandColor || '#041024'}
                                 onChange={e => setSettings({...settings, brandColor: e.target.value})}
                                 placeholder="#041024"
@@ -635,7 +635,7 @@ export const SettingsManager: React.FC = () => {
                                   type="color" 
                                   id="settings-accent-color"
                                   name="accentColor"
-                                  autocomplete="off"
+                                  autoComplete="off"
                                   value={settings.accentColor || '#ffc107'}
                                   onChange={e => setSettings({...settings, accentColor: e.target.value})}
                                   className="w-11 h-11 rounded-xl cursor-pointer border border-gray-200 dark:border-gray-600 shadow-sm transition-transform hover:scale-105"
@@ -645,7 +645,7 @@ export const SettingsManager: React.FC = () => {
                                 type="text" 
                                 id="settings-accent-hex"
                                 name="accentColorHex"
-                                autocomplete="off"
+                                autoComplete="off"
                                 value={settings.accentColor || '#ffc107'}
                                 onChange={e => setSettings({...settings, accentColor: e.target.value})}
                                 placeholder="#FFC107"
@@ -674,7 +674,7 @@ export const SettingsManager: React.FC = () => {
                           <select
                             id="settings-font"
                             name="fontFamily"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-semibold text-xs shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                             value={settings.fontFamily || 'Outfit'}
                             onChange={e => setSettings({...settings, fontFamily: e.target.value})}
@@ -691,7 +691,7 @@ export const SettingsManager: React.FC = () => {
                           <select
                             id="settings-layout"
                             name="layoutStyle"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-semibold text-xs shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                             value={settings.layoutStyle || 'wide'}
                             onChange={e => setSettings({...settings, layoutStyle: e.target.value as any})}
@@ -711,7 +711,7 @@ export const SettingsManager: React.FC = () => {
                               type="range" 
                               id="settings-border-radius"
                               name="borderRadius"
-                              autocomplete="off"
+                              autoComplete="off"
                               min="0" 
                               max="24" 
                               step="2"
@@ -761,7 +761,7 @@ export const SettingsManager: React.FC = () => {
                             </div>
                             <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
                               Upload File
-                              <input type="file" id="settings-light-logo" name="lightLogo" autocomplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'light')} />
+                              <input type="file" id="settings-light-logo" name="lightLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'light')} />
                             </label>
                           </div>
                         </div>
@@ -792,7 +792,7 @@ export const SettingsManager: React.FC = () => {
                             </div>
                             <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
                               Upload File
-                              <input type="file" id="settings-dark-logo" name="darkLogo" autocomplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
+                              <input type="file" id="settings-dark-logo" name="darkLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
                             </label>
                           </div>
                         </div>
@@ -823,7 +823,7 @@ export const SettingsManager: React.FC = () => {
                             </div>
                             <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
                               Upload File
-                              <input type="file" id="settings-loading-logo" name="loadingLogo" autocomplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'loading')} />
+                              <input type="file" id="settings-loading-logo" name="loadingLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'loading')} />
                             </label>
                           </div>
                         </div>
@@ -854,7 +854,7 @@ export const SettingsManager: React.FC = () => {
                             </div>
                             <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
                               Upload File
-                              <input type="file" id="settings-favicon" name="favicon" autocomplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'favicon')} />
+                              <input type="file" id="settings-favicon" name="favicon" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'favicon')} />
                             </label>
                           </div>
                         </div>
@@ -877,7 +877,7 @@ export const SettingsManager: React.FC = () => {
                           <textarea
                             id="settings-custom-css"
                             name="customCss"
-                            autocomplete="off"
+                            autoComplete="off"
                             rows={4}
                             value={settings.customCss || ''}
                             onChange={e => setSettings({...settings, customCss: e.target.value})}
@@ -909,7 +909,7 @@ export const SettingsManager: React.FC = () => {
                           <select
                             id="settings-animation-speed"
                             name="animationSpeed"
-                            autocomplete="off"
+                            autoComplete="off"
                             className="w-full p-2.5 bg-white dark:bg-gray-800 border border-gray-250 dark:border-gray-700 rounded-xl dark:text-white font-semibold text-xs shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                             value={settings.animationSpeed || 'smooth'}
                             onChange={e => setSettings({...settings, animationSpeed: e.target.value as any})}
@@ -1314,7 +1314,7 @@ export const SettingsManager: React.FC = () => {
                       type="file" 
                       id="settings-import-file"
                       name="importFile"
-                      autocomplete="off"
+                      autoComplete="off"
                       accept=".json" 
                       className="hidden" 
                       onChange={(e) => {
@@ -1390,7 +1390,7 @@ export const SettingsManager: React.FC = () => {
                   type="text" 
                   id="settings-user-name"
                   name="userName"
-                  autocomplete="off"
+                  autoComplete="off"
                   value={userForm.name}
                   onChange={e => setUserForm({...userForm, name: e.target.value})}
                   className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -1404,7 +1404,7 @@ export const SettingsManager: React.FC = () => {
                   type="email" 
                   id="settings-user-email"
                   name="userEmail"
-                  autocomplete="off"
+                  autoComplete="off"
                   value={userForm.email}
                   onChange={e => setUserForm({...userForm, email: e.target.value})}
                   className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -1417,7 +1417,7 @@ export const SettingsManager: React.FC = () => {
                 <select
                   id="settings-user-role"
                   name="userRole"
-                  autocomplete="off"
+                  autoComplete="off"
                   value={userForm.role}
                   onChange={e => setUserForm({...userForm, role: e.target.value})}
                   className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-semibold"
@@ -1455,7 +1455,7 @@ export const SettingsManager: React.FC = () => {
                   type="text" 
                   id="settings-role-name"
                   name="roleName"
-                  autocomplete="off"
+                  autoComplete="off"
                   value={roleForm.name}
                   onChange={e => setRoleForm({...roleForm, name: e.target.value})}
                   className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -1469,7 +1469,7 @@ export const SettingsManager: React.FC = () => {
                   type="text" 
                   id="settings-role-desc"
                   name="roleDescription"
-                  autocomplete="off"
+                  autoComplete="off"
                   value={roleForm.description}
                   onChange={e => setRoleForm({...roleForm, description: e.target.value})}
                   className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -1495,7 +1495,7 @@ export const SettingsManager: React.FC = () => {
                         type="checkbox" 
                         id={`settings-perm-${perm.id}`}
                         name="permissions"
-                        autocomplete="off"
+                        autoComplete="off"
                         checked={roleForm.permissions.includes(perm.id)}
                         onChange={() => handleTogglePermission(perm.id)}
                         className="rounded border-gray-300 text-primary focus:ring-primary"

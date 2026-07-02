@@ -54,8 +54,8 @@ export const Footer: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <img 
                     src={footerLogo} 
-                    alt="Skylar Education Logo" 
-                    className={`h-[28px] w-auto ${isDefaultLogo ? 'brightness-0 invert' : ''}`}
+                    alt="RidersBUD Safety Solutions Logo" 
+                    className="h-[40px] md:h-[48px] w-auto logo-color-white"
                   />
                 </div>
               </Link>
@@ -130,7 +130,7 @@ export const Footer: React.FC = () => {
                 <input 
                   id="subscribe-email"
                   name="subscribeEmail"
-                  autocomplete="email"
+                  autoComplete="email"
                   type="email" 
                   required
                   placeholder="Your email address" 
@@ -147,6 +147,8 @@ export const Footer: React.FC = () => {
               </form>
             )}
           </div>
+
+
         </div>
 
         {/* Footer Bottom Meta Section */}

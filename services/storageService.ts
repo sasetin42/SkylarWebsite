@@ -1,6 +1,6 @@
 
-import { Course, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog } from '../types';
-import { COURSES as SEED_COURSES, LOCATIONS } from '../constants';
+import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog } from '../types';
+import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES } from '../constants';
 import { supabaseClient } from './supabaseClient';
 
 // Intercept localStorage.setItem to sync with Supabase in the background
@@ -41,6 +41,63 @@ const PAYMENTS_KEY = 'apex_payments_data_v1';
 const SECTIONS_KEY = 'apex_sections_data_v1';
 const TICKETS_KEY = 'apex_tickets_data_v1';
 const AUDIT_LOGS_KEY = 'apex_audit_logs_v1';
+const CATEGORIES_KEY = 'apex_categories_data_v1';
+
+// Correct casing map: normalized key => proper display name
+const CATEGORY_NAME_CORRECTIONS: Record<string, string> = {
+  'gwo bst (basic safety training)': 'GWO BST (Basic Safety Training)',
+  'gwo art (advanced rescue training)': 'GWO ART (Advanced Rescue Training)',
+  'gwo-btt (basic technical training)': 'GWO-BTT (Basic Technical Training)',
+  'gwo btt (basic technical training)': 'GWO-BTT (Basic Technical Training)',
+  // sub-categories
+  'bst - initial': 'BST – Initial',
+  'bst-r': 'BST-R',
+  'bst - refresher': 'BST – Refresher',
+  'art - initial': 'ART – Initial',
+  'art - refresher': 'ART – Refresher',
+  'btt - initial': 'BTT – Initial',
+  'btt - refresher': 'BTT – Refresher',
+};
+
+// --- Category Management ---
+export const getCategories = (): Category[] => {
+  const stored = localStorage.getItem(CATEGORIES_KEY);
+  if (!stored) {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(SEED_CATEGORIES));
+    return SEED_CATEGORIES;
+  }
+  const categories: Category[] = JSON.parse(stored);
+  // Apply name corrections and persist if anything changed
+  let changed = false;
+  const corrected = categories.map(cat => {
+    const key = cat.name.toLowerCase().trim();
+    if (CATEGORY_NAME_CORRECTIONS[key] && cat.name !== CATEGORY_NAME_CORRECTIONS[key]) {
+      changed = true;
+      return { ...cat, name: CATEGORY_NAME_CORRECTIONS[key] };
+    }
+    return cat;
+  });
+  if (changed) {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(corrected));
+  }
+  return corrected;
+};
+
+export const saveCategory = (category: Category) => {
+  const categories = getCategories();
+  const index = categories.findIndex(c => c.id === category.id);
+  if (index >= 0) {
+    categories[index] = category;
+  } else {
+    categories.push(category);
+  }
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+};
+
+export const deleteCategory = (id: string) => {
+  const categories = getCategories().filter(c => c.id !== id);
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+};
 
 // --- Cart Management ---
 export const getCart = (): string[] => {

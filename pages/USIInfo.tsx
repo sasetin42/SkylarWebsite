@@ -267,11 +267,11 @@ export const USIInfo: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Email</label>
-                                <input id="usi-email" name="email" autocomplete="email" type="email" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="email@address.com" />
+                                <input id="usi-email" name="email" autoComplete="email" type="email" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="email@address.com" />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Message</label>
-                                <textarea id="usi-message" name="message" autocomplete="off" rows={3} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="I'm having trouble with my USI..."></textarea>
+                                <textarea id="usi-message" name="message" autoComplete="off" rows={3} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="I'm having trouble with my USI..."></textarea>
                             </div>
                             <Button type="submit" className="w-full shadow-lg" disabled={formState === 'submitting'}>{formState === 'submitting' ? 'Sending...' : 'Get Support'}</Button>
                         </form>

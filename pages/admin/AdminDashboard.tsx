@@ -4,7 +4,7 @@ import {
   Users, BookOpen, DollarSign, TrendingUp, 
   Settings, LogOut, LayoutDashboard, FileText, Bell, 
   Database, Briefcase, Calendar, Moon, Sun, ShieldCheck,
-  LayoutTemplate, ClipboardList, Search, Menu, MessageSquare
+  LayoutTemplate, ClipboardList, Search, Menu, MessageSquare, FolderTree
 } from 'lucide-react';
 import { getStudents, getCourses, getSettings } from '../../services/storageService';
 import { LOGO_URL } from '../../constants';
@@ -83,6 +83,7 @@ export const AdminDashboard: React.FC = () => {
     { path: '/admin/dashboard/students', icon: Users, label: 'Students' },
     { path: '/admin/dashboard/classes', icon: Users, label: 'Classes & Sections' }, 
     { path: '/admin/dashboard/courses', icon: BookOpen, label: 'Courses' },
+    { path: '/admin/dashboard/categories', icon: FolderTree, label: 'Categories' },
     { path: '/admin/dashboard/sessions', icon: Calendar, label: 'Sessions' },
     { path: '/admin/dashboard/finance', icon: DollarSign, label: 'Finance & Billing' }, 
     { path: '/admin/dashboard/corporate', icon: Briefcase, label: 'Corporate' },
@@ -116,11 +117,7 @@ export const AdminDashboard: React.FC = () => {
             <img 
               src={sidebarOpen ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.faviconUrl || settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)} 
               alt="Logo" 
-              className={`transition-all duration-300 ${sidebarOpen ? 'h-11 w-auto max-w-full' : 'h-8 w-8 object-contain'} ${
-                !(sidebarOpen ? settings.lightLogoUrl : (settings.faviconUrl || settings.lightLogoUrl))
-                  ? 'brightness-0 invert'
-                  : ''
-              }`} 
+              className={`transition-all duration-300 logo-color-white ${sidebarOpen ? 'h-11 w-auto max-w-full' : 'h-8 w-8 object-contain'}`} 
             />
           </div>
           
@@ -180,7 +177,7 @@ export const AdminDashboard: React.FC = () => {
                       type="text" 
                       id="admin-search"
                       name="adminSearch"
-                      autocomplete="off"
+                      autoComplete="off"
                       placeholder="Quick search..." 
                       className="bg-transparent border-none focus:ring-0 text-sm ml-2 w-48 text-gray-700 dark:text-gray-200 placeholder-gray-400"
                   />

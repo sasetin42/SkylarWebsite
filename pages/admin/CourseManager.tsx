@@ -7,9 +7,9 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/Button';
-import { getCourses, saveCourse, deleteCourse } from '../../services/storageService';
+import { getCourses, saveCourse, deleteCourse, getCategories } from '../../services/storageService';
 import { generateCourseImage } from '../../services/geminiService';
-import { Course, CourseCategory } from '../../types';
+import { Course, Category } from '../../types';
 
 interface RichTextSectionEditorProps {
   label: string;
@@ -304,7 +304,8 @@ export const CourseManager: React.FC = () => {
     setFormData({
       id: `c_${Date.now()}`,
       title: '',
-      category: CourseCategory.SAFETY,
+      category: getCategories().filter(c => !c.parentId)[0]?.name || '',
+      subCategory: '',
       shortDescription: '',
       fullDescription: '',
       price: 0,
@@ -434,7 +435,7 @@ export const CourseManager: React.FC = () => {
   // Filter Logic
   const filteredCourses = courses.filter(c => {
     const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'All' || c.category === filterCategory;
+    const matchesCategory = filterCategory === 'All' || c.category === filterCategory || c.subCategory === filterCategory;
     
     let matchesPrice = true;
     if (filterPrice === 'Low') matchesPrice = c.price < 500;
@@ -480,7 +481,7 @@ export const CourseManager: React.FC = () => {
                 type="text"
                 id={`course-list-item-${idx}`}
                 name={`listItem-${idx}`}
-                autocomplete="off"
+                autoComplete="off"
                 value={item}
                 className="flex-grow p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white"
                 onChange={(e) => {
@@ -865,7 +866,7 @@ export const CourseManager: React.FC = () => {
                   type="text"
                   id="course-custom-intake"
                   name="customIntake"
-                  autocomplete="off"
+                  autoComplete="off"
                   placeholder="e.g. 22 - 25 June 2026, 09:00 AM - 05:00 PM"
                   value={rawIntakeText}
                   onChange={(e) => setRawIntakeText(e.target.value)}
@@ -900,7 +901,7 @@ export const CourseManager: React.FC = () => {
                       type="date"
                       id="course-start-date"
                       name="startDate"
-                      autocomplete="off"
+                      autoComplete="off"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -913,7 +914,7 @@ export const CourseManager: React.FC = () => {
                         type="date"
                         id="course-end-date"
                         name="endDate"
-                        autocomplete="off"
+                        autoComplete="off"
                         value={endDate}
                         min={startDate}
                         onChange={(e) => setEndDate(e.target.value)}
@@ -930,7 +931,7 @@ export const CourseManager: React.FC = () => {
                     <select
                       id="course-time-preset"
                       name="timePreset"
-                      autocomplete="off"
+                      autoComplete="off"
                       value={timePreset}
                       onChange={(e) => setTimePreset(e.target.value)}
                       className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -950,7 +951,7 @@ export const CourseManager: React.FC = () => {
                           type="time"
                           id="course-start-time"
                           name="startTime"
-                          autocomplete="off"
+                          autoComplete="off"
                           value={startTime}
                           onChange={(e) => setStartTime(e.target.value)}
                           className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -962,7 +963,7 @@ export const CourseManager: React.FC = () => {
                           type="time"
                           id="course-end-time"
                           name="endTime"
-                          autocomplete="off"
+                          autoComplete="off"
                           value={endTime}
                           onChange={(e) => setEndTime(e.target.value)}
                           className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-905 dark:text-white focus:ring-1 focus:ring-primary shadow-sm"
@@ -1022,33 +1023,62 @@ export const CourseManager: React.FC = () => {
                 type="text" 
                 id="course-title"
                 name="courseTitle"
-                autocomplete="off"
+                autoComplete="off"
                 required
                 className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
                 value={formData.title || ''}
                 onChange={e => setFormData({...formData, title: e.target.value})}
               />
             </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Category</label>
-              <select 
-                id="course-category"
-                name="courseCategory"
-                autocomplete="off"
-                className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
-                value={formData.category}
-                onChange={e => setFormData({...formData, category: e.target.value as CourseCategory})}
-              >
-                {Object.values(CourseCategory).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+            {(() => {
+              const allCats = getCategories();
+              const parentCats = allCats.filter(c => !c.parentId);
+              const selectedParent = parentCats.find(c => c.name === formData.category);
+              const subCats = selectedParent ? allCats.filter(c => c.parentId === selectedParent.id) : [];
+              return (
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select 
+                      id="course-category"
+                      name="courseCategory"
+                      autoComplete="off"
+                      className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
+                      value={formData.category || ''}
+                      onChange={e => setFormData({...formData, category: e.target.value, subCategory: ''})}
+                    >
+                      <option value="" disabled>Select Category</option>
+                      {parentCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  {subCats.length > 0 ? (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Sub Category</label>
+                      <select 
+                        id="course-subcategory"
+                        name="courseSubCategory"
+                        autoComplete="off"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
+                        value={formData.subCategory || ''}
+                        onChange={e => setFormData({...formData, subCategory: e.target.value})}
+                      >
+                        <option value="">None</option>
+                        {subCats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="hidden md:block"></div>
+                  )}
+                </div>
+              );
+            })()}
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Price ($)</label>
               <input 
                 type="number" 
                 id="course-price"
                 name="coursePrice"
-                autocomplete="off"
+                autoComplete="off"
                 required
                 className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm"
                 value={formData.price || 0}
@@ -1061,7 +1091,7 @@ export const CourseManager: React.FC = () => {
                 type="text" 
                 id="course-duration"
                 name="courseDuration"
-                autocomplete="off"
+                autoComplete="off"
                 required
                 placeholder="e.g. 5 Days"
                 className={`w-full p-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm ${durationError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'}`}
@@ -1103,7 +1133,7 @@ export const CourseManager: React.FC = () => {
 
                   <div className="flex-1 w-full">
                       <label className={`cursor-pointer flex flex-col items-center justify-center w-full h-32 p-4 border-2 border-dashed rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-all group ${imageError ? 'border-red-400 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'}`}>
-                          <input type="file" id="course-image" name="courseImage" autocomplete="off" className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleImageUpload} />
+                          <input type="file" id="course-image" name="courseImage" autoComplete="off" className="hidden" accept="image/png, image/jpeg, image/gif" onChange={handleImageUpload} />
                           <div className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
                             <UploadCloud size={20} className="text-primary dark:text-blue-400" />
                           </div>
@@ -1134,7 +1164,7 @@ export const CourseManager: React.FC = () => {
                 <textarea 
                   id="course-short-desc"
                   name="courseShortDescription"
-                  autocomplete="off"
+                  autoComplete="off"
                   rows={4}
                   placeholder="Enter a brief, compelling summary for course cards and search outcomes..."
                   className="w-full h-[180px] p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm resize-none"
@@ -1322,7 +1352,7 @@ export const CourseManager: React.FC = () => {
                     type="text" 
                     id="course-code"
                     name="courseCode"
-                    autocomplete="off"
+                    autoComplete="off"
                     placeholder="e.g. GWO-ART-I"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.code || ''}
@@ -1334,7 +1364,7 @@ export const CourseManager: React.FC = () => {
                   <select 
                     id="course-level"
                     name="courseLevel"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.level || 'Available'}
                     onChange={e => setFormData({...formData, level: e.target.value})}
@@ -1351,7 +1381,7 @@ export const CourseManager: React.FC = () => {
                     type="text" 
                     id="course-certification"
                     name="courseCertification"
-                    autocomplete="off"
+                    autoComplete="off"
                     placeholder="e.g. GWO Advanced Rescue Training Certificate"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.certificationName || ''}
@@ -1364,7 +1394,7 @@ export const CourseManager: React.FC = () => {
                     type="number" 
                     id="course-validity"
                     name="courseValidity"
-                    autocomplete="off"
+                    autoComplete="off"
                     placeholder="e.g. 24"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white"
                     value={formData.validityMonths || ''}
@@ -1376,7 +1406,7 @@ export const CourseManager: React.FC = () => {
                     type="checkbox"
                     id="isGwo"
                     name="isGwo"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300 dark:bg-gray-950"
                     checked={!!formData.isGwo}
                     onChange={e => setFormData({...formData, isGwo: e.target.checked})}
@@ -1389,7 +1419,7 @@ export const CourseManager: React.FC = () => {
                     type="text" 
                     id="course-rto-code"
                     name="courseRtoCode"
-                    autocomplete="off"
+                    autoComplete="off"
                     placeholder="e.g. RTO 21647"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.rtoCode || ''}
@@ -1401,7 +1431,7 @@ export const CourseManager: React.FC = () => {
                   <select 
                     id="course-delivery-mode"
                     name="courseDeliveryMode"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.deliveryMode || 'Face-to-Face'}
                     onChange={e => setFormData({...formData, deliveryMode: e.target.value})}
@@ -1418,7 +1448,7 @@ export const CourseManager: React.FC = () => {
                     type="number" 
                     id="course-deposit"
                     name="courseDeposit"
-                    autocomplete="off"
+                    autoComplete="off"
                     placeholder="e.g. 1500"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.depositAmount || ''}
@@ -1545,7 +1575,7 @@ export const CourseManager: React.FC = () => {
                                 <textarea 
                                     id="course-ai-prompt"
                                     name="aiPrompt"
-                                    autocomplete="off"
+                                    autoComplete="off"
                                     rows={3}
                                     placeholder="Describe the image you want (e.g. 'Technicians working on a wind turbine at sunset')"
                                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-accent transition-all dark:text-white"
@@ -1559,7 +1589,7 @@ export const CourseManager: React.FC = () => {
                                     <select 
                                         id="course-ai-aspect-ratio"
                                         name="aiAspectRatio"
-                                        autocomplete="off"
+                                        autoComplete="off"
                                         className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white"
                                         value={genAspectRatio}
                                         onChange={e => setGenAspectRatio(e.target.value)}
@@ -1575,7 +1605,7 @@ export const CourseManager: React.FC = () => {
                                     <select 
                                         id="course-ai-quality"
                                         name="aiQuality"
-                                        autocomplete="off"
+                                        autoComplete="off"
                                         className="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg dark:text-white"
                                         value={genSize}
                                         onChange={e => setGenSize(e.target.value)}
@@ -1633,7 +1663,7 @@ export const CourseManager: React.FC = () => {
                         type="text" 
                         id="course-search"
                         name="courseSearch"
-                        autocomplete="off"
+                        autoComplete="off"
                         placeholder="Search courses..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -1647,19 +1677,19 @@ export const CourseManager: React.FC = () => {
                 <select 
                     id="course-filter-category"
                     name="filterCategory"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                 >
                     <option value="All">All Categories</option>
-                    {Object.values(CourseCategory).map(c => <option key={c} value={c}>{c}</option>)}
+                    {getCategories().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
                 
                 <select 
                     id="course-filter-price"
                     name="filterPrice"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterPrice}
                     onChange={(e) => setFilterPrice(e.target.value)}
@@ -1673,7 +1703,7 @@ export const CourseManager: React.FC = () => {
                 <select 
                     id="course-filter-duration"
                     name="filterDuration"
-                    autocomplete="off"
+                    autoComplete="off"
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     value={filterDuration}
                     onChange={(e) => setFilterDuration(e.target.value)}
@@ -1696,7 +1726,7 @@ export const CourseManager: React.FC = () => {
                                 type="checkbox" 
                                 id="course-select-all"
                                 name="selectAll"
-                                autocomplete="off"
+                                autoComplete="off"
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                                 checked={selectedIds.length === filteredCourses.length && filteredCourses.length > 0}
                                 onChange={handleSelectAll}
@@ -1717,7 +1747,7 @@ export const CourseManager: React.FC = () => {
                                     type="checkbox" 
                                     id={`course-row-${course.id}`}
                                     name="selectedCourse"
-                                    autocomplete="off"
+                                    autoComplete="off"
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                     checked={selectedIds.includes(course.id)}
                                     onChange={() => handleSelectRow(course.id)}

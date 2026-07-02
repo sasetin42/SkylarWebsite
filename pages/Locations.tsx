@@ -175,7 +175,7 @@ export const Locations: React.FC = () => {
             <input 
               id="locations-search"
               name="locationSearch"
-              autocomplete="off"
+              autoComplete="off"
               type="text" 
               value={placeQuery}
               onChange={(e) => setPlaceQuery(e.target.value)}

@@ -143,7 +143,7 @@ export const DataMigration: React.FC = () => {
                 type="file" 
                 id="migration-file"
                 name="migrationFile"
-                autocomplete="off"
+                autoComplete="off"
                 ref={fileInputRef} 
                 className="hidden" 
                 accept=".csv,.json"
@@ -185,7 +185,7 @@ export const DataMigration: React.FC = () => {
                             <select 
                                 id="migration-field-map"
                                 name={`mapping-${field.key}`}
-                                autocomplete="off"
+                                autoComplete="off"
                                 className="p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/50"
                                 onChange={(e) => setMapping({...mapping, [field.key]: e.target.value})}
                             >
