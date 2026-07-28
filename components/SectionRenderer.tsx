@@ -579,7 +579,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                       {section.data.subheading}
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                      Skylar Education
+                      SKYLAR EDUCATION ASIA
                     </span>
                   </div>
                 )}

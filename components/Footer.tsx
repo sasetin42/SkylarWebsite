@@ -154,7 +154,7 @@ export const Footer: React.FC = () => {
         {/* Footer Bottom Meta Section */}
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-gray-500 font-medium">
           <div className="flex items-center gap-4">
-            <span>&copy; {new Date().getFullYear()} Skylar Education Asia Inc. All Rights Reserved.</span>
+            <span>&copy; {new Date().getFullYear()} SKYLAR EDUCATION ASIA All Rights Reserved.</span>
           </div>
 
           {/* Accreditation Logos / Trust Badges */}

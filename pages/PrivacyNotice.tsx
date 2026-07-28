@@ -50,40 +50,22 @@ export const PrivacyNotice: React.FC = () => {
     {
         id: 'use',
         title: 'HOW WE USE YOUR PERSONAL INFORMATION',
-        content: "We use your personal information to enable us to deliver VET courses to you, and otherwise, as needed, to comply with our obligations as an RTO."
+        content: "We use your personal information to enable us to deliver our courses to you, and otherwise, as needed, to comply with our obligations as a training provider and Global Wind Organisation (GWO) certified center."
     },
     {
         id: 'disclose',
         title: 'HOW WE DISCLOSE YOUR PERSONAL INFORMATION',
-        content: "We are required by law (under the National Vocational Education and Training Regulator Act 2011 (Cth) (NVETR Act)) to disclose the personal information we collect about you to the National VET Data Collection kept by the National Centre for Vocational Education Research Ltd (NCVER). The NCVER is responsible for collecting, managing, analysing and communicating research and statistics about the Australian VET sector.\n\nWe are also authorised by law (under the NVETR Act) to disclose your personal information to the relevant state or territory training authority."
+        content: "We may disclose the personal information we collect about you to the Global Wind Organisation (GWO) via the WINDA database to register your training records. We are also authorised by law to disclose your personal information to relevant regulatory bodies where required."
     },
     {
-        id: 'ncver',
-        title: 'HOW THE NCVER AND OTHER BODIES HANDLE YOUR PERSONAL INFORMATION',
-        content: `The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.
-
-The NCVER is authorised to disclose information to the Australian Government Department of Education, Skills and Employment (DESE), Commonwealth authorities, State and Territory authorities (other than registered training organisations) that deal with matters relating to VET and VET regulators for the purposes of those bodies, including to enable:
-
--administration of VET, including program administration, regulation, monitoring and evaluation
--facilitation of statistics and research relating to education, including surveys and data linkage
--understanding how the VET market operates, for policy, workforce planning and consumer information.
-
-The NCVER may also disclose personal information to persons engaged by NCVER to conduct research on NCVER’s behalf.
-
-The NCVER does not intend to disclose your personal information to any overseas recipients.
-
-For more information about how the NCVER will handle your personal information please refer to the NCVER’s Privacy Policy at www.ncver.edu.au/privacy.
-
-If you would like to seek access to or correct your information, in the first instance, please contact Skylar Education using the contact details listed below.
-
-DESE is authorised by law, including the Privacy Act and the NVETR Act, to collect, use and disclose your personal information to fulfil specified functions and activities. For more information about how the DESE will handle your personal information, please refer to the DESE VET Privacy Notice at https://www.dese.gov.au/national-vet-data/vet-privacy-notice
-
-Please refer to the additional State or Territory Authority Privacy Notice included in this application process should this be relevant to your application.`
+        id: 'gwo',
+        title: 'HOW GWO HANDLES YOUR PERSONAL INFORMATION',
+        content: `GWO will collect, hold, use and disclose your personal information in accordance with their privacy policies. Your personal information may be used and disclosed by GWO for purposes that include populating authenticated training records; administration of training; facilitation of statistics and research relating to safety training.\n\nFor more information about how GWO will handle your personal information please refer to their privacy policy.\n\nIf you would like to seek access to or correct your information, in the first instance, please contact SKYLAR EDUCATION ASIA using the contact details listed below.`
     },
     {
         id: 'surveys',
         title: 'SURVEYS',
-        content: "You may receive a student survey which may be run by a government department or an NCVER employee, agent, third-party contractor or another authorised agency. Please note you may opt out of the survey at the time of being contacted."
+        content: "You may receive a student survey which may be run by us or a third-party contractor. Please note you may opt out of the survey at the time of being contacted."
     },
     {
         id: 'contact',
@@ -141,7 +123,7 @@ o ask a question about this Privacy Notice`
                 <h2 className="text-3xl font-heading font-bold text-black mb-4">{policies?.heading || "Why we collect your personal information"}</h2>
                 <div className="prose prose-lg text-gray-600 max-w-none leading-relaxed mb-8">
                     <p>
-                        As a registered training organisation (RTO), we collect your personal information so we can process and manage your enrolment in a vocational education and training (VET) course with us.
+                        As a training provider, we collect your personal information so we can process and manage your enrolment in a course with us.
                     </p>
                 </div>
             </section>

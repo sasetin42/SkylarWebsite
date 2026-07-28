@@ -62,7 +62,7 @@ export const TermsOfService: React.FC = () => {
           </div>
           <h1 className="font-heading font-bold text-4xl md:text-5xl mb-4">Terms of Service</h1>
           <p className="text-gray-300 text-lg max-w-2xl leading-relaxed">
-            Please read these terms carefully before using our services. By accessing or using Skylar Education Asia Inc. services, you agree to be bound by these terms.
+            Please read these terms carefully before using our services. By accessing or using SKYLAR EDUCATION ASIA services, you agree to be bound by these terms.
           </p>
           <p className="text-gray-400 text-sm mt-4">
             <Clock size={14} className="inline mr-1.5" />
@@ -75,7 +75,7 @@ export const TermsOfService: React.FC = () => {
       <div className="bg-accent/5 border-y border-accent/20">
         <div className="container mx-auto px-4 md:px-8 max-w-5xl py-5">
           <div className="flex flex-wrap gap-6 text-sm font-medium text-secondary">
-            <span className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> RTO #45000 Registered</span>
+            <span className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> GWO Certified</span>
             <span className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> ISO 9001 Certified</span>
             <span className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> GDPR & Privacy Act Compliant</span>
             <span className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> Philippines Operations</span>
@@ -88,7 +88,7 @@ export const TermsOfService: React.FC = () => {
         {/* Intro */}
         <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-6 mb-10 text-sm text-blue-900 leading-relaxed">
           <p className="font-bold mb-1 flex items-center gap-2"><AlertCircle size={16} /> Important Notice</p>
-          <p>These Terms of Service ("Terms") govern your access to and use of all services, platforms, and training programs offered by <strong>Skylar Education Asia Inc.</strong> ("Skylar", "we", "us", "our"), a registered training organisation operating in the Philippines, affiliated with Skylar Education Pty Ltd (Australia). By enrolling in any course or using our website, you confirm that you accept these Terms.</p>
+          <p>These Terms of Service ("Terms") govern your access to and use of all services, platforms, and training programs offered by <strong>SKYLAR EDUCATION ASIA</strong> ("SKYLAR EDUCATION ASIA", "we", "us", "our"), a training organisation operating in the Philippines. By enrolling in any course or using our website, you confirm that you accept these Terms.</p>
         </div>
 
         <div className="space-y-4">
@@ -101,18 +101,17 @@ export const TermsOfService: React.FC = () => {
               <li>Maintain the security of your account credentials</li>
               <li>Notify us immediately of any unauthorised access to your account</li>
             </ul>
-            <p className="mt-3">Skylar Education Asia Inc. reserves the right to refuse enrolment or terminate accounts at its discretion, particularly in the case of violations of these Terms.</p>
+            <p className="mt-3">SKYLAR EDUCATION ASIA reserves the right to refuse enrolment or terminate accounts at its discretion, particularly in the case of violations of these Terms.</p>
           </Section>
 
           <Section id="services" icon={<BookOpen size={20} />} title="2. Training Services & Enrolment">
-            <p>Skylar Education Asia Inc. provides nationally recognised and internationally accredited vocational safety training, including but not limited to:</p>
+            <p>SKYLAR EDUCATION ASIA provides internationally accredited vocational safety training, including but not limited to:</p>
             <ul className="list-disc list-inside space-y-1 mt-2">
               <li><strong>GWO (Global Wind Organisation)</strong> — Basic Safety Training, Advanced Rescue, Blades</li>
               <li><strong>High Risk Work Licensing</strong> — Dogging, Rigging, Crane Operations, Forklift</li>
               <li><strong>Industrial Safety Programs</strong> — Working at Heights, Confined Space, Fire Safety</li>
-              <li><strong>First Aid & Emergency Response</strong> — HLTAID and related qualifications</li>
             </ul>
-            <p className="mt-3">Enrolment is complete only upon receipt of full payment confirmation and written acceptance from Skylar Education. Course places are not guaranteed until confirmed in writing.</p>
+            <p className="mt-3">Enrolment is complete only upon receipt of full payment confirmation and written acceptance from SKYLAR EDUCATION ASIA. Course places are not guaranteed until confirmed in writing.</p>
           </Section>
 
           <Section id="payment" icon={<FileText size={20} />} title="3. Fees, Payment, and Refunds">
@@ -124,7 +123,7 @@ export const TermsOfService: React.FC = () => {
                 <li>5–10 business days before commencement: 50% refund</li>
                 <li>Less than 5 business days: No refund (credit toward future course may be considered)</li>
               </ul>
-              <p className="mt-2"><strong>Cancellation by Skylar:</strong> If Skylar Education cancels a course, all enrolled students will receive a full refund or the option to transfer to the next available session.</p>
+              <p className="mt-2"><strong>Cancellation by SKYLAR EDUCATION ASIA:</strong> If SKYLAR EDUCATION ASIA cancels a course, all enrolled students will receive a full refund or the option to transfer to the next available session.</p>
             </div>
             <p className="mt-3 text-xs text-gray-500">See our full <a href="#/student-info/refund-policy" className="text-primary underline">Refund Policy</a> for complete details.</p>
           </Section>
@@ -139,16 +138,16 @@ export const TermsOfService: React.FC = () => {
               <li>Comply with all workplace health and safety (WHS) rules during training</li>
               <li>Not use mobile phones or other devices in a distracting manner during sessions</li>
             </ul>
-            <p className="mt-3">Skylar Education reserves the right to remove any student from training for misconduct without refund.</p>
+            <p className="mt-3">SKYLAR EDUCATION ASIA reserves the right to remove any student from training for misconduct without refund.</p>
           </Section>
 
           <Section id="certification" icon={<CheckCircle size={20} />} title="5. Certification & Competency Assessment">
-            <p>Certification is issued only upon successful demonstration of all required competencies. Skylar Education cannot guarantee that every enrolled student will achieve certification. Assessment decisions are based on evidence gathered during training and must meet the standards set by the relevant training package or accrediting body (e.g., GWO, TESDA).</p>
+            <p>Certification is issued only upon successful demonstration of all required competencies. SKYLAR EDUCATION ASIA cannot guarantee that every enrolled student will achieve certification. Assessment decisions are based on evidence gathered during training and must meet the standards set by the relevant training package or accrediting body (e.g., GWO, TESDA).</p>
             <p className="mt-3">If a student is deemed not yet competent (NYC), they may be offered a re-assessment opportunity at an additional fee. The number of re-assessment attempts is at the trainer's discretion.</p>
           </Section>
 
           <Section id="intellectual-property" icon={<Lock size={20} />} title="6. Intellectual Property">
-            <p>All training materials, course content, manuals, assessments, and digital resources provided by Skylar Education Asia Inc. are the exclusive intellectual property of Skylar Education Asia Inc. and/or its licensors.</p>
+            <p>All training materials, course content, manuals, assessments, and digital resources provided by SKYLAR EDUCATION ASIA are the exclusive intellectual property of SKYLAR EDUCATION ASIA and/or its licensors.</p>
             <p className="mt-3">Students may not:</p>
             <ul className="list-disc list-inside space-y-1 mt-2">
               <li>Reproduce, distribute, or sell any course materials</li>
@@ -163,7 +162,7 @@ export const TermsOfService: React.FC = () => {
           </Section>
 
           <Section id="liability" icon={<AlertCircle size={20} />} title="8. Limitation of Liability">
-            <p>To the maximum extent permitted by law, Skylar Education Asia Inc. shall not be liable for:</p>
+            <p>To the maximum extent permitted by law, SKYLAR EDUCATION ASIA shall not be liable for:</p>
             <ul className="list-disc list-inside space-y-1 mt-2">
               <li>Any indirect, consequential, or incidental damages arising from use of our services</li>
               <li>Loss of income or employment outcomes resulting from training or certification</li>
@@ -175,11 +174,11 @@ export const TermsOfService: React.FC = () => {
 
           <Section id="governing-law" icon={<Globe size={20} />} title="9. Governing Law & Jurisdiction">
             <p>These Terms are governed by the laws of the Republic of the Philippines. For Australian operations and students, the relevant laws of the Commonwealth of Australia and the state/territory of operation apply. Any disputes shall be submitted to the jurisdiction of the applicable courts of the relevant country.</p>
-            <p className="mt-3">Skylar Education encourages all disputes to be resolved through its internal complaints process prior to any formal legal action. See our <a href="#/student-info/complaints" className="text-primary underline">Complaints Policy</a>.</p>
+            <p className="mt-3">SKYLAR EDUCATION ASIA encourages all disputes to be resolved through its internal complaints process prior to any formal legal action. See our <a href="#/student-info/complaints" className="text-primary underline">Complaints Policy</a>.</p>
           </Section>
 
           <Section id="changes" icon={<FileText size={20} />} title="10. Changes to These Terms">
-            <p>Skylar Education Asia Inc. reserves the right to update or modify these Terms at any time. Changes will be effective immediately upon posting to our website. Continued use of our services after changes are posted constitutes your acceptance of the new Terms. We encourage you to review these Terms periodically.</p>
+            <p>SKYLAR EDUCATION ASIA reserves the right to update or modify these Terms at any time. Changes will be effective immediately upon posting to our website. Continued use of our services after changes are posted constitutes your acceptance of the new Terms. We encourage you to review these Terms periodically.</p>
             <p className="mt-3">For material changes, we will notify enrolled students via email to the address on file.</p>
           </Section>
 
@@ -212,7 +211,7 @@ export const TermsOfService: React.FC = () => {
         </div>
 
         <p className="text-center text-gray-400 text-xs mt-8">
-          © 2026 Skylar Education Asia Inc. All rights reserved. &nbsp;|&nbsp; RTO #45000 &nbsp;|&nbsp; ISO 9001 Certified
+          © 2026 SKYLAR EDUCATION ASIA All rights reserved. &nbsp;|&nbsp; ISO 9001 Certified
         </p>
       </div>
     </div>

@@ -18,7 +18,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   locations = [
     {
       id: 'ph-facility',
-      name: 'Skylar Education Asia - Pampanga Facility',
+      name: 'SKYLAR EDUCATION ASIA - Pampanga Facility',
       address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
       lat: 15.14,
       lng: 120.59

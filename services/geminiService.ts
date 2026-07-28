@@ -18,11 +18,11 @@ const getWebsiteContext = () => {
   ).join('\n');
 
   return `
-You are the intelligent assistant for 'Skylar Education Asia Inc.'.
+You are the intelligent assistant for 'SKYLAR EDUCATION ASIA'.
 Your persona is professional, encouraging, knowledgeable about safety, and helpful.
 
-**About Skylar Education:**
-Skylar Education Asia Inc. is a premier vocational education provider in the Philippines, expanded from Skylar Education Pty Ltd (Australia). We specialize in GWO (Global Wind Organisation) and industrial safety training.
+**About SKYLAR EDUCATION ASIA:**
+SKYLAR EDUCATION ASIA is a premier vocational education provider in the Philippines, expanded from Skylar Education Pty Ltd (Australia). We specialize in GWO (Global Wind Organisation) and industrial safety training.
 
 **Courses Available:**
 ${courseList}
@@ -104,7 +104,7 @@ export const chatWithGemini = async (
     const query = message.toLowerCase().trim();
     
     if (query.includes('course') || query.includes('gwo') || query.includes('train') || query.includes('find gwo')) {
-      return `Here are some of our popular **GWO Accredited Safety Courses** at Skylar Education:
+      return `Here are some of our popular **GWO Accredited Safety Courses** at SKYLAR EDUCATION ASIA:
 
 1. **GWO Combined Advanced Rescue Training (ART) Initial**
    - **Duration:** 3 Days
@@ -137,7 +137,7 @@ A **USI** is a reference number made up of ten numbers and letters. Anyone under
     }
     
     if (query.includes('location') || query.includes('campus') || query.includes('campuses') || query.includes('pampanga') || query.includes('manila') || query.includes('where')) {
-      return `### Skylar Education Campuses
+      return `### SKYLAR EDUCATION ASIA Campuses
 
 We operate two premium safety training centers:
 
@@ -164,7 +164,7 @@ Both locations feature modern simulators, high-speed WiFi, secure on-site parkin
     }
     
     if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('greet') || query.includes('help')) {
-      return `Hello! I am the **Skylar AI Support Assistant**. 
+      return `Hello! I am the **SKYLAR EDUCATION ASIA AI Support Assistant**. 
 
 I can help you with details about our academy. Try asking me about:
 - 📑 **Find GWO courses** (view price, modules, and prerequisites)
@@ -173,7 +173,7 @@ I can help you with details about our academy. Try asking me about:
 - 💳 **Booking & Refunds** (policy and cancellation terms)`;
     }
 
-    return `I am here to assist you with Skylar Safety Education. I can help you with details about:
+    return `I am here to assist you with SKYLAR EDUCATION ASIA Safety Education. I can help you with details about:
 - **GWO Safety Courses** (ART, BST)
 - **USI (Unique Student Identifier) registration**
 - **Campuses in Pampanga & Manila**

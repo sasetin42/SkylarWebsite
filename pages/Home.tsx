@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle, Users, Award, Briefcase, Fan, Zap, BookOpen,
   ChevronRight, ChevronLeft, HardHat, ShieldCheck, Target, Eye,
-  Heart, Search, Calendar, ArrowRight, Star, Globe, TrendingUp,
+  Heart, Search, Calendar, ArrowRight, Star, Globe,
   GraduationCap, FileText, Mail, Phone, Clock, MapPin, LifeBuoy,
   AlertCircle, X, Send
 } from 'lucide-react';
@@ -27,14 +27,14 @@ interface NewsletterForm {
 }
 
 const SITE_PAGES = [
-  { id: 'about', title: 'About Skylar Education', path: '/about', description: 'Learn about our mission, values, and wind energy training expertise.', tags: 'about us team history safety company' },
+  { id: 'about', title: 'About SKYLAR EDUCATION ASIA', path: '/about', description: 'Learn about our mission, values, and wind energy training expertise.', tags: 'about us team history safety company' },
   { id: 'gwo-benefits', title: 'GWO Certification Benefits', path: '/about/gwo-benefits', description: 'Why GWO certifications are critical for global wind energy careers.', tags: 'gwo benefit advantage industry wind safety' },
-  { id: 'team', title: 'Our Training Instructors & Team', path: '/about/team', description: 'Meet the expert GWO and safety instructors at Skylar.', tags: 'team members staff trainers instructors experts' },
-  { id: 'locations', title: 'Skylar Campus Locations', path: '/locations', description: 'Find our state-of-the-art training facilities and campus contacts.', tags: 'campus locations map melbourne sydney brisbane perth adelaide addresses' },
+  { id: 'team', title: 'Our Training Instructors & Team', path: '/about/team', description: 'Meet the expert GWO and safety instructors at SKYLAR EDUCATION ASIA.', tags: 'team members staff trainers instructors experts' },
+  { id: 'locations', title: 'SKYLAR EDUCATION ASIA Campus Locations', path: '/locations', description: 'Find our state-of-the-art training facilities and campus contacts.', tags: 'campus locations map melbourne sydney brisbane perth adelaide addresses' },
   { id: 'news', title: 'Industry Insights & News', path: '/news', description: 'Stay updated with renewable energy trends, training tips, and news.', tags: 'blog news insights articles updates safety standards' },
   { id: 'usi', title: 'USI Information', path: '/student-info/usi', description: 'How to register or find your Unique Student Identifier (USI).', tags: 'usi student identifier unique number registration identity' },
   { id: 'refund-policy', title: 'Fees and Refund Policy', path: '/student-info/refund-policy', description: 'Review our course fees, cooling-off periods, and refund procedures.', tags: 'refund policy fees payment cancellation terms condition' },
-  { id: 'privacy-notice', title: 'Student Privacy Notice', path: '/student-info/privacy-notice', description: 'How Skylar Education protects your personal information and student records.', tags: 'privacy notice data protection policy student files security' },
+  { id: 'privacy-notice', title: 'Student Privacy Notice', path: '/student-info/privacy-notice', description: 'How SKYLAR EDUCATION ASIA protects your personal information and student records.', tags: 'privacy notice data protection policy student files security' },
   { id: 'online-enrolments', title: 'Online Enrolments Guide', path: '/student-info/online-enrolments', description: 'Step-by-step guide to enrolling online and submitting required identity documents.', tags: 'enrollment online process register application identity upload' },
   { id: 'complaints', title: 'Complaints & Appeals Policy', path: '/student-info/complaints', description: 'Our commitment to a fair and transparent complaints resolution process.', tags: 'complaints appeals dispute resolution feedback issue support' },
   { id: 'faq', title: 'Frequently Asked Questions (FAQ)', path: '/student-info/faq', description: 'Answers to common questions about GWO training, course bookings, and prerequisites.', tags: 'faq questions answers help support wind certification requirement' },
@@ -884,7 +884,6 @@ const Home: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {(accreditation?.items || [
-              { title: "NRT Accredited (RTO 21647)", description: "Accredited courses, nationally recognised certifications.", icon: "Award" },
               { title: "GWO Standard Alignment", description: "Meets Global Wind Organisation's stringent industry standards.", icon: "Fan" },
               { title: "Experienced Instructors", description: "Delivered by industry-experienced professional trainers.", icon: "Users" },
               { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
@@ -911,7 +910,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Why Skylar Asia? Banner Section */}
+      {/* Why SKYLAR EDUCATION ASIA? Banner Section */}
       <section className="py-16 bg-[#F8FAFC]">
         <div className="container mx-auto px-4 md:px-8">
           <div className="bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-[0_10px_30px_-5px_rgba(0,0,0,0.08)] border border-gray-100">
@@ -974,7 +973,7 @@ const Home: React.FC = () => {
               {enrolmentSteps?.heading || "Easy 4-Step Enrolment"}
             </h2>
             <p className="text-gray-500 text-lg leading-relaxed">
-              {enrolmentSteps?.description || "Begin your learning adventure with Skylar Education through our streamlined 4-step enrolment process."}
+              {enrolmentSteps?.description || "Begin your learning adventure with SKYLAR EDUCATION ASIA through our streamlined 4-step enrolment process."}
             </p>
           </div>
           <div className="grid md:grid-cols-4 gap-6 md:gap-8 relative">
@@ -1043,7 +1042,7 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      {/* Why Train With Skylar */}
+      {/* Why Train With SKYLAR EDUCATION ASIA */}
       <section className="py-24 md:py-32 bg-gray-50/50 relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-8 max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
@@ -1052,28 +1051,17 @@ const Home: React.FC = () => {
                 {!imageLoads['why-image'] && <div className="w-full h-[500px] bg-gray-200 animate-pulse" />}
                 <img
                   src="/why-train-skylar.png"
-                  alt="Skylar Training Facility"
+                  alt="SKYLAR EDUCATION ASIA Training Facility"
                   className={`w-full h-[500px] object-cover transition-transform duration-700 hover:scale-105 ${imageLoads['why-image'] ? 'opacity-100' : 'opacity-0'}`}
                   onLoad={() => handleImageLoad('why-image')}
                 />
-              </div>
-              <div className="absolute -bottom-6 right-0 md:-bottom-8 md:-right-4 lg:-right-6 bg-white p-6 md:p-8 rounded-3xl shadow-2xl border border-gray-100 hidden md:block">
-                <div className="flex items-center gap-5">
-                  <div className="bg-emerald-100 p-4 rounded-2xl text-emerald-600">
-                    <TrendingUp size={28} />
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">Success Rate</p>
-                    <p className="text-4xl font-heading font-extrabold text-secondary">98%</p>
-                  </div>
-                </div>
               </div>
             </div>
             <div className="text-left mt-8 lg:mt-0">
               <span className="inline-block py-1 px-3 rounded bg-accent/10 text-accent text-xs font-bold uppercase tracking-widest mb-4">
                 Why Choose Us
               </span>
-              <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-6 leading-tight">Why Train With Skylar?</h2>
+              <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-6 leading-tight">Why Train With SKYLAR EDUCATION ASIA?</h2>
               <p className="text-gray-600 text-lg mb-12 leading-relaxed">
                 We don't just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions to ensure maximum readiness.
               </p>
@@ -1211,7 +1199,7 @@ const Home: React.FC = () => {
               {cta?.heading || "Ready to Advance Your Career?"}
             </h2>
             <p className="text-gray-300 text-lg md:text-xl mb-10 leading-relaxed max-w-2xl mx-auto md:mx-0">
-              {cta?.subheading || "Upskill with Skylar today. Get industry-leading training, state-of-the-art facilities, and real-world experience. Classes fill up quickly, secure your spot now."}
+              {cta?.subheading || "Upskill with SKYLAR EDUCATION ASIA today. Get industry-leading training, state-of-the-art facilities, and real-world experience. Classes fill up quickly, secure your spot now."}
             </p>
             <div className="flex flex-col sm:flex-row items-center md:justify-start justify-center gap-5">
               <Link to={cta?.buttonLink || "/courses"} className="w-full sm:w-auto">
@@ -1395,7 +1383,7 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="mb-12">
             <span className="text-accent font-bold text-xs uppercase tracking-widest block mb-3">
-              SKYLAR EDUCATION LOCATIONS
+              SKYLAR EDUCATION ASIA LOCATIONS
             </span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary tracking-tight">
               World-Class Training Facilities

@@ -47,7 +47,7 @@ export const Blog: React.FC = () => {
                   Safety Updates
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                  Skylar News
+                  SKYLAR EDUCATION ASIA News
                 </span>
               </div>
               <h1

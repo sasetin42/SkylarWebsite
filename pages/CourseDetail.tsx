@@ -187,19 +187,6 @@ export const CourseDetail: React.FC = () => {
                   </div>
                 )}
 
-                {/* RTO Code Card */}
-                {course.rtoCode && (
-                  <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
-                      <div className="p-2.5 bg-rose-500/20 rounded-xl text-rose-400 mr-4 shrink-0 shadow-inner">
-                          <Award className="w-5 h-5" />
-                      </div>
-                      <div>
-                          <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">RTO Code</span>
-                          <span className="font-bold text-lg text-white font-heading">{course.rtoCode}</span>
-                      </div>
-                  </div>
-                )}
-
                 {/* Delivery Mode Card */}
                 <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
                     <div className="p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 mr-4 shrink-0 shadow-inner">
@@ -285,9 +272,7 @@ export const CourseDetail: React.FC = () => {
                   { id: 'careerOpportunities', title: 'Career Opportunities', content: course?.careerOpportunities },
                   { id: 'durationOfTraining', title: 'What is the duration of training?', content: course?.durationOfTraining },
                   { id: 'whereDelivered', title: 'Where is the training delivered?', content: course?.whereDelivered },
-                  { id: 'accreditedUnitsRich', title: 'Accredited Units', content: course?.accreditedUnitsRich },
                   { id: 'entryRequirementsRich', title: 'What are the entry requirements?', content: course?.entryRequirementsRich },
-                  { id: 'lln', title: 'Language, Literacy & Numeracy (LLN)', content: course?.lln },
                   { id: 'assessment', title: 'Assessment', content: course?.assessment },
                   { id: 'certificationRecord', title: 'Certification/Training Record', content: course?.certificationRecord },
                   { id: 'validityPeriod', title: 'Validity Period', content: course?.validityPeriod },
@@ -424,8 +409,8 @@ export const CourseDetail: React.FC = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 sticky top-24 shadow-2xl z-20">
+          <div className="lg:col-span-1 sticky top-[104px] self-start z-30 transition-all duration-500 ease-in-out">
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-2xl">
               <div className="flex items-center gap-2 border-b border-gray-100 pb-4" style={{ marginBottom: '24px' }}>
                  <Calendar className="text-primary w-6 h-6"/>
                  <h3 className="text-xl font-bold text-secondary">Upcoming Intakes</h3>

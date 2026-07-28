@@ -13,7 +13,6 @@ import { Locations } from './pages/Locations';
 import { LocationDetail } from './pages/LocationDetail';
 import { StudentInfo } from './pages/StudentInfo';
 import { OnlineEnrolments } from './pages/OnlineEnrolments';
-import { USIInfo } from './pages/USIInfo';
 import { RefundPolicy } from './pages/RefundPolicy';
 import { PrivacyNotice } from './pages/PrivacyNotice';
 import { Complaints } from './pages/Complaints';
@@ -43,7 +42,7 @@ import { CategoryManager } from './pages/admin/CategoryManager'; // New
 import { ScrollToTop } from './components/ScrollToTop';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
-import { getThemeSettings, getPageContent, initializeSupabase, getSettings } from './services/storageService';
+import { getThemeSettings, getPageContent, initializeFirebase, getSettings } from './services/storageService';
 import { ThemeSettings } from './types';
 
 // Helper to map route paths to CMS Page IDs
@@ -119,8 +118,7 @@ const ThemeEngine: React.FC = () => {
       existingIcons.forEach(el => el.parentNode?.removeChild(el));
 
       const link = document.createElement('link');
-      link.type = 'image/x-icon';
-      link.rel = 'shortcut icon';
+      link.rel = 'icon';
       link.href = settings.faviconUrl || '/favicon.ico';
       document.head.appendChild(link);
     };
@@ -153,9 +151,8 @@ const PublicLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <ThemeEngine />
       <Navbar />
-      <main id="main-content" className={`flex-grow ${hasSelfPaddedHero ? '' : 'pt-[80px]'}`}>
+      <main id="main-content" className={`flex-grow ${hasSelfPaddedHero ? '' : 'pt-[66px]'}`}>
         <Outlet />
       </main>
       <Footer />
@@ -171,7 +168,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        await initializeSupabase();
+        await initializeFirebase();
       } catch (error) {
         console.error("Initialization error:", error);
       } finally {
@@ -266,7 +263,7 @@ const App: React.FC = () => {
             margin: 0,
             textTransform: 'uppercase'
           }}>
-            Skylar Education Asia
+            SKYLAR EDUCATION ASIA
           </h2>
           
           <p style={{
@@ -289,7 +286,7 @@ const App: React.FC = () => {
           textAlign: 'center',
           width: '100%'
         }}>
-          RTO #45000 &nbsp;|&nbsp; ISO 9001 Certified
+          ISO 9001 Certified
         </div>
 
         <style>{`
@@ -308,6 +305,7 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <Router>
+        <ThemeEngine />
         <div className="font-sans text-gray-900">
           <a href="#main-content" className="skip-link">Skip to content</a>
           <Routes>
@@ -326,7 +324,6 @@ const App: React.FC = () => {
               <Route path="/student-info/online-enrolments" element={<OnlineEnrolments />} />
               <Route path="/student-info/refund-policy" element={<RefundPolicy />} />
               <Route path="/student-info/privacy-notice" element={<PrivacyNotice />} />
-              <Route path="/student-info/usi" element={<USIInfo />} />
               <Route path="/student-info/complaints" element={<Complaints />} />
               <Route path="/student-info/faq" element={<FAQ />} />
               <Route path="/contact" element={<Contact />} />

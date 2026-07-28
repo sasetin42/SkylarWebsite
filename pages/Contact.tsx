@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin, Clock, CheckCircle, Building, Globe, ArrowRight } 
 import { Button } from '../components/Button';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { getPageContent, saveTicket } from '../services/storageService';
-import { supabaseClient } from '../services/supabaseClient';
+import { firebaseClient } from '../services/firebaseClient';
 import { SitePage } from '../types';
 import { Link } from 'react-router-dom';
 
@@ -54,8 +54,8 @@ export const Contact: React.FC = () => {
     try {
       saveTicket(newTicket);
       
-      // Attempt to save to Supabase if config exists
-      await supabaseClient.saveContactSubmission({
+      // Attempt to save to Firebase if config exists
+      await firebaseClient.saveContactSubmission({
         name: formData.name,
         email: formData.email,
         mobile: formData.mobile || undefined,
@@ -114,7 +114,7 @@ export const Contact: React.FC = () => {
                 className="font-heading font-bold text-white mb-4 drop-shadow-lg"
                 style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}
               >
-                Contact <span className="text-accent">Skylar Education</span>
+                Contact <span className="text-accent">SKYLAR EDUCATION ASIA</span>
               </h1>
 
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
@@ -141,7 +141,7 @@ export const Contact: React.FC = () => {
                 </div>
                 <h2 className="text-3xl font-heading font-bold text-secondary mb-4">Message Sent!</h2>
                 <p className="text-gray-600 text-lg max-w-md mb-8">
-                  Thank you for contacting Skylar Education. Our student support team has received your enquiry and will respond within 24 hours.
+                  Thank you for contacting SKYLAR EDUCATION ASIA. Our student support team has received your enquiry and will respond within 24 hours.
                 </p>
                 <Button onClick={() => { setStatus('idle'); setFormData({ name: '', email: '', mobile: '', message: '' }); }}>
                   Send Another Message

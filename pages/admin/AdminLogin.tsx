@@ -19,52 +19,13 @@ export const AdminLogin: React.FC = () => {
     setError('');
     setLoading(true);
 
-    // 1. Fallback developer credentials
-    if (
-      (email === 'admin@skylareducation.asia' && password === 'admin') ||
-      (email === 'admin@skylar.com.ph' && password === 'admin')
-    ) {
+    if (email === 'admin@skylareducation.asia' && password === 'admin') {
       localStorage.setItem('isAdminAuthenticated', 'true');
       navigate('/admin/dashboard');
-      setLoading(false);
-      return;
+    } else {
+      setError('Invalid credentials. Try admin@skylareducation.asia / admin');
     }
-
-    // 2. Real Supabase Auth authentication
-    try {
-      const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://ofjorojhrnfakwkozvib.supabase.co';
-      const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mam9yb2pocm5mYWt3a296dmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTM5MjMsImV4cCI6MjA5NzE2OTkyM30.OEzTbd_JJtGDWAQwq7TEMkIYGfxU07tp3xc5hLKJusU';
-
-      const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const userEmail = data.user?.email || email;
-        if (
-          userEmail === 'admin@skylar.com.ph' || 
-          userEmail === 'admin@skylareducation.asia'
-        ) {
-          localStorage.setItem('isAdminAuthenticated', 'true');
-          localStorage.setItem('supabaseToken', data.access_token);
-          navigate('/admin/dashboard');
-          return;
-        }
-      }
-      
-      setError('Invalid credentials. Try admin@skylareducation.asia / admin or your Supabase credentials');
-    } catch (err) {
-      console.error(err);
-      setError('Connection failed. Please check credentials or try again.');
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
   return (
@@ -110,8 +71,7 @@ export const AdminLogin: React.FC = () => {
                 className="h-14 w-auto"
               />
               <div>
-                <p className="font-heading font-bold text-xl leading-none text-white">Skylar</p>
-                <p className="text-[10px] uppercase tracking-widest text-white/50">Education Asia</p>
+                <p className="font-heading font-bold text-xl leading-none text-white">SKYLAR EDUCATION ASIA</p>
               </div>
             </Link>
 
@@ -132,7 +92,7 @@ export const AdminLogin: React.FC = () => {
 
             {/* Sub-description */}
             <p className="text-gray-300 text-base max-w-sm leading-relaxed border-l-4 border-accent pl-5">
-              Skylar Education Asia Inc. Admin Portal. Managing course operations, student records, and compliance for the Philippines.
+              SKYLAR EDUCATION ASIA Admin Portal. Managing course operations, student records, and compliance for the Philippines.
             </p>
 
             {/* Stats row */}
@@ -156,7 +116,7 @@ export const AdminLogin: React.FC = () => {
 
           {/* Footer */}
           <div className="text-sm text-white/30">
-            &copy; 2026 Skylar Education Asia Inc. All rights reserved.
+            &copy; 2026 SKYLAR EDUCATION ASIA All rights reserved.
           </div>
         </div>
       </div>

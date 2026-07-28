@@ -41,7 +41,7 @@ export const Team: React.FC = () => {
                   Our People
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                  Skylar Education
+                  SKYLAR EDUCATION ASIA
                 </span>
               </div>
               <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
@@ -49,7 +49,7 @@ export const Team: React.FC = () => {
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
-                {teamSection?.description || "Meet the dedicated professionals leading Skylar Education."}
+                {teamSection?.description || "Meet the dedicated professionals leading SKYLAR EDUCATION ASIA."}
               </p>
             </div>
           </div>

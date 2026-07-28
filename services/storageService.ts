@@ -1,18 +1,15 @@
-
 import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog } from '../types';
 import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES } from '../constants';
-import { supabaseClient } from './supabaseClient';
+import { firebaseClient } from './firebaseClient';
 
-// Intercept localStorage.setItem to sync with Supabase in the background
+// Intercept localStorage.setItem to sync with Firebase in the background
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key: string, value: string) => {
   originalSetItem(key, value);
   if (key.startsWith('apex_')) {
     try {
       const parsed = JSON.parse(value);
-      supabaseClient.upsert(key, parsed).catch(err => {
-        console.error(`Failed to sync key ${key} to Supabase:`, err);
-      });
+      firebaseClient.upsert(key, { value: parsed }).catch(() => {});
     } catch (e) {
       // Ignore parse errors (non-JSON strings)
     }
@@ -200,11 +197,11 @@ export const deleteStudent = (id: string) => {
 
 // --- Settings ---
 const DEFAULT_SETTINGS: InstituteSettings = {
-  instituteName: "Skylar Education Asia Inc.",
+  instituteName: "SKYLAR EDUCATION ASIA",
   contactEmail: "info@skylareducation.asia",
   contactPhone: "+63 45 123 4567",
   address: "Lot 2 Liwayway St., Angeles City, Pampanga",
-  rtoId: "45000",
+  
   operatingHours: "Mon-Fri 8am-5pm",
   siteAnnouncement: "",
   enrollmentOpen: true,
@@ -213,6 +210,8 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   darkLogoUrl: "",
   loadingLogoUrl: "",
   faviconUrl: "",
+  collapsedLogoUrl: "",
+  uncollapsedLogoUrl: "",
   defaultDarkMode: false,
   brandColor: "#041024",
   themePreset: "navy",
@@ -312,14 +311,14 @@ const SEED_PAGES: SitePage[] = [
             label: 'Hero Slider',
             type: 'hero',
             data: {
-                heading: 'Skylar Education: Leading GWO Wind Safety Training',
-                description: 'Nationally Recognised RTO providing certified GWO and High Risk Work courses across key locations.',
+                heading: 'SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training',
+                description: 'Internationally certified training provider delivering GWO and industrial safety courses across key locations.',
                 buttonText: 'Browse Courses',
                 buttonLink: '/courses',
                 image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1920',
                 items: [
                     { 
-                        title: "Skylar Education: Leading GWO Wind Safety Training", 
+                        title: "SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training", 
                         description: "Leading safety training and services for a sustainable future. GWO accredited, nationally recognised, multiple locations.", 
                         image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
                         buttonText: "Browse Courses",
@@ -349,7 +348,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Excellence in Safety Training - Industry-Leading Skills & Support",
                 items: [
-                    { title: "NRT Accredited (RTO 21647)", description: "Accredited courses, nationally recognised certifications.", icon: "Award" },
+                    
                     { title: "GWO Standard Alignment", description: "Meets Global Wind Organisation's stringent industry standards.", icon: "Fan" },
                     { title: "Experienced Instructors", description: "Delivered by industry-experienced professional trainers.", icon: "Users" },
                     { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
@@ -363,7 +362,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Leading Safety Training and Services for a Sustainable Future",
                 subheading: "Tailored Safety Training for Diverse Industries",
-                description: "Skylar Education exists to lift the bar on safety training. By tailoring programs to each industry, we help clients meet and exceed standards while creating cultures where every worker goes home safe. Discover how Skylar Education provides customised, high-quality training and safety services that prioritise injury-free work environments and meet your unique needs.",
+                description: "SKYLAR EDUCATION ASIA exists to lift the bar on safety training. By tailoring programs to each industry, we help clients meet and exceed standards while creating cultures where every worker goes home safe. Discover how SKYLAR EDUCATION ASIA provides customised, high-quality training and safety services that prioritise injury-free work environments and meet your unique needs.",
                 buttonText: "More About Us",
                 buttonLink: "/about",
                 image: "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=1200"
@@ -385,7 +384,7 @@ const SEED_PAGES: SitePage[] = [
             type: 'features',
             data: {
                 heading: "Easy 4-Step Enrolment - Learning Begins Here",
-                description: "Begin your learning adventure with Skylar Education through our streamlined 4-step enrollment process. Designed for ease and simplicity, our portal guides you smoothly from sign-up to start.",
+                description: "Begin your learning adventure with SKYLAR EDUCATION ASIA through our streamlined 4-step enrollment process. Designed for ease and simplicity, our portal guides you smoothly from sign-up to start.",
                 items: [
                     { title: "Browse Courses Online", description: "Explore our extensive course listings and select the best option for your career goals.", icon: "Search" },
                     { title: "Choose a Date", description: "Pick a convenient date from the available sessions to fit your schedule.", icon: "Calendar" },
@@ -400,7 +399,7 @@ const SEED_PAGES: SitePage[] = [
             type: 'features',
             data: {
                 heading: "Training Across Asia-Pacific's Key Locations",
-                description: "Skylar Education operates multiple training facilities, empowering thousands of students annually. Our comprehensive reach ensures that quality training is accessible, enhancing careers.",
+                description: "SKYLAR EDUCATION ASIA operates multiple training facilities, empowering thousands of students annually. Our comprehensive reach ensures that quality training is accessible, enhancing careers.",
                 items: [
                     { title: "12+", description: "Number of Locations Across Key Facilities" },
                     { title: "3,000+", description: "Students Trained Annually Across Our Facilities" },
@@ -414,7 +413,7 @@ const SEED_PAGES: SitePage[] = [
             type: 'cta',
             data: {
                 heading: "Ready to Advance Your Career?",
-                subheading: "Upskill with Skylar today. Book your spot now - classes fill up quickly.",
+                subheading: "Upskill with SKYLAR EDUCATION ASIA today. Book your spot now - classes fill up quickly.",
                 buttonText: "Browse Courses Now",
                 buttonLink: "/courses"
             }
@@ -431,7 +430,7 @@ const SEED_PAGES: SitePage[] = [
             label: 'Hero Section',
             type: 'hero',
             data: {
-                heading: "About Skylar Education",
+                heading: "About SKYLAR EDUCATION ASIA",
                 description: "We are dedicated to providing world-class safety training for the renewable energy and construction sectors.",
                 image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1920"
             }
@@ -443,7 +442,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Empowering Safety Excellence in Wind Energy",
                 subheading: "TAILORED SAFETY TRAINING FOR THE WIND INDUSTRY",
-                description: "Skylar Education is a dedicated Registered Training Organisation (RTO 21647) specialising in wind safety training across Australia. With a focus on the Global Wind Organisation's (GWO) safety standards, we offer both initial and refresher courses designed to elevate the skills and safety practices of professionals in the wind energy sector.\n\nOur training centres are strategically located in key regions, providing accessible, top-tier education to ensure industry compliance and enhance career opportunities.",
+                description: "SKYLAR EDUCATION ASIA is an internationally certified training provider specialising in wind safety training in the Philippines and across Asia. With a focus on the Global Wind Organisation's (GWO) safety standards, we offer both initial and refresher courses designed to elevate the skills and safety practices of professionals in the wind energy sector.\n\nOur training centres are strategically located in key regions, providing accessible, top-tier education to ensure industry compliance and enhance career opportunities.",
                 image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200"
                 // partners removed per request
             }
@@ -466,7 +465,7 @@ const SEED_PAGES: SitePage[] = [
                     },
                     { 
                         title: "Our Credentials", 
-                        description: "• Industry-Relevant Accreditation\n• Nationally Recognised (RTO 21647)\n• Experienced Instructors\n• Flexibility in Training Delivery", 
+                        description: "• Industry-Relevant Accreditation\n• Experienced Instructors\n• Flexibility in Training Delivery", 
                         icon: "Award" 
                     }
                 ]
@@ -479,7 +478,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Your Partner in Professional Wind Safety Training",
                 subheading: "Excellence in Safety Training",
-                description: "Choose Skylar Education for comprehensive, practical training that meets global standards. Our programs are meticulously designed to ensure that every participant gains the skills necessary for safety and efficiency in the wind sector.\n\nWith state-of-the-art facilities, a curriculum that covers essential safety modules, and a track record of successful certifications, Skylar Education stands out as your best choice for advancing in the wind energy field.",
+                description: "Choose SKYLAR EDUCATION ASIA for comprehensive, practical training that meets global standards. Our programs are meticulously designed to ensure that every participant gains the skills necessary for safety and efficiency in the wind sector.\n\nWith state-of-the-art facilities, a curriculum that covers essential safety modules, and a track record of successful certifications, SKYLAR EDUCATION ASIA stands out as your best choice for advancing in the wind energy field.",
                 image: "/wind-turbine-worker.png"
             }
         },
@@ -555,7 +554,7 @@ const SEED_PAGES: SitePage[] = [
             type: 'content',
             data: {
                 heading: "Pramono Edens - COO",
-                description: "GWO Certification is your pathway to a successful and rewarding career in the renewable energy sector. At Skylar Education, we empower individuals to build a stable future for themselves and their families while contributing to a greener, more sustainable world. By achieving GWO Certification, you’re not just advancing your career—you’re making a lasting impact on your life, your loved ones, and the planet.",
+                description: "GWO Certification is your pathway to a successful and rewarding career in the renewable energy sector. At SKYLAR EDUCATION ASIA, we empower individuals to build a stable future for themselves and their families while contributing to a greener, more sustainable world. By achieving GWO Certification, you’re not just advancing your career—you’re making a lasting impact on your life, your loved ones, and the planet.",
                 image: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=800"
             }
         },
@@ -678,7 +677,7 @@ const SEED_PAGES: SitePage[] = [
             label: 'Hero Section',
             type: 'hero',
             data: {
-                heading: 'Contact Skylar Education',
+                heading: 'Contact SKYLAR EDUCATION ASIA',
                 description: 'Whether you need to book a group session or verify a certificate, our team is ready to assist.',
                 image: 'https://images.unsplash.com/photo-1423666639041-f142fcb944b0?auto=format&fit=crop&q=80&w=1920'
             }
@@ -953,7 +952,7 @@ We reserve the right to amend this refund policy from time to time. If we do, we
                 items: [
                     {
                         title: "HOW WE USE YOUR PERSONAL INFORMATION",
-                        description: "We use your personal information to enable us to deliver VET courses to you, and otherwise, as needed, to comply with our obligations as an RTO."
+                        description: "We use your personal information to enable us to deliver our courses to you, and otherwise, as needed, to comply with our obligations as a training provider and Global Wind Organisation (GWO) certified center."
                     },
                     {
                         title: "HOW WE DISCLOSE YOUR PERSONAL INFORMATION",
@@ -975,7 +974,7 @@ The NCVER does not intend to disclose your personal information to any overseas 
 
 For more information about how the NCVER will handle your personal information please refer to the NCVER’s Privacy Policy at www.ncver.edu.au/privacy.
 
-If you would like to seek access to or correct your information, in the first instance, please contact Skylar Education using the contact details listed below.
+If you would like to seek access to or correct your information, in the first instance, please contact SKYLAR EDUCATION ASIA using the contact details listed below.
 
 DESE is authorised by law, including the Privacy Act and the NVETR Act, to collect, use and disclose your personal information to fulfil specified functions and activities. For more information about how the DESE will handle your personal information, please refer to the DESE VET Privacy Notice at https://www.dese.gov.au/national-vet-data/vet-privacy-notice
 
@@ -1020,7 +1019,7 @@ o ask a question about this Privacy Notice`
             type: 'content',
             data: {
                 heading: "Complaints Process",
-                description: "If you are dissatisfied with a service offered or treatment received by Skylar Education, then you have the right to lodge a complaint. In the event that you are dissatisfied with the outcome with your complaint, then you have the right to lodge an appeal. Please refer to the Complaints and Appeals Policy that is given to you upon enrolment via the student handbook."
+                description: "If you are dissatisfied with a service offered or treatment received by SKYLAR EDUCATION ASIA, then you have the right to lodge a complaint. In the event that you are dissatisfied with the outcome with your complaint, then you have the right to lodge an appeal. Please refer to the Complaints and Appeals Policy that is given to you upon enrolment via the student handbook."
             }
         }
     ] 
@@ -1221,7 +1220,8 @@ export const getAdminUsers = (): AdminUser[] => {
   if (!stored) {
       const defaultAdmins: AdminUser[] = [
           { id: 'admin1', name: 'Admin User', email: 'admin@skylareducation.asia', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
-          { id: 'e90e43c6-e13c-4a0f-a058-3f8fbc73666b', name: 'Super Admin', email: 'admin@skylar.com.ph', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
+          { id: 'e90e43c6-e13c-4a0f-a058-3f8fbc73666b', name: 'Super Admin', email: 'admin@skylar.com.ph', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
+          { id: 'M2LnqGjRMtT6PlWv9KC3FkmOIKG3', name: 'Super Admin', email: 'admin@gmail.com', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
       ];
       localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
       return defaultAdmins;
@@ -1348,6 +1348,11 @@ export const saveSection = (section: SchoolSection) => {
     localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections));
 };
 
+export const deleteSection = (id: string) => {
+    const sections = getSections().filter(s => s.id !== id);
+    localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections));
+};
+
 // --- Support ---
 export const getTickets = (): SupportTicket[] => {
     const stored = localStorage.getItem(TICKETS_KEY);
@@ -1362,48 +1367,50 @@ export const saveTicket = (ticket: SupportTicket) => {
     localStorage.setItem(TICKETS_KEY, JSON.stringify(tickets));
 };
 
-// --- Supabase Initialization & Seeding ---
-export const initializeSupabase = async (): Promise<void> => {
+// --- Firebase Initialization & Seeding ---
+export const initializeFirebase = async (): Promise<void> => {
   try {
-    const data = await supabaseClient.getAll();
-    const dbKeys = new Set(data.map(item => item.key));
+    const data = await firebaseClient.getAll();
+    const dbKeys = new Set(Object.keys(data));
     
-    // 1. Populate what we got from Supabase
-    data.forEach(item => {
-      localStorage.setItem(item.key, JSON.stringify(item.value));
+    // 1. Populate what we got from Firebase
+    Object.entries(data).forEach(([key, item]: [string, any]) => {
+      if (item.value) {
+        localStorage.setItem(key, JSON.stringify(item.value));
+      }
     });
 
-    // 2. Seed default values in Supabase if they are missing
+    // 2. Seed default values in Firebase if they are missing
     if (!dbKeys.has(COURSES_KEY)) {
       const courses = getCourses();
-      await supabaseClient.upsert(COURSES_KEY, courses);
+      await firebaseClient.upsert(COURSES_KEY, { value: courses });
     }
     if (!dbKeys.has(SITE_PAGES_KEY)) {
       const pages = getSitePages();
-      await supabaseClient.upsert(SITE_PAGES_KEY, pages);
+      await firebaseClient.upsert(SITE_PAGES_KEY, { value: pages });
     }
     if (!dbKeys.has(TRAINERS_KEY)) {
       const trainers = getTrainers();
-      await supabaseClient.upsert(TRAINERS_KEY, trainers);
+      await firebaseClient.upsert(TRAINERS_KEY, { value: trainers });
     }
     if (!dbKeys.has(ROLES_KEY)) {
       const roles = getRoles();
-      await supabaseClient.upsert(ROLES_KEY, roles);
+      await firebaseClient.upsert(ROLES_KEY, { value: roles });
     }
     if (!dbKeys.has(ADMIN_USERS_KEY)) {
       const admins = getAdminUsers();
-      await supabaseClient.upsert(ADMIN_USERS_KEY, admins);
+      await firebaseClient.upsert(ADMIN_USERS_KEY, { value: admins });
     }
     if (!dbKeys.has(THEME_KEY)) {
       const theme = getThemeSettings();
-      await supabaseClient.upsert(THEME_KEY, theme);
+      await firebaseClient.upsert(THEME_KEY, { value: theme });
     }
     if (!dbKeys.has(SETTINGS_KEY)) {
       const settings = getSettings();
-      await supabaseClient.upsert(SETTINGS_KEY, settings);
+      await firebaseClient.upsert(SETTINGS_KEY, { value: settings });
     }
   } catch (error) {
-    console.error('Failed to initialize data from Supabase:', error);
+    // Firebase unavailable — app runs entirely from localStorage
   }
 };
 

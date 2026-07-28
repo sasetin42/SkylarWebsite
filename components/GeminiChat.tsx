@@ -6,7 +6,6 @@ import { ChatMessage } from '../types';
 
 const SUGGESTIONS = [
   "Find GWO courses",
-  "How do I get a USI?",
   "Campus locations",
   "Contact support"
 ];
@@ -82,10 +81,7 @@ const formatMessage = (text: string) => {
       const headerText = trimmed.replace(/^###\s*/, '').trim();
       let icon = '💡';
       let iconBg = 'bg-yellow-500/10 text-yellow-600';
-      if (headerText.toLowerCase().includes('usi')) {
-        icon = '🆔';
-        iconBg = 'bg-blue-500/10 text-blue-600';
-      } else if (headerText.toLowerCase().includes('course') || headerText.toLowerCase().includes('safety') || headerText.toLowerCase().includes('train')) {
+      if (headerText.toLowerCase().includes('course') || headerText.toLowerCase().includes('safety') || headerText.toLowerCase().includes('train')) {
         icon = '🛡️';
         iconBg = 'bg-emerald-500/10 text-emerald-600';
       } else if (headerText.toLowerCase().includes('location') || headerText.toLowerCase().includes('campus') || headerText.toLowerCase().includes('campuses')) {
@@ -191,7 +187,7 @@ export const GeminiChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Hello! I am the Skylar AI Assistant. I can help you find courses, check policies, or answer safety questions.' }
+    { role: 'model', text: 'Hello! I am the SKYLAR EDUCATION ASIA AI Assistant. I can help you find courses, check policies, or answer safety questions.' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [useReasoning, setUseReasoning] = useState(false);
@@ -274,7 +270,7 @@ export const GeminiChat: React.FC = () => {
                 <Sparkles className="w-5 h-5 text-accent" />
             </div>
             <div>
-                <h3 className="font-heading font-bold text-base leading-none">Skylar Assistant</h3>
+                <h3 className="font-heading font-bold text-base leading-none">SKYLAR EDUCATION ASIA Assistant</h3>
                 <span className="text-[10px] text-gray-300 flex items-center gap-1 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Online
                 </span>

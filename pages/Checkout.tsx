@@ -17,7 +17,6 @@ export const Checkout: React.FC = () => {
     lastName: '',
     email: '',
     phone: '',
-    usi: '',
     paymentMethod: 'credit_card'
   });
 

@@ -9,7 +9,7 @@
 }
 
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
   -webkit-text-size-adjust: 100%;
   font-family: 'Maven Pro', sans-serif !important;
@@ -214,12 +214,24 @@ button, input, select, textarea {
   font-size: 16px !important;
 }
 
-/* Logo Color Filters */
-.logo-color-white {
-  filter: brightness(0) invert(1) !important;
+/* Custom Scrollbar - Modern, thin design */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-.logo-color-blue {
-  /* Converts any logo color to approximately #000685 */
-  filter: brightness(0) saturate(100%) invert(9%) sepia(100%) saturate(5940%) hue-rotate(238deg) brightness(63%) contrast(121%) !important;
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

@@ -66,14 +66,16 @@ export const SettingsManager: React.FC = () => {
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading') => {
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading' | 'collapsed' | 'uncollapsed') => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (< 2MB to keep localStorage clean)
       if (file.size > 2 * 1024 * 1024) {
         alert("Image file size should be less than 2MB.");
         return;
       }
+      setIsUploadingLogo(true);
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
@@ -82,10 +84,17 @@ export const SettingsManager: React.FC = () => {
           if (type === 'light') next.lightLogoUrl = base64;
           else if (type === 'dark') next.darkLogoUrl = base64;
           else if (type === 'loading') next.loadingLogoUrl = base64;
-          else next.faviconUrl = base64;
+          else if (type === 'favicon') next.faviconUrl = base64;
+          else if (type === 'collapsed') next.collapsedLogoUrl = base64;
+          else if (type === 'uncollapsed') next.uncollapsedLogoUrl = base64;
           saveSettings(next);
           return next;
         });
+        setIsUploadingLogo(false);
+      };
+      reader.onerror = () => {
+        alert("Failed to read file.");
+        setIsUploadingLogo(false);
       };
       reader.readAsDataURL(file);
     }
@@ -99,6 +108,8 @@ export const SettingsManager: React.FC = () => {
         darkLogoUrl: '',
         loadingLogoUrl: '',
         faviconUrl: '',
+        collapsedLogoUrl: '',
+        uncollapsedLogoUrl: '',
         brandColor: '#041024',
         accentColor: '#ffc107',
         borderRadius: 12,
@@ -110,14 +121,16 @@ export const SettingsManager: React.FC = () => {
     }
   };
 
-  const handleDeleteLogo = (type: 'light' | 'dark' | 'loading' | 'favicon') => {
+  const handleDeleteLogo = (type: 'light' | 'dark' | 'loading' | 'favicon' | 'collapsed' | 'uncollapsed') => {
     if (window.confirm(`Are you sure you want to clear this custom ${type === 'favicon' ? 'favicon' : type + ' logo'}?`)) {
       setSettings(prev => {
         const next = { ...prev };
         if (type === 'light') next.lightLogoUrl = '';
         else if (type === 'dark') next.darkLogoUrl = '';
         else if (type === 'loading') next.loadingLogoUrl = '';
-        else next.faviconUrl = '';
+        else if (type === 'favicon') next.faviconUrl = '';
+        else if (type === 'collapsed') next.collapsedLogoUrl = '';
+        else if (type === 'uncollapsed') next.uncollapsedLogoUrl = '';
         saveSettings(next);
         return next;
       });
@@ -251,7 +264,7 @@ export const SettingsManager: React.FC = () => {
             <form onSubmit={handleSaveSettings} className="space-y-8 max-w-3xl animate-fade-in">
               <div>
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">General Information</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Basic identity details about your RTO training institute.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Basic identity details about your training institute.</p>
                 
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -267,17 +280,7 @@ export const SettingsManager: React.FC = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">RTO ID Code</label>
-                      <input 
-                        id="settings-rto-id"
-                        name="rtoId"
-                        autoComplete="off"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
-                        value={settings.rtoId} 
-                        onChange={e => setSettings({...settings, rtoId: e.target.value})} 
-                      />
-                    </div>
+
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -518,9 +521,9 @@ export const SettingsManager: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                  {/* Left Column: Form Controls (Spans 3 columns on wide screens) */}
-                  <div className="xl:col-span-3 space-y-6">
+                <div className="grid grid-cols-1 gap-8">
+                  {/* Left Column: Form Controls */}
+                  <div className="space-y-6">
                     
                     {/* Grid of basic configuration blocks */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -729,132 +732,200 @@ export const SettingsManager: React.FC = () => {
                     </div>
 
                     {/* Logo Asset Uploaders Grid */}
-                    <div className="p-5 bg-slate-50/50 dark:bg-gray-900/10 rounded-2xl border border-slate-100 dark:border-gray-805 space-y-4">
-                      <h4 className="font-bold text-gray-800 dark:text-white text-xs uppercase tracking-wider flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-3">
-                        <span className="flex items-center gap-1.5"><Image size={14} className="text-blue-500" /> Logo Assets Management</span>
-                        <span className="text-[10px] text-gray-400 normal-case font-medium">PNG, SVG or JPEG formats. Size limit 2MB.</span>
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="p-6 bg-slate-50/50 dark:bg-slate-900/50 rounded-3xl border border-slate-200/60 dark:border-slate-700/60 space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 gap-3">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-widest flex items-center gap-2">
+                          <Image size={18} className="text-primary dark:text-accent" /> 
+                          Logo Assets Management
+                        </h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium bg-white dark:bg-slate-800 px-3 py-1 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
+                          PNG, SVG or JPEG (Max 2MB)
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Light Mode Logo */}
-                        <div className="p-4 bg-white dark:bg-gray-850 rounded-xl border border-slate-200/60 dark:border-gray-750 flex flex-col justify-between shadow-sm relative group">
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
                           {settings.lightLogoUrl && (
                             <button
                               type="button"
                               onClick={() => handleDeleteLogo('light')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
                               title="Delete Logo"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={16} />
                             </button>
                           )}
-                          <div>
-                            <h5 className="text-xs font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1 mb-1">Light Mode Logo</h5>
-                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-3">Loaded on white/light navigation panels.</p>
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Light Mode Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed on light backgrounds and panels.</p>
                           </div>
-                          <div className="space-y-3">
-                            <div className="h-16 bg-slate-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-2 border border-dashed border-slate-200 dark:border-gray-700">
+                          <div className="space-y-4">
+                            <div className="h-28 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
                               {settings.lightLogoUrl ? (
-                                <img src={settings.lightLogoUrl} alt="Light logo preview" className="max-h-full object-contain" />
+                                <img src={settings.lightLogoUrl} alt="Light logo preview" className="max-h-full max-w-full object-contain" />
                               ) : (
-                                <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">Default Active</span>
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
                               )}
                             </div>
-                            <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
-                              Upload File
-                              <input type="file" id="settings-light-logo" name="lightLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'light')} />
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="lightLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'light')} />
                             </label>
                           </div>
                         </div>
 
                         {/* Dark Mode Logo */}
-                        <div className="p-4 bg-white dark:bg-gray-850 rounded-xl border border-slate-200/60 dark:border-gray-750 flex flex-col justify-between shadow-sm relative group">
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
                           {settings.darkLogoUrl && (
                             <button
                               type="button"
                               onClick={() => handleDeleteLogo('dark')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
                               title="Delete Logo"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={16} />
                             </button>
                           )}
-                          <div>
-                            <h5 className="text-xs font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1 mb-1">Dark Mode Logo</h5>
-                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-3">Loaded on dark footer backgrounds.</p>
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Dark Mode Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed on dark backgrounds and footers.</p>
                           </div>
-                          <div className="space-y-3">
-                            <div className="h-16 bg-[#041024] rounded-lg flex items-center justify-center p-2 border border-dashed border-gray-800">
+                          <div className="space-y-4">
+                            <div className="h-28 bg-[#0B172A] rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-800 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
                               {settings.darkLogoUrl ? (
-                                <img src={settings.darkLogoUrl} alt="Dark logo preview" className="max-h-full object-contain" />
+                                <img src={settings.darkLogoUrl} alt="Dark logo preview" className="max-h-full max-w-full object-contain" />
                               ) : (
-                                <span className="text-[9px] text-gray-500 font-semibold uppercase tracking-wider">Default Active</span>
+                                <span className="text-xs text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
                               )}
                             </div>
-                            <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
-                              Upload File
-                              <input type="file" id="settings-dark-logo" name="darkLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="darkLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
                             </label>
                           </div>
                         </div>
 
                         {/* Loading Screen Logo */}
-                        <div className="p-4 bg-white dark:bg-gray-850 rounded-xl border border-slate-200/60 dark:border-gray-750 flex flex-col justify-between shadow-sm relative group">
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
                           {settings.loadingLogoUrl && (
                             <button
                               type="button"
                               onClick={() => handleDeleteLogo('loading')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
                               title="Delete Logo"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={16} />
                             </button>
                           )}
-                          <div>
-                            <h5 className="text-xs font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1 mb-1">Loading Logo</h5>
-                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-3">Displayed on loading/splash screens.</p>
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Loading Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed centrally on loading splash screens.</p>
                           </div>
-                          <div className="space-y-3">
-                            <div className="h-16 bg-[#1a2333] rounded-lg flex items-center justify-center p-2 border border-dashed border-gray-800">
+                          <div className="space-y-4">
+                            <div className="h-28 bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
                               {settings.loadingLogoUrl ? (
-                                <img src={settings.loadingLogoUrl} alt="Loading logo preview" className="max-h-full object-contain" />
+                                <img src={settings.loadingLogoUrl} alt="Loading logo preview" className="max-h-full max-w-full object-contain" />
                               ) : (
-                                <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">Default Active</span>
+                                <span className="text-xs text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
                               )}
                             </div>
-                            <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
-                              Upload File
-                              <input type="file" id="settings-loading-logo" name="loadingLogo" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'loading')} />
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="loadingLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'loading')} />
                             </label>
                           </div>
                         </div>
 
                         {/* Favicon Logo */}
-                        <div className="p-4 bg-white dark:bg-gray-850 rounded-xl border border-slate-200/60 dark:border-gray-750 flex flex-col justify-between shadow-sm relative group">
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
                           {settings.faviconUrl && (
                             <button
                               type="button"
                               onClick={() => handleDeleteLogo('favicon')}
-                              className="absolute top-2 right-2 p-1.5 bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
-                              title="Delete Favicon"
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
+                              title="Delete Logo"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={16} />
                             </button>
                           )}
-                          <div>
-                            <h5 className="text-xs font-extrabold text-gray-800 dark:text-gray-200 flex items-center gap-1 mb-1">Browser Favicon</h5>
-                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-3">Tab icon shown in user browser window.</p>
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Browser Favicon</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Tiny icon shown in the browser tab (16x16 or 32x32).</p>
                           </div>
-                          <div className="space-y-3">
-                            <div className="h-16 bg-slate-50 dark:bg-gray-900 rounded-lg flex items-center justify-center p-2 border border-dashed border-slate-200 dark:border-gray-700">
+                          <div className="space-y-4">
+                            <div className="h-28 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
                               {settings.faviconUrl ? (
-                                <img src={settings.faviconUrl} alt="Favicon preview" className="h-7 w-7 object-contain" />
+                                <img src={settings.faviconUrl} alt="Favicon preview" className="w-12 h-12 object-contain rounded-md shadow-sm bg-white p-1" />
                               ) : (
-                                <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">Default Active</span>
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
                               )}
                             </div>
-                            <label className="block text-center cursor-pointer bg-slate-50 dark:bg-gray-750 hover:bg-slate-100 hover:dark:bg-gray-700 py-1.5 border border-slate-200 dark:border-gray-600 rounded-lg text-[10px] font-bold text-gray-700 dark:text-white shadow-sm transition-colors">
-                              Upload File
-                              <input type="file" id="settings-favicon" name="favicon" autoComplete="off" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'favicon')} />
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="favicon" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'favicon')} />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Collapsed Logo */}
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
+                          {settings.collapsedLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogo('collapsed')}
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
+                              title="Delete Logo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Collapsed Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed in sidebar when collapsed (icon only).</p>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="h-28 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
+                              {settings.collapsedLogoUrl ? (
+                                <img src={settings.collapsedLogoUrl} alt="Collapsed logo preview" className="w-12 h-12 object-contain" />
+                              ) : (
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
+                              )}
+                            </div>
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="collapsedLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'collapsed')} />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Uncollapsed Logo */}
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
+                          {settings.uncollapsedLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogo('uncollapsed')}
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
+                              title="Delete Logo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Uncollapsed Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed in sidebar when expanded.</p>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="h-28 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
+                              {settings.uncollapsedLogoUrl ? (
+                                <img src={settings.uncollapsedLogoUrl} alt="Uncollapsed logo preview" className="max-h-full max-w-full object-contain" />
+                              ) : (
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
+                              )}
+                            </div>
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="uncollapsedLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'uncollapsed')} />
                             </label>
                           </div>
                         </div>
@@ -930,149 +1001,6 @@ export const SettingsManager: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Sticky Live Preview Panel (Spans 1 column) */}
-                  <div className="xl:col-span-1">
-                    <div className={`border border-slate-200 dark:border-gray-750 p-5 rounded-3xl shadow-lg sticky top-24 space-y-6 transition-colors duration-300 ${
-                      previewDark ? 'bg-gray-900 text-white border-gray-800 shadow-gray-950/55' : 'bg-white text-gray-800 border-slate-200'
-                    }`}>
-                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
-                        <div className="flex items-center gap-1.5">
-                          <Eye size={16} className={previewDark ? 'text-blue-400' : 'text-primary'} />
-                          <h4 className="font-extrabold text-xs uppercase tracking-wider">Live Sandbox Preview</h4>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDark(!previewDark)}
-                          className={`px-2 py-1 text-[9px] font-extrabold rounded-lg uppercase tracking-wider border shadow-sm transition-all focus:outline-none ${
-                            previewDark 
-                              ? 'bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700' 
-                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          {previewDark ? 'Light Preview' : 'Dark Preview'}
-                        </button>
-                      </div>
-
-                      {/* Mock Header Navigation Preview */}
-                      <div className={`p-4 rounded-2xl border space-y-4 ${
-                        previewDark ? 'bg-gray-950 border-gray-800/80' : 'bg-slate-50 border-slate-100'
-                      }`}>
-                        <div>
-                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Navigation Bar Accent</span>
-                          <div className={`flex items-center justify-between p-2.5 rounded-xl shadow-sm border transition-all ${
-                            previewDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-100'
-                          }`} style={{ borderRadius: `${settings.borderRadius || 12}px` }}>
-                            {/* Logo representation */}
-                            <div className="flex items-center gap-1">
-                              {settings.lightLogoUrl ? (
-                                <img src={settings.lightLogoUrl} alt="Logo" className="h-3.5 object-contain" />
-                              ) : (
-                                <span className="font-heading font-extrabold text-xs tracking-wider" style={{ fontFamily: settings.fontFamily || 'Outfit' }}>SKYLAR</span>
-                              )}
-                            </div>
-                            
-                            {/* Menu with brand color dynamic preview */}
-                            <div className="flex gap-2">
-                              <span className="text-[9px] font-bold transition-colors uppercase" style={{ color: settings.brandColor }}>Home</span>
-                              <span className="text-[9px] font-bold text-gray-400 transition-colors uppercase">Courses</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Interactive Accent Element simulation */}
-                        <div>
-                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Action Button Corners</span>
-                          <button
-                            type="button"
-                            className="w-full py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest text-white shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
-                            style={{ 
-                              backgroundColor: settings.brandColor, 
-                              borderRadius: `${settings.borderRadius || 12}px` 
-                            }}
-                          >
-                            Enroll Now <Sparkles size={11} className="text-yellow-400" />
-                          </button>
-                        </div>
-
-                        {/* Mock Course Card Preview */}
-                        <div>
-                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Mock Course Card</span>
-                          <div className={`p-3 border rounded-xl shadow-sm space-y-2 transition-all ${
-                            previewDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200/60'
-                          }`} style={{ 
-                            borderRadius: `${settings.borderRadius || 12}px`, 
-                            fontFamily: settings.fontFamily || 'Outfit' 
-                          }}>
-                            <div className="h-20 bg-slate-200 dark:bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-                              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Course Image Area</span>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex gap-1">
-                                <span className="px-1.5 py-0.5 text-[8px] font-extrabold rounded-md uppercase tracking-wider border" 
-                                      style={{ 
-                                        color: settings.accentColor || '#ffc107', 
-                                        borderColor: `${settings.accentColor || '#ffc107'}35`, 
-                                        backgroundColor: `${settings.accentColor || '#ffc107'}10` 
-                                      }}>
-                                  GWO Certified
-                                </span>
-                              </div>
-                              <h5 className="font-bold text-[11px] leading-tight truncate">Basic Safety Training</h5>
-                              <p className="text-[9px] text-gray-400 line-clamp-1">Industrial wind turbine safety course.</p>
-                            </div>
-                            <div className="flex justify-between items-center pt-1 border-t border-slate-100 dark:border-gray-800 text-[10px]">
-                              <span className="font-bold">$1,500 AUD</span>
-                              <span className="font-semibold text-gray-400">5 Days</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Theme details info badge */}
-                        <div className={`p-3 rounded-xl border space-y-1.5 text-[10px] font-semibold ${
-                          previewDark ? 'bg-gray-900/60 border-gray-800 text-gray-400' : 'bg-white border-slate-100 text-gray-600'
-                        }`}>
-                          <div className="flex justify-between">
-                            <span>Font family:</span>
-                            <span className="font-mono text-gray-800 dark:text-gray-200 font-bold">{settings.fontFamily || 'Outfit'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Sidebar Theme:</span>
-                            <span className="font-mono text-gray-800 dark:text-gray-200 font-bold uppercase text-[9px]">{settings.sidebarTheme || 'dark'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Layout Spacing:</span>
-                            <span className="font-mono text-gray-800 dark:text-gray-200 font-bold uppercase text-[9px]">{settings.layoutStyle || 'wide'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Corner Radius:</span>
-                            <span className="font-mono text-gray-800 dark:text-gray-200 font-bold text-[9px]">{settings.borderRadius !== undefined ? settings.borderRadius : 12}px</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Mock Notification Panel */}
-                      <div className={`p-3.5 rounded-2xl border space-y-2 ${
-                        previewDark ? 'bg-gray-950 border-gray-850' : 'bg-slate-50 border-slate-150'
-                      }`}>
-                        <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Accents & Badges</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="px-2 py-0.5 text-[8.5px] font-bold rounded-lg uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
-                            Passing: {settings.passingScore}%
-                          </span>
-                          <span className="px-2 py-0.5 text-[8.5px] font-bold rounded-lg uppercase border" 
-                                style={{ 
-                                  color: settings.brandColor, 
-                                  borderColor: `${settings.brandColor}25`, 
-                                  backgroundColor: `${settings.brandColor}10` 
-                                }}>
-                            Max: {settings.classSizeLimit}
-                          </span>
-                        </div>
-                      </div>
-
                     </div>
                   </div>
 

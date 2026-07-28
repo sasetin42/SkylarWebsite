@@ -20,9 +20,7 @@ export interface Course {
   whatYouWillLearn?: string[];
   entryRequirements?: string[];
   targetAudience?: string[];
-  rtoCode?: string;
   deliveryMode?: string;
-  accreditedUnits?: string[];
   whatToBring?: string[];
   depositAmount?: number;
   // Collapsible Rich-Text Sections
@@ -31,15 +29,16 @@ export interface Course {
   careerOpportunities?: string;
   durationOfTraining?: string;
   whereDelivered?: string;
-  accreditedUnitsRich?: string;
   entryRequirementsRich?: string;
-  lln?: string;
   assessment?: string;
   certificationRecord?: string;
   validityPeriod?: string;
   whatToBringRich?: string;
   costOfTraining?: string;
   paymentOptions?: string;
+  accreditedUnits?: string[];
+  accreditedUnitsRich?: string;
+  lln?: string;
 }
 
 export interface Category {
@@ -107,8 +106,8 @@ export interface Student {
   lastName: string;
   email: string;
   phone: string;
-  usi?: string; // Unique Student Identifier
   windaId?: string; // GWO ID
+  usi?: string;
   employer?: string;
   enrolledCourseId: string;
   enrollmentDate: string;
@@ -167,7 +166,6 @@ export interface InstituteSettings {
   contactEmail: string;
   contactPhone: string;
   address: string;
-  rtoId: string;
   operatingHours: string;
   siteAnnouncement: string;
   // Enrollment Settings
@@ -179,6 +177,8 @@ export interface InstituteSettings {
   darkLogoUrl?: string;
   loadingLogoUrl?: string;
   faviconUrl?: string;
+  collapsedLogoUrl?: string;
+  uncollapsedLogoUrl?: string;
   defaultDarkMode?: boolean;
   brandColor?: string;
   themePreset?: 'navy' | 'dark' | 'emerald' | 'crimson';

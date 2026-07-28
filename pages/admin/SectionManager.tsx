@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { Layers, Plus, Users, Edit2, Trash2 } from 'lucide-react';
+import { Layers, Plus, Edit2, Trash2, ShieldAlert } from 'lucide-react';
 import { Button } from '../../components/Button';
-import { getSections, saveSection, getCourses } from '../../services/storageService';
+import { getSections, saveSection, deleteSection, getCourses } from '../../services/storageService';
 import { SchoolSection, Course } from '../../types';
 
 export const SectionManager: React.FC = () => {
@@ -27,6 +26,13 @@ export const SectionManager: React.FC = () => {
           setSections(getSections());
           setIsEditing(false);
           setFormData({});
+      }
+  };
+
+  const handleDelete = (id: string, name: string) => {
+      if (window.confirm(`Are you sure you want to delete section "${name}"? This action cannot be undone.`)) {
+          deleteSection(id);
+          setSections(getSections());
       }
   };
 
@@ -69,36 +75,98 @@ export const SectionManager: React.FC = () => {
             </div>
         )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sections.map(sec => {
-                const course = courses.find(c => c.id === sec.courseId);
-                const percentage = (sec.enrolledCount / sec.capacity) * 100;
-                
-                return (
-                    <div key={sec.id} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
-                                <Layers size={24} />
-                            </div>
-                            <button onClick={() => { setFormData(sec); setIsEditing(true); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-white p-2">
-                                <Edit2 size={16} />
-                            </button>
-                        </div>
-                        <h3 className="text-xl font-bold text-secondary dark:text-white mb-1">{sec.name}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 truncate">{course?.title}</p>
-                        
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400">
-                                <span>Enrollment</span>
-                                <span>{sec.enrolledCount} / {sec.capacity}</span>
-                            </div>
-                            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full ${percentage >= 100 ? 'bg-red-500' : 'bg-green-500'}`} style={{width: `${percentage}%`}}></div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-gray-50/50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                            <th className="py-4 px-6 text-xs font-extrabold text-gray-500 uppercase tracking-widest">Section Details</th>
+                            <th className="py-4 px-6 text-xs font-extrabold text-gray-500 uppercase tracking-widest">Assigned Course</th>
+                            <th className="py-4 px-6 text-xs font-extrabold text-gray-500 uppercase tracking-widest">Enrollment Status</th>
+                            <th className="py-4 px-6 text-xs font-extrabold text-gray-500 uppercase tracking-widest">Availability</th>
+                            <th className="py-4 px-6 text-xs font-extrabold text-gray-500 uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {sections.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="py-12 text-center text-gray-400">
+                                    <div className="flex flex-col items-center justify-center">
+                                        <Layers size={48} className="mb-4 text-gray-300 dark:text-gray-600" />
+                                        <p className="font-semibold text-gray-500">No sections found.</p>
+                                        <p className="text-sm">Click "Add Section" to create one.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : sections.map(sec => {
+                            const course = courses.find(c => c.id === sec.courseId);
+                            const percentage = Math.min((sec.enrolledCount / sec.capacity) * 100, 100);
+                            
+                            let statusBadge = { text: 'OPEN', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' };
+                            if (percentage >= 100) statusBadge = { text: 'FULL', color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800' };
+                            else if (percentage >= 80) statusBadge = { text: 'NEAR CAPACITY', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800' };
+
+                            return (
+                                <tr key={sec.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <td className="py-4 px-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                                                <Layers size={18} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 dark:text-white">{sec.name}</h3>
+                                                <span className="text-xs text-gray-400">ID: {sec.id.slice(-6)}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div className="max-w-[250px]">
+                                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate" title={course?.title}>{course?.title || 'Unknown Course'}</p>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div className="w-full max-w-[200px] space-y-1.5">
+                                            <div className="flex justify-between text-xs font-bold text-gray-600 dark:text-gray-400">
+                                                <span>{sec.enrolledCount} Students</span>
+                                                <span>{sec.capacity} Max</span>
+                                            </div>
+                                            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all duration-500 ${percentage >= 100 ? 'bg-rose-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                                                    style={{width: `${percentage}%`}}
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className={`px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md border ${statusBadge.color}`}>
+                                            {statusBadge.text}
+                                        </span>
+                                    </td>
+                                    <td className="py-4 px-6 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button 
+                                                onClick={() => { setFormData(sec); setIsEditing(true); }} 
+                                                className="p-2 text-gray-400 hover:text-primary dark:hover:text-blue-400 bg-gray-50 hover:bg-blue-50 dark:bg-gray-800 dark:hover:bg-blue-900/30 rounded-lg transition-colors focus:outline-none"
+                                                title="Edit Section"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(sec.id, sec.name)} 
+                                                className="p-2 text-gray-400 hover:text-rose-500 bg-gray-50 hover:bg-rose-50 dark:bg-gray-800 dark:hover:bg-rose-900/30 rounded-lg transition-colors focus:outline-none"
+                                                title="Delete Section"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
   );

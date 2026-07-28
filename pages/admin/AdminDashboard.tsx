@@ -99,7 +99,7 @@ export const AdminDashboard: React.FC = () => {
   // Apply 'dark' class to a wrapper to enable Tailwind dark mode for children
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div className="min-h-screen flex transition-colors duration-300 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden font-sans">
+      <div className="h-screen flex transition-colors duration-300 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden font-sans">
       
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
@@ -115,30 +115,33 @@ export const AdminDashboard: React.FC = () => {
         >
           <div className={`flex items-center transition-all duration-300 border-b border-white/10 dark:border-gray-700 ${sidebarOpen ? 'justify-start pl-8 pr-6 py-6' : 'justify-center p-4'}`}>
             <img 
-              src={sidebarOpen ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.faviconUrl || settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)} 
+              src={sidebarOpen ? (settings.uncollapsedLogoUrl || settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.collapsedLogoUrl || settings.faviconUrl || settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL)} 
               alt="Logo" 
               className={`transition-all duration-300 logo-color-white ${sidebarOpen ? 'h-11 w-auto max-w-full' : 'h-8 w-8 object-contain'}`} 
             />
           </div>
           
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          <nav className={`flex-1 ${sidebarOpen ? 'px-4' : 'px-2'} py-6 space-y-2 overflow-y-auto custom-scrollbar`}>
             {menuItems.map(item => (
               <Link 
                 key={item.path}
                 to={item.path} 
-                title={!sidebarOpen ? item.label : ''}
-                className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
+                className={`flex items-center ${sidebarOpen ? 'gap-4 px-4' : 'justify-center'} py-3 rounded-xl transition-all duration-200 group relative ${
                   location.pathname === item.path
-                    ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/10' 
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    ? 'bg-slate-800/80 text-white shadow-md border border-accent/70' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'
                 }`}
               >
-                <item.icon size={22} className={`shrink-0 ${location.pathname === item.path ? 'text-accent' : ''}`} /> 
-                <span className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 md:hidden'}`}>
+                <item.icon size={22} className={`shrink-0 transition-colors ${location.pathname === item.path ? 'text-accent' : 'group-hover:text-white'}`} /> 
+                <span className={`font-medium whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 md:hidden overflow-hidden'}`}>
                   {item.label}
                 </span>
-                {location.pathname === item.path && sidebarOpen && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-accent rounded-full shadow-[0_0_8px_rgba(255,193,7,0.8)]"></div>
+                
+                {/* Instant Tooltip for collapsed state */}
+                {!sidebarOpen && (
+                  <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 whitespace-nowrap z-[100] shadow-xl border border-slate-700 pointer-events-none">
+                    {item.label}
+                  </div>
                 )}
               </Link>
             ))}

@@ -79,8 +79,8 @@ export const Navbar: React.FC = () => {
   const isSolid = !isHome || isScrolled;
 
   const navBackgroundClass = isSolid
-    ? 'bg-white/95 backdrop-blur-md shadow-md shadow-black/10 py-2'
-    : 'bg-transparent py-4';
+    ? 'bg-white/95 backdrop-blur-md shadow-md shadow-black/10 py-1.5'
+    : 'bg-transparent py-3';
 
   const linkColorClass = isSolid
     ? 'text-secondary hover:text-primary'
@@ -107,7 +107,6 @@ export const Navbar: React.FC = () => {
       subItems: [
         { name: 'Student Hub', path: '/student-info', icon: Laptop },
         { name: 'Online Enrolments', path: '/student-info/online-enrolments', icon: FileText },
-        { name: 'USI Information', path: '/student-info/usi', icon: Shield },
         { name: 'Policies & Refund', path: '/student-info/refund-policy', icon: CreditCard },
         { name: 'Privacy Notice', path: '/student-info/privacy-notice', icon: Lock },
         { name: 'Complaints', path: '/student-info/complaints', icon: AlertCircle },
@@ -128,7 +127,7 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out h-[72px] flex items-center ${navBackgroundClass}`}
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out ${isSolid ? 'h-[60px] md:h-[66px]' : 'h-[72px] md:h-[80px]'} flex items-center ${navBackgroundClass}`}
       >
         <div className="container mx-auto px-4 md:px-8">
           <nav className="flex items-center justify-between">
@@ -136,7 +135,7 @@ export const Navbar: React.FC = () => {
               <img
                 src={(!isSolid || isDarkMode) ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.darkLogoUrl || LOGO_URL)}
                 alt="RidersBUD Safety Solutions"
-                className={`${isSolid ? 'h-10 md:h-[42px]' : 'h-14 md:h-[60px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 ${!isSolid ? 'logo-color-white' : 'logo-color-blue'}`}
+                className={`${isSolid ? 'h-10 md:h-[44px]' : 'h-12 md:h-[56px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 object-contain`}
               />
             </Link>
 
@@ -147,7 +146,7 @@ export const Navbar: React.FC = () => {
                 return (
                   <div
                     key={link.name}
-                    className="relative group py-4 flex items-center"
+                    className="relative group py-2 flex items-center group/tooltip"
                   >
                     <Link
                       to={link.path}
@@ -161,9 +160,16 @@ export const Navbar: React.FC = () => {
                       {link.subItems && <ChevronDown size={11} className="transition-transform duration-300 group-hover:rotate-180 opacity-75" />}
                       
                       {/* Active & Hover Slider Line */}
-                      <span className={`absolute bottom-[-16px] left-3 right-3 h-[2px] bg-accent transform transition-transform duration-300 origin-center ${
+                      <span className={`absolute bottom-[-8px] left-3 right-3 h-[2px] bg-accent transform transition-transform duration-300 origin-center ${
                         isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                       }`} />
+
+                      {/* Instant Tooltip */}
+                      {!link.subItems && (
+                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-[10px] rounded-md opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-150 pointer-events-none whitespace-nowrap shadow-xl z-50">
+                          {link.name}
+                        </div>
+                      )}
                     </Link>
 
                     {/* Dropdown Menu */}
@@ -267,13 +273,18 @@ export const Navbar: React.FC = () => {
                   )}
                 </div>
               </Link>
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className={`p-2 focus:outline-none transition-transform active:scale-95 ${mobileToggleClass}`}
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
+              <div className="relative group/mobile-menu">
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className={`p-2 focus:outline-none transition-transform active:scale-95 ${mobileToggleClass}`}
+                  aria-label="Toggle menu"
+                >
+                  {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                </button>
+                <div className="absolute top-full right-0 mt-2 px-2.5 py-1 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-[10px] rounded-md opacity-0 invisible group-hover/mobile-menu:opacity-100 group-hover/mobile-menu:visible transition-all duration-150 pointer-events-none whitespace-nowrap shadow-xl z-50">
+                  Menu
+                </div>
+              </div>
             </div>
           </nav>
         </div>
@@ -327,10 +338,8 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="mt-auto pb-8 text-center text-white/40 text-sm">
-          <p>© 2025 Skylar Education</p>
+          <p>© 2025 SKYLAR EDUCATION ASIA</p>
           <div className="flex justify-center gap-4 mt-4">
-            <span>RTO #45000</span>
-            <span>•</span>
             <Link to="/admin" className="hover:text-white transition-colors">Admin</Link>
           </div>
         </div>

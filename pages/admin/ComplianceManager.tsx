@@ -37,7 +37,7 @@ export const ComplianceManager: React.FC = () => {
                 <span className="text-4xl font-bold text-gray-800 dark:text-white">100%</span>
             </div>
             <h3 className="font-bold text-gray-700 dark:text-gray-200">Audit Readiness</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">ASQA standards met</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">GWO standards met</p>
          </div>
       </div>
 

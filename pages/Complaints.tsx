@@ -73,7 +73,7 @@ export const Complaints: React.FC = () => {
                     </div>
                     
                     <div className="prose prose-lg text-gray-600 max-w-none leading-relaxed mb-8 bg-gray-50 p-8 rounded-2xl border border-gray-100 shadow-sm whitespace-pre-line">
-                        <p>{content?.description || "If you are dissatisfied with a service offered or treatment received by Skylar Education, then you have the right to lodge a complaint. In the event that you are dissatisfied with the outcome with your complaint, then you have the right to lodge an appeal. Please refer to the Complaints and Appeals Policy that is given to you upon enrolment via the student handbook."}</p>
+                        <p>{content?.description || "If you are dissatisfied with a service offered or treatment received by SKYLAR EDUCATION ASIA, then you have the right to lodge a complaint. In the event that you are dissatisfied with the outcome with your complaint, then you have the right to lodge an appeal. Please refer to the Complaints and Appeals Policy that is given to you upon enrolment via the student handbook."}</p>
                     </div>
                 </section>
             </div>

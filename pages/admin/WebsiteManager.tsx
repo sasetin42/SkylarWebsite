@@ -188,6 +188,8 @@ export const WebsiteManager: React.FC = () => {
         setHasUnsavedChanges(true); // Mark page as dirty to trigger save button
     };
 
+    const [isUploading, setIsUploading] = useState(false);
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number, itemIndex?: number) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -195,14 +197,20 @@ export const WebsiteManager: React.FC = () => {
                 alert("File is too large. Max 5MB.");
                 return;
             }
+            setIsUploading(true);
             const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
+            reader.onload = (event) => {
+                const base64 = event.target?.result as string;
                 if (itemIndex !== undefined) {
                     updateSectionItemData(sectionIndex, itemIndex, 'image', base64);
                 } else {
                     updateSectionData(sectionIndex, 'image', base64);
                 }
+                setIsUploading(false);
+            };
+            reader.onerror = () => {
+                alert("Failed to read file.");
+                setIsUploading(false);
             };
             reader.readAsDataURL(file);
         }
@@ -211,9 +219,16 @@ export const WebsiteManager: React.FC = () => {
     const handleCourseImageUpload = (e: React.ChangeEvent<HTMLInputElement>, courseId: string) => {
         const file = e.target.files?.[0];
         if (file) {
+            setIsUploading(true);
             const reader = new FileReader();
-            reader.onloadend = () => {
-                updateGlobalCourse(courseId, 'image', reader.result as string);
+            reader.onload = (event) => {
+                const base64 = event.target?.result as string;
+                updateGlobalCourse(courseId, 'image', base64);
+                setIsUploading(false);
+            };
+            reader.onerror = () => {
+                alert("Failed to read file.");
+                setIsUploading(false);
             };
             reader.readAsDataURL(file);
         }

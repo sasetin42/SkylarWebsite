@@ -117,7 +117,7 @@ export const GWOBenefits: React.FC = () => {
       role: 'Safety Manager',
       company: 'Siemens Gamesa',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100',
-      content: 'The GWO-trained technicians we hire from Skylar consistently demonstrate superior safety awareness and technical competence. It\'s a benchmark we trust.',
+      content: 'The GWO-trained technicians we hire from SKYLAR EDUCATION ASIA consistently demonstrate superior safety awareness and technical competence. It\'s a benchmark we trust.',
       rating: 5
     },
     {
@@ -152,7 +152,7 @@ export const GWOBenefits: React.FC = () => {
       a: 'GWO certification is required by most wind energy companies worldwide. It qualifies you for roles such as Wind Turbine Technician, Safety Supervisor, Operations & Maintenance Specialist, and various offshore wind positions.'
     },
     {
-      q: 'Does Skylar Education offer corporate GWO training?',
+      q: 'Does SKYLAR EDUCATION ASIA offer corporate GWO training?',
       a: 'Yes, we offer tailored corporate training packages for organisations in the wind energy sector. We can conduct training at our facility or on-site at your location. Contact us for customised group pricing and scheduling.'
     }
   ];
@@ -287,7 +287,7 @@ export const GWOBenefits: React.FC = () => {
                   <h4 className="font-heading font-bold text-secondary text-sm">Build a Stable Future</h4>
                 </div>
                 <p className="text-gray-500 text-xs leading-relaxed">
-                  At Skylar Education, we empower individuals to thrive in the wind energy industry, building careers while contributing to a greener, more sustainable world.
+                  At SKYLAR EDUCATION ASIA, we empower individuals to thrive in the wind energy industry, building careers while contributing to a greener, more sustainable world.
                 </p>
               </div>
             </div>
@@ -560,7 +560,7 @@ export const GWOBenefits: React.FC = () => {
                 Frequently Asked Questions
               </h2>
               <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                Everything you need to know about GWO certification and training at Skylar Education.
+                Everything you need to know about GWO certification and training at SKYLAR EDUCATION ASIA.
               </p>
               <Link to="/contact" className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:text-accent transition-colors">
                 Still have questions? Contact us <ArrowRight size={16} />

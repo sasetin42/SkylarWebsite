@@ -93,7 +93,6 @@ export const COURSES: Course[] = ([
     certificationName: 'GWO Basic Safety Training (BST) Initial Certificate',
     validityMonths: 24,
     isGwo: true,
-    rtoCode: 'RTO 21647',
     deliveryMode: 'Face-to-Face',
     depositAmount: 1500,
     whatYouWillLearn: [
@@ -115,17 +114,6 @@ export const COURSES: Course[] = ([
       'Emergency Response Coordinators and Rescue Operations Managers.',
       'Wind Turbine Technicians and Safety Officers for wind energy projects.'
     ],
-    accreditedUnits: [
-      'RIIWHS204E – Work Safely at Heights',
-      'PUASAR022 – Participate in Rescue Operations',
-      'HLTWHS005 – Conduct manual tasks safely',
-      'HLTAID009 – Perform Cardiopulmonary Resuscitation (CPR)',
-      'HLTAID011 – Provide First Aid',
-      'UETDRMP010 – Perform First Aid in an ESI environment',
-      'CPPFES2005 – Demonstrate First Attack Fire Fighting Equipment',
-      'PUAFER008 – Confine Small Emergencies in a Facility',
-      'UETDRMP018 – Perform rescue from a live low voltage panel (LVR)'
-    ],
     whatToBring: [
       'Long pants and work boots suitable for practical activities',
       'Laptop or tablet is recommended for digital assessments (mobile phones may be used too)',
@@ -136,8 +124,8 @@ export const COURSES: Course[] = ([
     id: 'gwo-bst-refresher',
     title: 'GWO Basic Safety Training (BST) Refresher',
     category: 'Global Wind Organisation',
-    shortDescription: 'Keep your wind industry safety skills sharp with Skylar Education’s GWO BST Refresher course.',
-    fullDescription: 'Keep your wind industry safety skills sharp with Skylar Education’s GWO BST Refresher course. Update your certification and stay compliant with industry standards.',
+    shortDescription: 'Keep your wind industry safety skills sharp with SKYLAR EDUCATION ASIA’s GWO BST Refresher course.',
+    fullDescription: 'Keep your wind industry safety skills sharp with SKYLAR EDUCATION ASIA’s GWO BST Refresher course. Update your certification and stay compliant with industry standards.',
     price: 1690,
     duration: '3 Days',
     level: 'Available',
@@ -296,7 +284,7 @@ export const COURSES: Course[] = ([
 export const LOCATIONS: Location[] = [
   {
     id: 'ph-facility',
-    name: 'Skylar Education Asia - Pampanga Facility',
+    name: 'SKYLAR EDUCATION ASIA - Pampanga Facility',
     address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
     phone: '+63 45 123 4567',
     email: 'info@skylareducation.asia',
@@ -306,7 +294,7 @@ export const LOCATIONS: Location[] = [
   },
   {
     id: 'manila-facility',
-    name: 'Skylar Education Asia - Manila Safety Center',
+    name: 'SKYLAR EDUCATION ASIA - Manila Safety Center',
     address: 'Pier 18, Port Area, Tondo, Manila, Metro Manila, 1012, Philippines',
     phone: '+63 2 8234 5678',
     email: 'manila@skylareducation.asia',
@@ -321,7 +309,7 @@ export const TESTIMONIALS: Testimonial[] = [
     id: 't1',
     name: 'James Wilson',
     role: 'Wind Turbine Technician',
-    content: 'The GWO training at Skylar was exceptional. The simulators are exactly like what we use offshore.',
+    content: 'The GWO training at SKYLAR EDUCATION ASIA was exceptional. The simulators are exactly like what we use offshore.',
     avatar: 'https://i.pravatar.cc/150?img=11'
   },
   {
