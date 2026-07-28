@@ -4,7 +4,7 @@ import {
   Users, BookOpen, DollarSign, TrendingUp, 
   Settings, LogOut, LayoutDashboard, FileText, Bell, 
   Database, Briefcase, Calendar, Moon, Sun, ShieldCheck,
-  LayoutTemplate, ClipboardList, Search, Menu, MessageSquare, FolderTree
+  LayoutTemplate, ClipboardList, Search, Menu, MessageSquare, FolderTree, Star
 } from 'lucide-react';
 import { getStudents, getCourses, getSettings } from '../../services/storageService';
 import { LOGO_URL } from '../../constants';
@@ -25,7 +25,7 @@ export const AdminDashboard: React.FC = () => {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Mock Notifications Data with Links
+  // System Notifications Data with Links
   const [notifications, setNotifications] = useState([
     {
       id: 'n1',
@@ -79,6 +79,7 @@ export const AdminDashboard: React.FC = () => {
 
   const menuItems = [
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
+    { path: '/admin/dashboard/inquiries', icon: MessageSquare, label: 'Course Inquiries' },
     { path: '/admin/dashboard/enrollments', icon: ClipboardList, label: 'Enrollments' },
     { path: '/admin/dashboard/students', icon: Users, label: 'Students' },
     { path: '/admin/dashboard/classes', icon: Users, label: 'Classes & Sections' }, 
@@ -90,6 +91,7 @@ export const AdminDashboard: React.FC = () => {
     { path: '/admin/dashboard/support', icon: MessageSquare, label: 'Support & Tickets' }, 
     { path: '/admin/dashboard/compliance', icon: ShieldCheck, label: 'Compliance' },
     { path: '/admin/dashboard/content', icon: LayoutTemplate, label: 'Website Content' },
+    { path: '/admin/dashboard/testimonials', icon: Star, label: 'Testimonials & Reviews' },
     { path: '/admin/dashboard/reports', icon: FileText, label: 'Reports' },
     { path: '/admin/dashboard/settings', icon: Settings, label: 'Settings' },
   ];

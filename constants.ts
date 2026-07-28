@@ -2,7 +2,7 @@ import { Course, Category, Location, Testimonial, BlogPost } from './types';
 
 export const SEED_CATEGORIES: Category[] = [
   { id: 'cat_gwo', name: 'Global Wind Organisation', description: 'GWO certified training courses.' },
-  { id: 'cat_construction', name: 'Construction & High Risk Work', description: 'Accredited construction and high risk work courses.' },
+  { id: 'cat_construction', name: 'Industrial Safety & High Risk Work', description: 'Certified industrial safety and high risk work courses.' },
   { id: 'cat_rescue', name: 'Specialised Rescue', description: 'Advanced rescue techniques.' },
   { id: 'cat_safety', name: 'Workplace Safety & Emergency Response', description: 'Safety and emergency response protocols.' },
   { id: 'cat_first_aid', name: 'First Aid', description: 'First aid and CPR certifications.' },
@@ -39,7 +39,7 @@ export const COURSES: Course[] = ([
       'Must possess a valid GWO BST Working at Heights, Manual Handling, and First Aid certificate',
       'A valid, signed medical statement or certificate declaring fitness for training',
       'Minimum age of 18 years',
-      'A valid Unique Student Identifier (USI)'
+      'A valid WINDA ID registered with GWO'
     ],
     targetAudience: [
       'Wind turbine technicians working on onshore/offshore wind turbines',
@@ -246,14 +246,14 @@ export const COURSES: Course[] = ([
   whereDelivered: course.whereDelivered || `
     <p>Delivered at our premium simulated wind farm and heights facility, offering real-world environment training.</p>
   `,
-  accreditedUnitsRich: course.accreditedUnitsRich || (course.accreditedUnits && course.accreditedUnits.length > 0
-    ? `<ul>${course.accreditedUnits.map(unit => `<li>${unit}</li>`).join('')}</ul>`
-    : `<ul><li>Standard GWO Safety Modules</li><li>Accredited Industrial Heights Safety Protocols</li></ul>`),
+  gwoModulesRich: course.gwoModulesRich || (course.gwoModules && course.gwoModules.length > 0
+    ? `<ul>${course.gwoModules.map(unit => `<li>${unit}</li>`).join('')}</ul>`
+    : `<ul><li>Standard GWO Safety Modules</li><li>Certified Industrial Heights Safety Protocols</li></ul>`),
   entryRequirementsRich: course.entryRequirementsRich || (course.entryRequirements && course.entryRequirements.length > 0
     ? `<ul>${course.entryRequirements.map(req => `<li>${req}</li>`).join('')}</ul>`
     : `<p>Must be medically fit and over 18 years of age.</p>`),
-  lln: course.lln || `
-    <p>Participants must have basic Language, Literacy, and Numeracy skills to interpret technical wind-safety instructions and communicate with team members.</p>
+  languageRequirements: course.languageRequirements || `
+    <p>Participants must have basic English language and communication skills to interpret technical wind-safety instructions and communicate with team members.</p>
   `,
   assessment: course.assessment || `
     <p>Assessment is conducted via practical rescue simulations, height safety navigation exams, and a final written theory questionnaire.</p>
@@ -284,23 +284,23 @@ export const COURSES: Course[] = ([
 export const LOCATIONS: Location[] = [
   {
     id: 'ph-facility',
-    name: 'SKYLAR EDUCATION ASIA - Pampanga Facility',
+    name: 'SKYLAR EDUCATION ASIA - Angeles City Training Centre',
     address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
     phone: '+63 45 123 4567',
     email: 'info@skylareducation.asia',
-    image: '/wind-turbine-worker.png',
+    image: '/angeles-training-centre.jpg',
     coordinates: { lat: 15.14, lng: 120.59 },
     state: 'Pampanga'
   },
   {
-    id: 'manila-facility',
-    name: 'SKYLAR EDUCATION ASIA - Manila Safety Center',
-    address: 'Pier 18, Port Area, Tondo, Manila, Metro Manila, 1012, Philippines',
-    phone: '+63 2 8234 5678',
-    email: 'manila@skylareducation.asia',
-    image: '/manila-safety-center.png',
-    coordinates: { lat: 14.62, lng: 120.96 },
-    state: 'Manila'
+    id: 'onsite-delivery',
+    name: 'Nationwide Onsite Delivery (Client Facilities)',
+    address: 'Available Onsite at Client Facilities Nationwide Across the Philippines',
+    phone: '+63 45 123 4567',
+    email: 'onsite@skylareducation.asia',
+    image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200',
+    coordinates: { lat: 14.5995, lng: 120.9842 },
+    state: 'Nationwide'
   }
 ];
 

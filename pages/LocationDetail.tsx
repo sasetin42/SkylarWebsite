@@ -31,11 +31,11 @@ export const LocationDetail: React.FC = () => {
     // Get sessions for this location
     let localSessions = getSessions().filter(s => s.locationId === id);
 
-    // If no sessions exist in storage for this location, generate realistic mock sessions
+    // Default upcoming sessions for location
     if (localSessions.length === 0 && allCourses.length > 0) {
       localSessions = [
         {
-          id: 'mock-s1',
+          id: 'initial-s1',
           courseId: allCourses[0].id,
           locationId: id || '',
           trainerId: 't1',
@@ -46,7 +46,7 @@ export const LocationDetail: React.FC = () => {
           status: 'Scheduled'
         },
         {
-          id: 'mock-s2',
+          id: 'initial-s2',
           courseId: allCourses[1] ? allCourses[1].id : allCourses[0].id,
           locationId: id || '',
           trainerId: 't2',
@@ -57,7 +57,7 @@ export const LocationDetail: React.FC = () => {
           status: 'Scheduled'
         },
         {
-          id: 'mock-s3',
+          id: 'initial-s3',
           courseId: allCourses[2] ? allCourses[2].id : allCourses[0].id,
           locationId: id || '',
           trainerId: 't1',
@@ -143,11 +143,9 @@ export const LocationDetail: React.FC = () => {
 
   // Handle booking action
   const handleBookSession = (courseId: string, courseTitle: string) => {
-    addToCart(courseId);
-    setBookingSuccessCourse(courseTitle);
-    setTimeout(() => {
-      setBookingSuccessCourse(null);
-    }, 5000);
+    window.dispatchEvent(new CustomEvent('openInquireModal', {
+      detail: { courseId, courseTitle }
+    }));
   };
 
   return (

@@ -75,7 +75,7 @@ export const StudentManager: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold font-heading text-secondary dark:text-white">Student Management</h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage enrollments, GWO certifications, and USI records.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage enrollments, GWO certifications, and student delegate profiles.</p>
         </div>
         <Button onClick={() => { setFormData({}); setIsEditing(true); }} className="shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
           <Plus size={18} className="mr-2" /> Add New Student
@@ -112,10 +112,6 @@ export const StudentManager: React.FC = () => {
 
               <div className="space-y-4">
                   <h4 className="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">Enrollment Data</h4>
-                  <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">USI (Optional)</label>
-                      <input id="student-usi" name="usi" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.usi || ''} onChange={e => setFormData({...formData, usi: e.target.value})} placeholder="10-digit USI" />
-                  </div>
                   <div>
                       <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">WINDA ID (Optional)</label>
                       <input id="student-winda-id" name="windaId" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.windaId || ''} onChange={e => setFormData({...formData, windaId: e.target.value})} />
@@ -222,8 +218,8 @@ export const StudentManager: React.FC = () => {
                     <td className="px-8 py-5">
                       <div className="space-y-1">
                         {student.windaId && <div className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded w-fit text-gray-600 dark:text-gray-300">WINDA: {student.windaId}</div>}
-                        <div className={`text-xs font-bold flex items-center gap-1 ${student.usi ? 'text-green-600 dark:text-green-400' : 'text-orange-500'}`}>
-                            {student.usi ? <><CheckCircle size={12}/> USI Verified</> : <><AlertCircle size={12}/> USI Missing</>}
+                        <div className={`text-xs font-bold flex items-center gap-1 ${student.windaId ? 'text-green-600 dark:text-green-400' : 'text-orange-500'}`}>
+                            {student.windaId ? <><CheckCircle size={12}/> WINDA Verified</> : <><AlertCircle size={12}/> WINDA Pending</>}
                         </div>
                       </div>
                     </td>

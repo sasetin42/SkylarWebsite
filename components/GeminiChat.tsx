@@ -230,7 +230,7 @@ export const GeminiChat: React.FC = () => {
     setAttachedImage(null);
     setIsLoading(true);
 
-    // Filter history for API (text only for context history to avoid complexity in this demo)
+    // Filter text history for context payload
     const history = messages.map(m => ({ role: m.role, text: m.text }));
     
     // Call Service with Image if present

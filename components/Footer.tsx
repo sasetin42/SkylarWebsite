@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
     }
   };
 
-  const footerLogo = settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL;
+  const footerLogo = settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL;
   const isDefaultLogo = footerLogo === LOGO_URL;
 
   return (
@@ -45,22 +45,22 @@ export const Footer: React.FC = () => {
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-primary-400 to-accent/80" />
 
       <div className="container mx-auto px-4 md:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 xl:gap-12 mb-12 pb-8 border-b border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 mb-12 pb-8 border-b border-white/5">
           
-          {/* Brand & Socials Column */}
-          <div className="space-y-6 flex flex-col justify-between">
+          {/* Brand & Socials Column (Expanded Width) */}
+          <div className="lg:col-span-4 space-y-6 flex flex-col justify-between">
             <div className="space-y-4">
               <Link to="/" className="inline-block transition-transform hover:scale-[1.02]">
                 <div className="flex items-center gap-3">
                   <img 
                     src={footerLogo} 
-                    alt="RidersBUD Safety Solutions Logo" 
-                    className="h-[40px] md:h-[48px] w-auto logo-color-white"
+                    alt="SKYLAR EDUCATION ASIA Logo" 
+                    className="h-[64px] md:h-[80px] w-auto brightness-0 invert logo-color-white object-contain"
                   />
                 </div>
               </Link>
-              <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-                Asia's premier safety academy. Delivering world-class GWO, High Risk Work, and industrial safety certifications across the Philippines and broader Asia-Pacific region.
+              <p className="text-gray-400 text-sm leading-relaxed pr-4">
+                Skylar Education Asia is an affiliate of Skylar Education Pty Ltd (Australia). Training is delivered by Skylar Education Asia, while certifications are issued through Skylar Education Pty Ltd Australia in accordance with applicable international training standards.
               </p>
             </div>
             
@@ -76,7 +76,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Quick Links Column */}
-          <div className="space-y-5">
+          <div className="lg:col-span-2 space-y-5">
             <h3 className="font-heading font-bold text-sm uppercase tracking-widest text-white border-l-2 border-accent pl-3">Quick Navigation</h3>
             <ul className="space-y-3.5 text-sm text-gray-400 font-medium">
               <li><Link to="/courses" className="hover:text-accent transition-colors flex items-center gap-1.5 group"><span>All Courses</span><span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs">&rarr;</span></Link></li>
@@ -88,7 +88,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Contact Details Column */}
-          <div className="space-y-5">
+          <div className="lg:col-span-3 space-y-5">
             <h3 className="font-heading font-bold text-sm uppercase tracking-widest text-white border-l-2 border-accent pl-3">Contact Details</h3>
             <ul className="space-y-3.5 text-sm text-gray-400 font-medium">
               <li className="flex items-start gap-3">
@@ -115,7 +115,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Newsletter Column */}
-          <div className="space-y-5">
+          <div className="lg:col-span-3 space-y-5">
             <h3 className="font-heading font-bold text-sm uppercase tracking-widest text-white border-l-2 border-accent pl-3">Stay Updated</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
               Subscribe to receive updates on upcoming intakes, safety trends, and course announcements.
@@ -164,9 +164,9 @@ export const Footer: React.FC = () => {
               <span className="text-[10px] uppercase font-bold tracking-wider">GWO Provider</span>
             </div>
             <div className="h-3 w-[1px] bg-gray-700" />
-            <div className="flex items-center gap-1" title="Registered Training Organization Standards">
+            <div className="flex items-center gap-1" title="Certified International Safety Standards">
               <ShieldCheck size={14} className="text-accent" />
-              <span className="text-[10px] uppercase font-bold tracking-wider">Accredited Standards</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">Certified Standards</span>
             </div>
           </div>
 

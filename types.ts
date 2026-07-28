@@ -36,9 +36,9 @@ export interface Course {
   whatToBringRich?: string;
   costOfTraining?: string;
   paymentOptions?: string;
-  accreditedUnits?: string[];
-  accreditedUnitsRich?: string;
-  lln?: string;
+  gwoModules?: string[];
+  gwoModulesRich?: string;
+  languageRequirements?: string;
 }
 
 export interface Category {
@@ -54,6 +54,21 @@ export interface Testimonial {
   role: string;
   content: string;
   avatar: string;
+  rating?: number; // 1 to 5 stars
+  source?: 'Google' | 'Manual' | 'Website';
+  status?: 'Approved' | 'Pending' | 'Hidden';
+  isFeatured?: boolean;
+  date?: string;
+  googleReviewId?: string;
+  locationName?: string;
+}
+
+export interface GoogleReviewSettings {
+  apiKey: string;
+  placeId: string;
+  autoSync: boolean;
+  minimumRating: number; // e.g. 4 or 5
+  lastSyncedAt?: string;
 }
 
 export interface Location {
@@ -93,7 +108,7 @@ export interface Review {
 
 export interface StudentDocument {
   id: string;
-  name: string; // e.g., "Birth Certificate", "USI Transcripts"
+  name: string; // e.g., "Birth Certificate", "WINDA Delegate Records"
   type: 'Identity' | 'Academic' | 'Medical' | 'Other';
   status: 'Pending' | 'Verified' | 'Rejected' | 'Missing';
   url?: string;
@@ -107,7 +122,6 @@ export interface Student {
   email: string;
   phone: string;
   windaId?: string; // GWO ID
-  usi?: string;
   employer?: string;
   enrolledCourseId: string;
   enrollmentDate: string;
@@ -127,7 +141,7 @@ export interface Trainer {
   lastName: string;
   email: string;
   specialties: string[];
-  qualifications: string[]; // e.g. TAE40116
+  qualifications: string[]; // e.g. GWO Instructor Certification
   isActive: boolean;
 }
 
@@ -145,7 +159,7 @@ export interface Session {
 
 export interface Certificate {
   id: string;
-  code: string; // e.g., HLTAID011
+  code: string; // e.g., GWO-BST-01
   issueDate: string;
   expiryDate?: string;
   pdfUrl?: string;
@@ -154,7 +168,7 @@ export interface Certificate {
 export interface CorporateClient {
   id: string;
   companyName: string;
-  abn: string;
+  taxId: string;
   contactPerson: string;
   email: string;
   contractStatus: 'Active' | 'Expired' | 'Pending';
@@ -246,6 +260,7 @@ export interface ImportFieldMapping {
 
 export interface PageSectionItem {
   title: string;
+  subtitle?: string;
   description: string;
   image?: string;
   icon?: string;
@@ -258,7 +273,7 @@ export interface PageSectionItem {
 export interface PageSection {
   id: string;
   label: string; // e.g. "Hero Section"
-  type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'course-list' | 'accordion';
+  type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'course-list' | 'accordion' | 'training-programs';
   data: {
     heading?: string;
     subheading?: string;
@@ -266,6 +281,8 @@ export interface PageSection {
     image?: string;
     buttonText?: string;
     buttonLink?: string;
+    badgeTitle?: string;
+    badgeDescription?: string;
     items?: PageSectionItem[];
     partners?: string[]; // Added for partner logos
   };
@@ -333,3 +350,45 @@ export interface AuditLog {
   timestamp: string;
   module: string;
 }
+
+export interface CourseInquiry {
+  id: string;
+  referenceCode: string;
+  studentName: string;
+  email: string;
+  phone: string;
+  company?: string;
+  courseId?: string;
+  courseTitle: string;
+  location: string;
+  preferredDate?: string;
+  participantsCount: string;
+  message?: string;
+  status: 'New' | 'Pending' | 'Contacted' | 'Quoted' | 'Resolved' | 'Archived';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SmtpSettings {
+  host: string;
+  port: number;
+  username: string;
+  password?: string;
+  fromEmail: string;
+  fromName: string;
+  enableSsl: boolean;
+  enableNotifications: boolean;
+  adminNotificationEmail: string;
+}
+
+export interface EmailLog {
+  id: string;
+  recipient: string;
+  subject: string;
+  inquiryRef?: string;
+  status: 'Sent' | 'Failed' | 'Queued';
+  timestamp: string;
+  errorDetails?: string;
+}
+

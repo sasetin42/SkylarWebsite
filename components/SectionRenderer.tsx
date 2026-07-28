@@ -5,7 +5,7 @@ import {
   CheckCircle, Users, Award, Briefcase, Fan, Zap, BookOpen,
   ChevronRight, HardHat, ShieldCheck, Building2, Hammer,
   Target, Eye, Heart, Search, Calendar, FileText, Mail, Shield,
-  Globe, UserCheck, Phone
+  Globe, UserCheck, Phone, ArrowRight
 } from 'lucide-react';
 import { Button } from './Button';
 import { PageSection } from '../types';
@@ -110,7 +110,7 @@ const EmissionsReductionChart: React.FC = () => {
   return (
     <div className="w-full mt-8 md:mt-0 p-2">
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-lg">
-        <h4 className="text-center font-bold text-gray-700 mb-10">Australia's Emissions Reduction Targets</h4>
+        <h4 className="text-center font-bold text-gray-700 mb-10">Global Emissions Reduction Targets</h4>
 
         <div className="relative h-64 w-full px-8 pb-8 box-border mx-auto max-w-xl">
           {/* Y Axis Labels */}
@@ -282,7 +282,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
                       </h3>
                       <div className="prose prose-lg text-gray-600">
                         <p className="leading-relaxed">
-                          As Australia strives towards greater sustainability goals, GWO Certification aligns perfectly with these objectives. By supporting the development of a knowledgeable workforce, the wind energy sector can advance more rapidly, ultimately contributing to the nation’s renewable energy aspirations.
+                          As energy sectors worldwide strive towards greater sustainability goals, GWO Certification aligns perfectly with these objectives. By supporting the development of a skilled safety workforce, the wind energy sector can advance rapidly, contributing directly to international renewable energy targets.
                         </p>
                       </div>
                     </div>
@@ -557,6 +557,51 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
   }
 
   switch (section.type) {
+    case 'training-programs':
+      return (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4 md:px-8 text-center">
+            {section.data.subheading && (
+              <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">
+                {section.data.subheading}
+              </span>
+            )}
+            {section.data.heading && (
+              <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-12">
+                {section.data.heading}
+              </h2>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+              {(section.data.items || []).map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.buttonLink || '/courses'}
+                  className="relative group block w-full text-left overflow-hidden rounded-3xl aspect-[4/3] md:aspect-[16/10] shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-transparent hover:border-primary/30"
+                >
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent group-hover:from-[#041024]/80 transition-colors duration-500"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <div className="w-8 h-1 bg-[#FDC70E] mb-4 rounded-full opacity-0 group-hover:opacity-100 group-hover:w-16 transition-all duration-500"></div>
+                    <h3 className="text-white font-heading font-bold text-2xl md:text-3xl leading-tight mb-2 drop-shadow-md">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-300 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2">
+                      {item.description || 'Explore Pathway'} <ChevronRight size={16} />
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+
     case 'hero': {
       const heroBgSR = section.data.image || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920';
       return (
@@ -608,20 +653,100 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
     }
 
     case 'features':
+      if (section.id === 'why_choose_us' || (section.data.image && section.data.items)) {
+        return (
+          <section className="py-20 md:py-28 bg-[#F8FAFC]/60 relative overflow-hidden">
+            <div className="container mx-auto px-4 md:px-8 max-w-7xl">
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                {/* Left Side: Featured Image */}
+                <div className="relative">
+                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_12px_40px_-5px_rgba(4,16,36,0.12)] border-[8px] border-white">
+                    <img
+                      src={section.data.image || "/why-train-skylar.png"}
+                      alt={section.data.heading || "Why Choose Us"}
+                      className="w-full h-[480px] object-cover transition-transform duration-700 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-[#041024]/10 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Right Side: Details & Feature List */}
+                <div className="text-left">
+                  {section.data.subheading && (
+                    <span className="inline-block py-1 px-3 rounded bg-[#FDC70E]/15 text-[#D97706] text-xs font-extrabold uppercase tracking-widest mb-4">
+                      {section.data.subheading}
+                    </span>
+                  )}
+                  <h2 className="text-3xl md:text-5xl font-heading font-extrabold text-[#041024] mb-6 leading-tight">
+                    {section.data.heading || "Why Train With SKYLAR EDUCATION ASIA?"}
+                  </h2>
+                  {section.data.description && (
+                    <p className="text-gray-600 text-base md:text-lg mb-10 leading-relaxed font-normal">
+                      {section.data.description}
+                    </p>
+                  )}
+                  <div className="space-y-8">
+                    {section.data.items?.map((item, idx) => {
+                      const Icon = IconMap[item.icon || 'HardHat'] || HardHat;
+                      return (
+                        <div key={idx} className="flex gap-5 group items-start">
+                          <div className="bg-[#EFF6FF] w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shrink-0 text-[#1C64B4] group-hover:bg-[#041024] group-hover:text-white transition-all duration-300 shadow-sm border border-slate-100 group-hover:shadow-lg group-hover:scale-105">
+                            <Icon size={26} className="stroke-[2]" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-base md:text-lg text-[#041024] mb-1.5 group-hover:text-[#1C64B4] transition-colors duration-300 whitespace-nowrap">
+                              {item.title}
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
       return (
-        <section className="py-24 md:py-28 bg-gradient-to-b from-slate-50 to-white">
+        <section className="py-20 md:py-24 bg-gradient-to-b from-[#F8FAFC] via-white to-[#F8FAFC]">
           <div className="container mx-auto px-4 md:px-8">
-            {section.data.heading && <h2 className="text-3xl font-heading font-bold text-left mb-16 text-secondary border-l-4 border-accent pl-4">{section.data.heading}</h2>}
-            <div className="grid md:grid-cols-3 gap-10 lg:gap-12">
+            {section.data.heading && (
+              <div className="max-w-3xl mx-auto text-center mb-16">
+                {section.data.subheading && (
+                  <span className="text-[#FDC70E] font-bold uppercase tracking-widest text-xs md:text-sm mb-3 block">
+                    {section.data.subheading}
+                  </span>
+                )}
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold text-[#041024] tracking-tight leading-tight">
+                  {section.data.heading}
+                </h2>
+                <div className="w-16 h-1 bg-[#FDC70E] mx-auto mt-4 rounded-full"></div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto items-stretch">
               {section.data.items?.map((item, idx) => {
                 const Icon = IconMap[item.icon || 'Award'] || Award;
                 return (
-                  <div key={idx} className="group bg-white p-8 rounded-3xl shadow-md hover:shadow-2xl border border-slate-100 text-left hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-start">
-                    <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:from-primary group-hover:to-primary group-hover:text-white transition-all duration-300">
-                      <Icon size={24} className="stroke-[1.75]" />
+                  <div 
+                    key={idx} 
+                    className="group relative bg-white p-6 md:p-8 rounded-3xl border border-slate-100/80 shadow-[0_4px_25px_-4px_rgba(4,16,36,0.06)] hover:shadow-2xl hover:border-[#1C64B4]/30 transition-all duration-500 transform hover:-translate-y-2 flex flex-col items-center text-center overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-[#FDC70E] group-hover:w-24 transition-all duration-500 rounded-b-full"></div>
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#EFF6FF] text-[#1C64B4] group-hover:bg-[#041024] group-hover:text-white transition-all duration-500 flex items-center justify-center mb-8 shadow-sm group-hover:shadow-xl group-hover:scale-110 shrink-0">
+                      <Icon size={28} className="stroke-[2]" />
                     </div>
-                    <h3 className="text-[25px] font-bold mb-3 text-secondary tracking-tight leading-tight">{item.title}</h3>
-                    <p className="text-gray-600 text-[15px] leading-relaxed whitespace-pre-line">{item.description}</p>
+                    <h3 className="text-lg md:text-xl font-bold font-heading text-[#041024] mb-3 leading-snug tracking-tight whitespace-nowrap">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-xs flex-1 whitespace-pre-line">
+                      {item.description}
+                    </p>
+                    <div className="w-8 h-0.5 bg-gray-100 group-hover:bg-[#FDC70E] group-hover:w-16 transition-all duration-500 rounded-full mt-6"></div>
                   </div>
                 );
               })}
@@ -632,39 +757,52 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
 
     case 'content':
       return (
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-[#F8FAFC]">
           <div className="container mx-auto px-4 md:px-8">
-            <div className="flex flex-col md:flex-row items-center gap-12">
-              <div className={`w-full ${section.data.image ? 'md:w-1/2' : 'w-full text-center'}`}>
-                {section.data.subheading && <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">{section.data.subheading}</span>}
-                <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6">{section.data.heading}</h2>
-                <div className="prose prose-lg text-gray-600 mb-8 whitespace-pre-line">
-                  {section.data.description}
-                </div>
-                {section.data.buttonText && (
-                  <Link to={section.data.buttonLink || '#'}>
-                    <Button>{section.data.buttonText}</Button>
-                  </Link>
-                )}
-                {/* Partners List if available */}
-                {section.data.partners && (
-                  <div className="mt-8 border-t border-gray-100 pt-6">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Trusted Partners</p>
-                    <div className="flex gap-6 opacity-60 grayscale hover:grayscale-0 transition-all">
-                      {section.data.partners.map(p => (
-                        <span key={p} className="font-heading font-bold text-xl text-gray-300">{p}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div className="bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-[0_12px_40px_-5px_rgba(4,16,36,0.12)] border border-gray-100">
               {section.data.image && (
-                <div className="w-full md:w-1/2">
-                  <div className="rounded-3xl overflow-hidden shadow-2xl">
-                    <img src={section.data.image} alt={section.data.heading} className="w-full h-full object-cover" />
-                  </div>
+                <div className="md:w-1/2 relative min-h-[320px] md:min-h-[440px]">
+                  <img
+                    src={section.data.image}
+                    alt={section.data.heading}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-[#041024]/10 mix-blend-multiply"></div>
                 </div>
               )}
+              <div className={`${section.data.image ? 'md:w-1/2' : 'w-full'} bg-gradient-to-br from-[#1C64B4] to-[#2E8CD6] p-8 md:p-12 lg:p-16 flex flex-col justify-between text-white relative overflow-hidden`}>
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+                <div className="relative z-10">
+                  {section.data.subheading && (
+                    <span className="text-[#FBBF24] font-bold tracking-widest text-xs md:text-sm uppercase mb-3 block">
+                      {section.data.subheading}
+                    </span>
+                  )}
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading font-extrabold mb-5 leading-tight text-white drop-shadow-sm">
+                    {section.data.heading}
+                  </h2>
+                  <p className="text-white/90 text-sm md:text-base leading-relaxed mb-8 font-normal">
+                    {section.data.description}
+                  </p>
+                </div>
+                <div className="relative z-10 border-t border-white/20 pt-6 mt-6 md:mt-8 flex flex-wrap gap-4 justify-between items-center">
+                  <div>
+                    <span className="text-white/70 font-bold tracking-wider text-[11px] uppercase mb-1 block">
+                      TRUSTED PARTNERS
+                    </span>
+                    <span className="text-lg font-bold text-white tracking-wide">
+                      {(section.data.partners && section.data.partners.length > 0) ? (Array.isArray(section.data.partners) ? section.data.partners.join(", ") : section.data.partners) : "GWO Certified"}
+                    </span>
+                  </div>
+                  {section.data.buttonText && (
+                    <Link to={section.data.buttonLink || '#'}>
+                      <button className="px-7 py-3 rounded-xl text-sm font-bold bg-[#FBBF24] text-[#041024] hover:bg-white hover:text-[#041024] shadow-lg transform hover:scale-105 transition-all duration-300 border-none">
+                        {section.data.buttonText}
+                      </button>
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -672,22 +810,58 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section }) => 
 
     case 'cta':
       return (
-        <section className="py-20 md:py-24 bg-gradient-to-r from-accent to-yellow-400 relative overflow-hidden mx-4 my-8 rounded-3xl" aria-label="Call to Action">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          <div className="container mx-auto px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 text-center md:text-left">
-            <div>
-              <h2 className="text-3xl md:text-5xl font-heading font-bold mb-4 text-secondary">{section.data.heading}</h2>
-              <p className="text-lg md:text-xl font-medium text-secondary/80">{section.data.subheading || section.data.description}</p>
-            </div>
-            {section.data.buttonText && (
-              <Link to={section.data.buttonLink || '#'} className="w-full md:w-auto">
-                <button className="bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 md:py-5 px-10 md:px-12 rounded-xl shadow-2xl transform hover:scale-105 transition-all duration-300 text-lg uppercase tracking-wide border-4 border-transparent hover:border-secondary w-full md:w-auto">
-                  {section.data.buttonText}
-                </button>
-              </Link>
-            )}
+        <section className="py-20 md:py-28 bg-[#041024] text-white relative overflow-hidden my-8 rounded-3xl" aria-label="Call to Action">
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-primary/20 blur-[120px] rounded-full"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[150%] bg-accent/10 blur-[120px] rounded-full"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40"></div>
           </div>
-          <div className="absolute top-0 right-0 w-96 h-full bg-white/20 skew-x-12 transform translate-x-32" aria-hidden="true"></div>
+
+          <div className="container mx-auto px-6 md:px-12 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-16">
+            <div className="md:w-1/2 text-center md:text-left">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-accent/20 text-accent text-xs md:text-sm font-bold uppercase tracking-widest mb-6 border border-accent/20">
+                Start Your Journey
+              </span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold mb-6 leading-tight text-white drop-shadow-md">
+                {section.data.heading || "Ready to Advance Your Career?"}
+              </h2>
+              <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-xl mx-auto md:mx-0 font-normal">
+                {section.data.subheading || section.data.description || "Upskill with SKYLAR EDUCATION ASIA today. Book your spot now - classes fill up quickly."}
+              </p>
+            </div>
+
+            <div className="md:w-1/2 flex flex-col gap-6 w-full max-w-md mx-auto md:mx-0">
+              <div className="bg-white/5 backdrop-blur-md border border-white/15 p-6 md:p-7 rounded-3xl flex items-start gap-5 hover:bg-white/10 transition-all duration-300 group shadow-xl">
+                <div className="bg-amber-500/20 p-4 rounded-2xl text-accent shrink-0 group-hover:bg-accent group-hover:text-secondary transition-colors duration-300 shadow-inner">
+                  <Award size={30} className="stroke-[2.5]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xl md:text-2xl mb-2 text-white font-heading tracking-tight">
+                    {section.data.badgeTitle || "Internationally Recognised"}
+                  </h4>
+                  <p className="text-gray-300 text-sm md:text-base leading-relaxed">
+                    {section.data.badgeDescription || "All GWO and safety training qualifications are aligned with internationally recognised standards."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row md:flex-col gap-3.5 pt-2">
+                {section.data.buttonText && (
+                  <Link to={section.data.buttonLink || '#'} className="w-full">
+                    <button className="w-full bg-accent text-secondary hover:bg-white hover:text-secondary font-extrabold py-4 px-8 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-300 transform hover:-translate-y-1 text-base md:text-lg flex items-center justify-center gap-3">
+                      {section.data.buttonText}
+                      <ArrowRight size={22} strokeWidth={2.5} />
+                    </button>
+                  </Link>
+                )}
+                <Link to="/contact" className="w-full">
+                  <button className="w-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20 font-bold py-4 px-8 rounded-2xl transition-all duration-300 text-base md:text-lg flex items-center justify-center gap-3">
+                    Contact Support
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </section>
       );
 

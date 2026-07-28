@@ -126,15 +126,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (!addedToCart) {
-                    addToCart(course.id);
-                  }
-                  window.location.href = '/checkout';
+                  window.dispatchEvent(new CustomEvent('openInquireModal', { 
+                    detail: { courseId: course.id, courseTitle: course.title } 
+                  }));
                 }}
                 size="sm"
-                className="flex-1 transition-all shadow-none flex items-center justify-center gap-1.5 text-xs font-bold rounded-[6px] py-2.5 bg-secondary text-white hover:bg-primary uppercase tracking-wider"
+                className="flex-1 transition-all shadow-md flex items-center justify-center gap-1.5 text-xs font-bold rounded-[6px] py-2.5 bg-accent text-secondary hover:bg-amber-400 uppercase tracking-wider"
              >
-                REGISTER NOW!
+                INQUIRE NOW
              </Button>
           </div>
         </div>

@@ -93,18 +93,26 @@ export const WebsiteManager: React.FC = () => {
         setHasUnsavedChanges(true);
     };
 
-    const addSection = (type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'accordion') => {
+    const addSection = (type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'accordion' | 'training-programs') => {
         if (!editingPage) return;
         const sectionId = `${type}_${Date.now()}`;
         const newSection: PageSection = {
             id: sectionId,
-            label: `${type.toUpperCase()} Section`,
+            label: type === 'training-programs' ? 'Explore Training Programs' : `${type.toUpperCase()} Section`,
             type: type,
             data: {
-                heading: 'New Section Title',
-                description: 'Description text for the section goes here.',
+                heading: type === 'training-programs' ? 'Explore Our Training Programs' : 'New Section Title',
+                subheading: type === 'training-programs' ? 'SPECIALIZED PATHWAYS' : undefined,
+                description: type === 'training-programs' ? undefined : 'Description text for the section goes here.',
                 ...(type === 'hero' || type === 'content' || type === 'cta' ? { buttonText: 'Learn More', buttonLink: '#' } : {}),
                 ...(type === 'features' || type === 'team' || type === 'accordion' ? { items: [{ title: 'New Item', description: 'Item description text.' }] } : {}),
+                ...(type === 'training-programs' ? {
+                    items: [
+                        { title: 'Global Wind Organisation', description: 'Explore Pathway', image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800', buttonLink: '/courses' },
+                        { title: 'Construction & High Risk Work', description: 'Explore Pathway', image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800', buttonLink: '/courses' },
+                        { title: 'Specialised Rescue', description: 'Explore Pathway', image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800', buttonLink: '/courses' }
+                    ]
+                } : {}),
                 ...(type === 'hero' || type === 'content' || type === 'team' ? { image: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=800' } : {})
             }
         };
@@ -517,6 +525,53 @@ export const WebsiteManager: React.FC = () => {
                                                     </div>
                                                 )}
 
+                                                {/* Trusted Partners field for content sections */}
+                                                {(section.id === 'about_intro' || section.type === 'content' || section.data.partners !== undefined) && (
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Trusted Partners / Accreditation Text</label>
+                                                        <input
+                                                            type="text"
+                                                            id={`website-partners-${idx}`}
+                                                            name="sectionPartners"
+                                                            autoComplete="off"
+                                                            placeholder="e.g. GWO Certified"
+                                                            className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
+                                                            value={Array.isArray(section.data.partners) ? section.data.partners.join(', ') : (section.data.partners || '')}
+                                                            onChange={(e) => updateSectionData(idx, 'partners', e.target.value.split(',').map(s => s.trim()))}
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {/* CTA Badge Title & Description fields */}
+                                                {(section.type === 'cta' || section.id === 'cta' || section.data.badgeTitle !== undefined) && (
+                                                    <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Title (e.g. Internationally Recognised)</label>
+                                                            <input
+                                                                type="text"
+                                                                id={`website-badge-title-${idx}`}
+                                                                name="sectionBadgeTitle"
+                                                                autoComplete="off"
+                                                                className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
+                                                                value={section.data.badgeTitle || ''}
+                                                                onChange={(e) => updateSectionData(idx, 'badgeTitle', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Description</label>
+                                                            <textarea
+                                                                id={`website-badge-desc-${idx}`}
+                                                                name="sectionBadgeDescription"
+                                                                autoComplete="off"
+                                                                rows={2}
+                                                                className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
+                                                                value={section.data.badgeDescription || ''}
+                                                                onChange={(e) => updateSectionData(idx, 'badgeDescription', e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* Array Items (Slides, Features, etc) */}
                                                 {section.data.items && (
                                                     <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -635,13 +690,13 @@ export const WebsiteManager: React.FC = () => {
                             <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 bg-gray-50/50 dark:bg-gray-900/10 text-center space-y-3">
                                 <span className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Add New Content Section</span>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {(['hero', 'content', 'features', 'cta', 'team', 'accordion'] as const).map(type => (
+                                    {(['hero', 'training-programs', 'content', 'features', 'cta', 'team', 'accordion'] as const).map(type => (
                                         <button
                                             key={type}
                                             onClick={() => addSection(type)}
                                             className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-blue-400 hover:text-primary dark:hover:text-blue-400 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 shadow-sm hover:shadow transition-all"
                                         >
-                                            + {type.toUpperCase()}
+                                            + {type === 'training-programs' ? 'TRAINING PROGRAMS' : type.toUpperCase()}
                                         </button>
                                     ))}
                                 </div>

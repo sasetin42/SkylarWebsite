@@ -1,5 +1,5 @@
-import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog } from '../types';
-import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES } from '../constants';
+import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings } from '../types';
+import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS } from '../constants';
 import { firebaseClient } from './firebaseClient';
 
 // Intercept localStorage.setItem to sync with Firebase in the background
@@ -140,9 +140,9 @@ export const getCourses = (): Course[] => {
       careerOpportunities: c.careerOpportunities || seed.careerOpportunities,
       durationOfTraining: c.durationOfTraining || seed.durationOfTraining,
       whereDelivered: c.whereDelivered || seed.whereDelivered,
-      accreditedUnitsRich: c.accreditedUnitsRich || seed.accreditedUnitsRich,
+      gwoModulesRich: c.gwoModulesRich || seed.gwoModulesRich,
       entryRequirementsRich: c.entryRequirementsRich || seed.entryRequirementsRich,
-      lln: c.lln || seed.lln,
+      languageRequirements: c.languageRequirements || seed.languageRequirements,
       assessment: c.assessment || seed.assessment,
       certificationRecord: c.certificationRecord || seed.certificationRecord,
       validityPeriod: c.validityPeriod || seed.validityPeriod,
@@ -218,10 +218,10 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   accentColor: "#ffc107",
   borderRadius: 12,
   sidebarTheme: "dark",
-  taxId: "ABN 84 920 184 721",
+  taxId: "TIN / Reg No: SK-PH-2026-001",
   supportContactName: "Safety Admin Team",
-  supportHours: "Mon-Fri 8:00 AM - 5:00 PM (AEST)",
-  tuitionCurrency: "AUD",
+  supportHours: "Mon-Fri 8:00 AM - 5:00 PM (PST)",
+  tuitionCurrency: "PHP",
   classSizeLimit: 20,
   passingScore: 80,
   fontFamily: "Outfit",
@@ -319,7 +319,7 @@ const SEED_PAGES: SitePage[] = [
                 items: [
                     { 
                         title: "SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training", 
-                        description: "Leading safety training and services for a sustainable future. GWO accredited, nationally recognised, multiple locations.", 
+                        description: "Leading safety training and services for a sustainable future. GWO certified, internationally recognised, multiple locations.", 
                         image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
                         buttonText: "Browse Courses",
                         buttonLink: "/courses"
@@ -332,11 +332,40 @@ const SEED_PAGES: SitePage[] = [
                         buttonLink: "/courses/gwo-btt"
                     },
                     { 
-                        title: "Nationally Recognised OHS & Safety Certifications", 
-                        description: "Accredited construction, high-risk work, and emergency warden training delivered by industry professionals.", 
+                        title: "International Safety & GWO Certifications", 
+                        description: "Certified wind energy, high-risk work, and industrial safety training delivered by international rescue professionals.", 
                         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
                         buttonText: "Contact Us",
                         buttonLink: "/contact"
+                    }
+                ]
+            }
+        },
+        {
+            id: 'training_programs',
+            label: 'Explore Training Programs',
+            type: 'training-programs',
+            data: {
+                subheading: 'SPECIALIZED PATHWAYS',
+                heading: 'Explore Our Training Programs',
+                items: [
+                    { 
+                        title: 'Global Wind Organisation', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
+                    },
+                    { 
+                        title: 'Construction & High Risk Work', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
+                    },
+                    { 
+                        title: 'Specialised Rescue', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
                     }
                 ]
             }
@@ -349,8 +378,8 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Excellence in Safety Training - Industry-Leading Skills & Support",
                 items: [
                     
-                    { title: "GWO Standard Alignment", description: "Meets Global Wind Organisation's stringent industry standards.", icon: "Fan" },
-                    { title: "Experienced Instructors", description: "Delivered by industry-experienced professional trainers.", icon: "Users" },
+                    { title: "International GWO Standards", description: "Training aligned with Internationally Recognised Global Wind Organisation (GWO) standards.", icon: "Fan" },
+                    { title: "Wind Industry Specialists", description: "Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.", icon: "Users" },
                     { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
                 ]
             }
@@ -387,23 +416,51 @@ const SEED_PAGES: SitePage[] = [
                 description: "Begin your learning adventure with SKYLAR EDUCATION ASIA through our streamlined 4-step enrollment process. Designed for ease and simplicity, our portal guides you smoothly from sign-up to start.",
                 items: [
                     { title: "Browse Courses Online", description: "Explore our extensive course listings and select the best option for your career goals.", icon: "Search" },
-                    { title: "Choose a Date", description: "Pick a convenient date from the available sessions to fit your schedule.", icon: "Calendar" },
+                    { title: "Inquire Now", description: "Submit your inquiry with your preferred date, location, and group details.", icon: "Calendar" },
                     { title: "Complete Enrolment Form", description: "Fill out the online enrolment form with your details to secure your spot.", icon: "FileText" },
                     { title: "Receive Confirmation", description: "Get immediate confirmation and all the course details in your inbox.", icon: "CheckCircle" }
                 ]
             }
         },
         {
-            id: 'stats',
-            label: 'Nationwide Reach Stats',
+            id: 'why_choose_us',
+            label: 'Why Choose Us',
             type: 'features',
             data: {
-                heading: "Training Across Asia-Pacific's Key Locations",
-                description: "SKYLAR EDUCATION ASIA operates multiple training facilities, empowering thousands of students annually. Our comprehensive reach ensures that quality training is accessible, enhancing careers.",
+                subheading: 'WHY CHOOSE US',
+                heading: 'Why Train With SKYLAR EDUCATION ASIA?',
+                description: 'We don\'t just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions to ensure maximum readiness.',
+                image: '/why-train-skylar.png',
                 items: [
-                    { title: "12+", description: "Number of Locations Across Key Facilities" },
-                    { title: "3,000+", description: "Students Trained Annually Across Our Facilities" },
-                    { title: "85%", description: "Of Wind Safety Industry Trained by Us" }
+                    { 
+                        title: 'Industry Specialist Trainers', 
+                        description: 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.', 
+                        icon: 'HardHat' 
+                    },
+                    { 
+                        title: 'Industry-Specific Training Facilities', 
+                        description: 'Purpose-built training environments replicating real-world wind industry work conditions.', 
+                        icon: 'Target' 
+                    },
+                    { 
+                        title: 'Internationally Recognised Qualifications', 
+                        description: 'Gain GWO qualifications and safety certifications that are globally recognised and accepted across wind energy projects worldwide.', 
+                        icon: 'Award' 
+                    }
+                ]
+            }
+        },
+        {
+            id: 'stats',
+            label: 'Operational Highlights',
+            type: 'features',
+            data: {
+                heading: "Operational Highlights",
+                description: "SKYLAR EDUCATION ASIA provides certified, GWO-aligned safety training with flexible delivery options across the Philippines and client sites.",
+                items: [
+                    { title: "1", subtitle: "Training Centre", description: "Angeles City, Pampanga", icon: "MapPin" },
+                    { title: "Nationwide", subtitle: "Training Delivery", description: "Client Site Delivery Available", icon: "Globe" },
+                    { title: "International", subtitle: "Training Standards", description: "GWO-Aligned Training", icon: "Award" }
                 ]
             }
         },
@@ -415,7 +472,9 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Ready to Advance Your Career?",
                 subheading: "Upskill with SKYLAR EDUCATION ASIA today. Book your spot now - classes fill up quickly.",
                 buttonText: "Browse Courses Now",
-                buttonLink: "/courses"
+                buttonLink: "/courses",
+                badgeTitle: "Internationally Recognised",
+                badgeDescription: "All GWO and safety training qualifications are aligned with internationally recognised standards."
             }
         }
     ] 
@@ -479,7 +538,7 @@ const SEED_PAGES: SitePage[] = [
                 heading: "Your Partner in Professional Wind Safety Training",
                 subheading: "Excellence in Safety Training",
                 description: "Choose SKYLAR EDUCATION ASIA for comprehensive, practical training that meets global standards. Our programs are meticulously designed to ensure that every participant gains the skills necessary for safety and efficiency in the wind sector.\n\nWith state-of-the-art facilities, a curriculum that covers essential safety modules, and a track record of successful certifications, SKYLAR EDUCATION ASIA stands out as your best choice for advancing in the wind energy field.",
-                image: "/wind-turbine-worker.png"
+                image: "/angeles-training-centre.jpg"
             }
         },
         {
@@ -651,8 +710,8 @@ const SEED_PAGES: SitePage[] = [
             label: 'Hero Section',
             type: 'hero',
             data: {
-                heading: 'Our Training Locations',
-                description: 'Globally aligned wind energy and safety training delivered through purpose-built facilities across the Asia-Pacific region.',
+                heading: 'Our Training Centre & Delivery Options',
+                description: 'SKYLAR EDUCATION ASIA operates one permanent, state-of-the-art training centre in Angeles City, Pampanga, alongside flexible nationwide client-site training delivery across the Philippines.',
                 image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920'
             }
         },
@@ -733,7 +792,7 @@ const SEED_PAGES: SitePage[] = [
                 heading: "General Questions",
                 items: [
                     { title: "How do I enroll?", description: "You can enroll online via our course pages or contact our admin team." },
-                    { title: "What is a USI?", description: "A Unique Student Identifier (USI) is a reference number made up of 10 numbers and letters that creates a secure online record of your recognised training and qualifications." },
+                    { title: "What is a WINDA ID?", description: "A WINDA ID is your personal registration ID created on the Global Wind Organisation (GWO) WINDA portal to track and authenticate your international safety certifications." },
                     { title: "Do you offer refunds?", description: "Yes, please refer to our Refund Policy page for full details regarding cancellations and withdrawals." }
                 ]
             }
@@ -930,7 +989,7 @@ We reserve the right to amend this refund policy from time to time. If we do, we
             type: 'hero',
             data: {
                 heading: "Privacy Notice",
-                description: "How we protect and manage your personal information in accordance with National VET standards.",
+                description: "How we protect and manage your personal information in accordance with Global GWO Standards and Philippine Data Privacy Laws.",
                 image: "https://images.unsplash.com/photo-1575936123452-b67c3203c357?auto=format&fit=crop&q=80&w=1920"
             }
         },
@@ -940,7 +999,7 @@ We reserve the right to amend this refund policy from time to time. If we do, we
             type: 'content',
             data: {
                 heading: "Privacy Policy Overview",
-                description: "We value your privacy and are committed to protecting your personal information. Under the VET Quality Framework, we collect and store student data securely for national reporting obligations."
+                description: "We value your privacy and are committed to protecting your personal information. Under Global GWO standards and Philippine privacy laws, we collect and store student data securely for certification verification and training administration."
             }
         },
         {
@@ -948,50 +1007,33 @@ We reserve the right to amend this refund policy from time to time. If we do, we
             label: 'Compliance Accordions',
             type: 'accordion',
             data: {
-                heading: "Federal & State Disclosures",
+                heading: "International Data Privacy & GWO Verification",
                 items: [
                     {
                         title: "HOW WE USE YOUR PERSONAL INFORMATION",
-                        description: "We use your personal information to enable us to deliver our courses to you, and otherwise, as needed, to comply with our obligations as a training provider and Global Wind Organisation (GWO) certified center."
+                        description: "We use your personal information to enable us to deliver safety training courses to you, issue course certificates, and fulfill our verification obligations as a certified Global Wind Organisation (GWO) training provider."
                     },
                     {
-                        title: "HOW WE DISCLOSE YOUR PERSONAL INFORMATION",
-                        description: "We are required by law (under the National Vocational Education and Training Regulator Act 2011 (Cth) (NVETR Act)) to disclose the personal information we collect about you to the National VET Data Collection kept by the National Centre for Vocational Education Research Ltd (NCVER). The NCVER is responsible for collecting, managing, analysing and communicating research and statistics about the Australian VET sector.\n\nWe are also authorised by law (under the NVETR Act) to disclose your personal information to the relevant state or territory training authority."
+                        title: "GWO WINDA DATABASE DISCLOSURES",
+                        description: "Upon successful completion of any GWO course module, your course records and personal identifiers are registered directly with the GWO WINDA global database (winda.gwo.org) to allow global wind energy employers to verify your qualifications."
                     },
                     {
-                        title: "HOW THE NCVER AND OTHER BODIES HANDLE YOUR PERSONAL INFORMATION",
-                        description: `The NCVER will collect, hold, use and disclose your personal information in accordance with the law, including the Privacy Act 1988 (Cth) (Privacy Act) and the NVETR Act. Your personal information may be used and disclosed by NCVER for purposes that include populating authenticated VET transcripts; administration of VET; facilitation of statistics and research relating to education, including surveys and data linkage; and understanding the VET market.
+                        title: "DATA PROTECTION & PRIVACY RIGHTS",
+                        description: `SKYLAR EDUCATION ASIA handles all student personal data in strict compliance with applicable international data privacy standards and Republic Act No. 10173 (Data Privacy Act of 2012). Your personal data will not be sold or shared with unauthorized third parties.
 
-The NCVER is authorised to disclose information to the Australian Government Department of Education, Skills and Employment (DESE), Commonwealth authorities, State and Territory authorities (other than registered training organisations) that deal with matters relating to VET and VET regulators for the purposes of those bodies, including to enable:
-
--administration of VET, including program administration, regulation, monitoring and evaluation
--facilitation of statistics and research relating to education, including surveys and data linkage
--understanding how the VET market operates, for policy, workforce planning and consumer information.
-
-The NCVER may also disclose personal information to persons engaged by NCVER to conduct research on NCVER’s behalf.
-
-The NCVER does not intend to disclose your personal information to any overseas recipients.
-
-For more information about how the NCVER will handle your personal information please refer to the NCVER’s Privacy Policy at www.ncver.edu.au/privacy.
-
-If you would like to seek access to or correct your information, in the first instance, please contact SKYLAR EDUCATION ASIA using the contact details listed below.
-
-DESE is authorised by law, including the Privacy Act and the NVETR Act, to collect, use and disclose your personal information to fulfil specified functions and activities. For more information about how the DESE will handle your personal information, please refer to the DESE VET Privacy Notice at https://www.dese.gov.au/national-vet-data/vet-privacy-notice
-
-Please refer to the additional State or Territory Authority Privacy Notice included in this application process should this be relevant to your application.`
+Your course completion records are maintained securely to facilitate license verification, employer queries, and training refresher reminders.`
                     },
                     {
-                        title: "SURVEYS",
-                        description: "You may receive a student survey which may be run by a government department or an NCVER employee, agent, third-party contractor or another authorised agency. Please note you may opt out of the survey at the time of being contacted."
+                        title: "SURVEYS & FEEDBACK",
+                        description: "You may receive optional course evaluation surveys from GWO or SKYLAR EDUCATION ASIA to help maintain top quality training standards. Participation is voluntary."
                     },
                     {
                         title: "CONTACT INFORMATION",
                         description: `At any time, you may contact us to:
 
-o request access to your personal information
-o correct your personal information
-o make a complaint about how your personal information has been handled
-o ask a question about this Privacy Notice`
+o request access to your personal training records
+o correct your personal details or WINDA ID
+o make an inquiry about our privacy policy`
                     }
                 ]
             }
@@ -1026,7 +1068,7 @@ o ask a question about this Privacy Notice`
   },
   { 
     id: 'usi', 
-    name: 'USI Info', 
+    name: 'WINDA Registration', 
     lastUpdated: new Date().toISOString(), 
     sections: [
         {
@@ -1034,36 +1076,36 @@ o ask a question about this Privacy Notice`
             label: 'Hero Section',
             type: 'hero',
             data: {
-                heading: "Unique Student Identifier (USI)",
-                description: "Your Key to Unlocking Opportunities in Vocational Education.",
+                heading: "GWO WINDA Registration Guide",
+                description: "Your Global Identity for Certified Wind Industry Safety Training.",
                 image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1920"
             }
         },
         {
             id: 'intro',
-            label: 'USI Introduction',
+            label: 'WINDA Introduction',
             type: 'content',
             data: {
-                heading: "Unique Student Identifier",
-                description: `Every year almost four million Australians build and sharpen their skills by undertaking nationally recognised training. All students doing nationally recognised training need to have a Unique Student Identifier (USI). This includes students doing Vocational Education Training (VET) when they are still at school (VET for secondary students).
+                heading: "Global Wind Organisation (WINDA) ID",
+                description: `All delegates completing GWO safety training courses are required to register for a WINDA ID prior to course completion. WINDA is the global database operated by the Global Wind Organisation.
 
-From 1 January 2015 it is a requirement of the Federal Government that all students undertaking nationally recognised training will need to obtain a Unique Student Identifier (USI). This involves an easy online application. See the USI website for additional information.`
+Your WINDA ID creates a permanent, verified record of your completed GWO safety training modules that can be accessed and verified by wind energy employers worldwide.`
             }
         },
         {
             id: 'usi_accordions',
-            label: 'USI Guide Accordions',
+            label: 'WINDA Guide Accordions',
             type: 'accordion',
             data: {
-                heading: "USI Help & Guides",
+                heading: "WINDA Help & Registration Guide",
                 items: [
                     {
-                        title: "WHAT IS A USI",
-                        description: "A Unique Student Identifier (USI) is a reference number that gives each student in Australia a unique identity for their educational achievements. It is a requirement for anyone studying a nationally recognised training course in Australia. The USI creates an online record of a student’s qualifications and achievements, allowing them to access their training records and transcripts from one central location. It also makes it easier for employers and educational institutions to verify a student’s qualifications and track their progress throughout their education and career. Creating a USI is free and can be done via the USI website."
+                        title: "WHAT IS A WINDA ID",
+                        description: "A WINDA ID is a unique global identification number assigned to each delegate in the GWO database. It stores all your GWO training achievements, allowing employers, turbine manufacturers, and site operators to verify your safety certifications anywhere in the world."
                     },
                     {
-                        title: "ALREADY HAVE A USI?",
-                        description: "There are 4 ways to find your USI:\n\n1. Email address: Enter the email address saved on your USI account and click 'Submit' on the USI website. An email will be sent containing your USI details.\n\n2. Mobile number: Enter the mobile number saved on your USI account and your date of birth, and you will receive an SMS containing your USI.\n\n3. Personal details: Supply your name, date of birth, gender, and town of birth, then answer your check questions to display your USI on-screen."
+                        title: "HOW TO GET A WINDA ID",
+                        description: "1. Visit the official WINDA portal at winda.gwo.org.\n2. Click 'Register as Delegate' and complete the registration form with your valid email address.\n3. Verify your account via email and log in to retrieve your WINDA ID.\n4. Provide your WINDA ID to SKYLAR EDUCATION ASIA before or during your training course."
                     }
                 ]
             }
@@ -1122,6 +1164,127 @@ export const getSitePages = (): SitePage[] => {
                 specialties: "Blade Repair, GWO ART, Electrical Safety",
                 experience: "7 Years"
             }
+          ];
+          migrated = true;
+        }
+      });
+    }
+    if (p.id === 'home') {
+      if (!p.sections.some(s => s.id === 'training_programs' || s.type === 'training-programs')) {
+        const defaultTrainingSection: PageSection = {
+            id: 'training_programs',
+            label: 'Explore Training Programs',
+            type: 'training-programs',
+            data: {
+                subheading: 'SPECIALIZED PATHWAYS',
+                heading: 'Explore Our Training Programs',
+                items: [
+                    { 
+                        title: 'Global Wind Organisation', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
+                    },
+                    { 
+                        title: 'Construction & High Risk Work', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
+                    },
+                    { 
+                        title: 'Specialised Rescue', 
+                        description: 'Explore Pathway', 
+                        image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800',
+                        buttonLink: '/courses'
+                    }
+                ]
+            }
+        };
+        p.sections.splice(1, 0, defaultTrainingSection);
+        migrated = true;
+      }
+      if (!p.sections.some(s => s.id === 'why_choose_us')) {
+        const defaultWhyChooseSection: PageSection = {
+            id: 'why_choose_us',
+            label: 'Why Choose Us',
+            type: 'features',
+            data: {
+                subheading: 'WHY CHOOSE US',
+                heading: 'Why Train With SKYLAR EDUCATION ASIA?',
+                description: 'We don\'t just tick boxes. We provide immersive, scenario-based training that prepares you for the real world. Our facilities replicate actual site conditions to ensure maximum readiness.',
+                image: '/why-train-skylar.png',
+                items: [
+                    { 
+                        title: 'Industry Specialist Trainers', 
+                        description: 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.', 
+                        icon: 'HardHat' 
+                    },
+                    { 
+                        title: 'Industry-Specific Training Facilities', 
+                        description: 'Purpose-built training environments replicating real-world wind industry work conditions.', 
+                        icon: 'Target' 
+                    },
+                    { 
+                        title: 'Internationally Recognised Qualifications', 
+                        description: 'Gain GWO qualifications and safety certifications that are globally recognised and accepted across wind energy projects worldwide.', 
+                        icon: 'Award' 
+                    }
+                ]
+            }
+        };
+        p.sections.push(defaultWhyChooseSection);
+        migrated = true;
+      }
+      p.sections.forEach(s => {
+        if (s.id === 'why_choose_us' && s.data.items) {
+          s.data.items.forEach((item: any) => {
+            if (item.title === 'Industry Experienced Trainers') {
+              item.title = 'Industry Specialist Trainers';
+              item.description = 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.';
+              migrated = true;
+            }
+            if (item.title === 'State-of-the-Art Facilities' || item.title === 'Industry-Specific Training Facilities') {
+              item.title = 'Industry-Specific Training Facilities';
+              item.description = 'Purpose-built training environments replicating real-world wind industry work conditions.';
+              migrated = true;
+            }
+            if (item.title === 'Internationally Recognised' || item.title === 'Internationally Recognised Qualifications') {
+              item.title = 'Internationally Recognised Qualifications';
+              item.description = 'Gain GWO qualifications and safety certifications that are globally recognised and accepted across wind energy projects worldwide.';
+              migrated = true;
+            }
+          });
+        }
+        if (s.id === 'enrolment_steps' && s.data.items) {
+          s.data.items.forEach((item: any) => {
+            if (item.title === 'Choose a Date' || item.title === 'Inquire Now') {
+              item.title = 'Inquire Now';
+              item.description = 'Submit your inquiry with your preferred date, location, and group details.';
+              migrated = true;
+            }
+          });
+        }
+        if (s.id === 'accreditation' && s.data.items) {
+          s.data.items.forEach((item: any) => {
+            if (item.title === 'Experienced Instructors') {
+              item.title = 'Wind Industry Specialists';
+              item.description = 'Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.';
+              migrated = true;
+            }
+            if (item.title === 'GWO Standard Alignment' || item.title === 'International GWO Standards') {
+              item.title = 'International GWO Standards';
+              item.description = 'Training aligned with Internationally Recognised Global Wind Organisation (GWO) standards.';
+              migrated = true;
+            }
+          });
+        }
+        if (s.id === 'stats') {
+          s.data.heading = "Operational Highlights";
+          s.data.description = "SKYLAR EDUCATION ASIA provides certified, GWO-aligned safety training with flexible delivery options across the Philippines and client sites.";
+          s.data.items = [
+            { title: "1", subtitle: "Training Centre", description: "Angeles City, Pampanga", icon: "MapPin" },
+            { title: "Nationwide", subtitle: "Training Delivery", description: "Client Site Delivery Available", icon: "Globe" },
+            { title: "International", subtitle: "Training Standards", description: "GWO-Aligned Training", icon: "Award" }
           ];
           migrated = true;
         }
@@ -1219,9 +1382,9 @@ export const getAdminUsers = (): AdminUser[] => {
   const stored = localStorage.getItem(ADMIN_USERS_KEY);
   if (!stored) {
       const defaultAdmins: AdminUser[] = [
-          { id: 'admin1', name: 'Admin User', email: 'admin@skylareducation.asia', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
-          { id: 'e90e43c6-e13c-4a0f-a058-3f8fbc73666b', name: 'Super Admin', email: 'admin@skylar.com.ph', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
-          { id: 'M2LnqGjRMtT6PlWv9KC3FkmOIKG3', name: 'Super Admin', email: 'admin@gmail.com', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
+          { id: 'iKbxm6RedwQ7l7piWwZkYT6XnR13', name: 'Super Admin', email: 'admin@gmail.com', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
+          { id: 'admin1', name: 'System Admin', email: 'admin@skylareducation.asia', role: 'Super Admin', status: 'Active', lastActive: 'Just now' },
+          { id: 'admin2', name: 'Super Admin', email: 'admin@skylar.com.ph', role: 'Super Admin', status: 'Active', lastActive: 'Just now' }
       ];
       localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdmins));
       return defaultAdmins;
@@ -1409,8 +1572,342 @@ export const initializeFirebase = async (): Promise<void> => {
       const settings = getSettings();
       await firebaseClient.upsert(SETTINGS_KEY, { value: settings });
     }
+
+    // 3. Real-Time Live Data Sync Listener
+    firebaseClient.subscribeToCollection('data', (items) => {
+      items.forEach((item) => {
+        if (item.id && item.value) {
+          localStorage.setItem(item.id, JSON.stringify(item.value));
+        }
+      });
+      window.dispatchEvent(new Event('themeUpdated'));
+      window.dispatchEvent(new Event('cartUpdated'));
+    });
   } catch (error) {
     // Firebase unavailable — app runs entirely from localStorage
   }
 };
+
+const INQUIRIES_KEY = 'apex_inquiries_data_v1';
+const SMTP_KEY = 'apex_smtp_settings_v1';
+const EMAIL_LOGS_KEY = 'apex_email_logs_v1';
+
+// --- Inquiries Management ---
+export const getInquiries = (): CourseInquiry[] => {
+  const stored = localStorage.getItem(INQUIRIES_KEY);
+  if (!stored) {
+    const seed: CourseInquiry[] = [
+      {
+        id: 'inq-1',
+        referenceCode: 'INQ-2026-9481',
+        studentName: 'Juan Dela Cruz',
+        email: 'juan.delacruz@example.ph',
+        phone: '+63 917 123 4567',
+        company: 'Philippine Wind Energy Corp',
+        courseId: 'gwo-bst',
+        courseTitle: 'GWO Basic Safety Training (BST)',
+        location: 'Pampanga Facility',
+        preferredDate: '2026-08-15',
+        participantsCount: '5 participants',
+        message: 'Requesting quotation for corporate group BST initial certification.',
+        status: 'New',
+        notes: 'Priority corporate inquiry.',
+        createdAt: '2026-07-28T10:30:00Z',
+        updatedAt: '2026-07-28T10:30:00Z'
+      },
+      {
+        id: 'inq-2',
+        referenceCode: 'INQ-2026-8320',
+        studentName: 'Maria Santos',
+        email: 'maria.santos@techwind.com',
+        phone: '+63 918 987 6543',
+        company: 'TechWind Renewables',
+        courseId: 'gwo-art',
+        courseTitle: 'GWO Advanced Rescue Training (ART)',
+        location: 'Manila Safety Center',
+        preferredDate: '2026-08-20',
+        participantsCount: '2 participants',
+        message: 'Checking availability for ART refresher module.',
+        status: 'Contacted',
+        notes: 'Called customer on July 28. Quotation sent via email.',
+        createdAt: '2026-07-27T14:15:00Z',
+        updatedAt: '2026-07-28T09:00:00Z'
+      }
+    ];
+    localStorage.setItem(INQUIRIES_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  return JSON.parse(stored);
+};
+
+export const saveInquiry = (inquiry: CourseInquiry) => {
+  const inquiries = getInquiries();
+  const index = inquiries.findIndex(i => i.id === inquiry.id);
+  if (index >= 0) {
+    inquiries[index] = inquiry;
+  } else {
+    inquiries.unshift(inquiry);
+  }
+  localStorage.setItem(INQUIRIES_KEY, JSON.stringify(inquiries));
+  window.dispatchEvent(new Event('inquiriesUpdated'));
+};
+
+export const updateInquiryStatus = (id: string, status: CourseInquiry['status'], notes?: string) => {
+  const inquiries = getInquiries();
+  const inquiry = inquiries.find(i => i.id === id);
+  if (inquiry) {
+    inquiry.status = status;
+    if (notes !== undefined) inquiry.notes = notes;
+    inquiry.updatedAt = new Date().toISOString();
+    localStorage.setItem(INQUIRIES_KEY, JSON.stringify(inquiries));
+    window.dispatchEvent(new Event('inquiriesUpdated'));
+  }
+};
+
+export const deleteInquiry = (id: string) => {
+  const inquiries = getInquiries().filter(i => i.id !== id);
+  localStorage.setItem(INQUIRIES_KEY, JSON.stringify(inquiries));
+  window.dispatchEvent(new Event('inquiriesUpdated'));
+};
+
+// --- SMTP & Email Log Management ---
+export const getSmtpSettings = (): SmtpSettings => {
+  const stored = localStorage.getItem(SMTP_KEY);
+  if (!stored) {
+    const seed: SmtpSettings = {
+      host: 'smtp.gmail.com',
+      port: 587,
+      username: 'smtp@skylaredasia.ph',
+      password: '••••••••••••',
+      fromEmail: 'inquiries@skylaredasia.ph',
+      fromName: 'SKYLAR EDUCATION ASIA Admissions',
+      enableSsl: true,
+      enableNotifications: true,
+      adminNotificationEmail: 'admissions@skylaredasia.ph'
+    };
+    localStorage.setItem(SMTP_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  return JSON.parse(stored);
+};
+
+export const saveSmtpSettings = (settings: SmtpSettings) => {
+  localStorage.setItem(SMTP_KEY, JSON.stringify(settings));
+};
+
+export const getEmailLogs = (): EmailLog[] => {
+  const stored = localStorage.getItem(EMAIL_LOGS_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+export const addEmailLog = (log: EmailLog) => {
+  const logs = getEmailLogs();
+  logs.unshift(log);
+  localStorage.setItem(EMAIL_LOGS_KEY, JSON.stringify(logs.slice(0, 100)));
+};
+
+// --- Testimonials & Google Reviews Management ---
+const TESTIMONIALS_KEY = 'apex_testimonials_data_v1';
+const GOOGLE_SETTINGS_KEY = 'apex_google_review_settings_v1';
+
+export const getTestimonials = (): Testimonial[] => {
+  const stored = localStorage.getItem(TESTIMONIALS_KEY);
+  if (!stored) {
+    const seed: Testimonial[] = [
+      {
+        id: 't-g1',
+        name: 'Jerome Villareal',
+        role: 'Offshore Wind Field Specialist',
+        content: 'Completed the GWO Basic Safety Training at Angeles City centre. Facilities are top tier and instructors have actual offshore turbine experience. Highly recommended!',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
+        rating: 5,
+        source: 'Google',
+        status: 'Approved',
+        isFeatured: true,
+        date: '2026-07-20',
+        googleReviewId: 'g-rev-101',
+        locationName: 'SKYLAR EDUCATION ASIA - Angeles City'
+      },
+      {
+        id: 't-g2',
+        name: 'Capt. Eduardo Santos',
+        role: 'Marine Operations Manager',
+        content: 'Enrolled our corporate team for GWO ART & Working at Heights. Seamless booking and world-class safety modules.',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
+        rating: 5,
+        source: 'Google',
+        status: 'Approved',
+        isFeatured: true,
+        date: '2026-07-15',
+        googleReviewId: 'g-rev-102',
+        locationName: 'Angeles City Training Centre'
+      },
+      {
+        id: 't1',
+        name: 'James Wilson',
+        role: 'Wind Turbine Technician',
+        content: 'The GWO training at SKYLAR EDUCATION ASIA was exceptional. The simulators are exactly like what we use offshore.',
+        avatar: 'https://i.pravatar.cc/150?img=11',
+        rating: 5,
+        source: 'Google',
+        status: 'Approved',
+        isFeatured: true,
+        date: '2026-07-02'
+      },
+      {
+        id: 't2',
+        name: 'Sarah Chen',
+        role: 'Safety Officer',
+        content: 'Excellent facilities and knowledgeable trainers. Highly recommended for industrial safety training.',
+        avatar: 'https://i.pravatar.cc/150?img=5',
+        rating: 5,
+        source: 'Google',
+        status: 'Approved',
+        isFeatured: true,
+        date: '2026-06-28'
+      },
+      {
+        id: 't3',
+        name: 'Michael Rodriguez',
+        role: 'Site Supervisor',
+        content: 'The hands-on approach really helped our team understand the critical safety procedures effectively.',
+        avatar: 'https://i.pravatar.cc/150?img=12',
+        rating: 5,
+        source: 'Website',
+        status: 'Approved',
+        isFeatured: false,
+        date: '2026-06-15'
+      },
+      {
+        id: 't4',
+        name: 'Emma Thompson',
+        role: 'Renewable Energy Engineer',
+        content: 'A world-class training center. The instruction quality is on par with the best international standards.',
+        avatar: 'https://i.pravatar.cc/150?img=9',
+        rating: 5,
+        source: 'Website',
+        status: 'Approved',
+        isFeatured: true,
+        date: '2026-05-30'
+      }
+    ];
+    localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  return JSON.parse(stored);
+};
+
+export const saveTestimonial = (testimonial: Testimonial) => {
+  const list = getTestimonials();
+  const index = list.findIndex(t => t.id === testimonial.id);
+  if (index >= 0) {
+    list[index] = testimonial;
+  } else {
+    list.unshift(testimonial);
+  }
+  localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event('testimonialsUpdated'));
+};
+
+export const deleteTestimonial = (id: string) => {
+  const list = getTestimonials().filter(t => t.id !== id);
+  localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event('testimonialsUpdated'));
+};
+
+export const toggleTestimonialStatus = (id: string) => {
+  const list = getTestimonials();
+  const item = list.find(t => t.id === id);
+  if (item) {
+    item.status = item.status === 'Approved' ? 'Hidden' : 'Approved';
+    localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+    window.dispatchEvent(new Event('testimonialsUpdated'));
+  }
+};
+
+export const toggleTestimonialFeatured = (id: string) => {
+  const list = getTestimonials();
+  const item = list.find(t => t.id === id);
+  if (item) {
+    item.isFeatured = !item.isFeatured;
+    localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+    window.dispatchEvent(new Event('testimonialsUpdated'));
+  }
+};
+
+export const getGoogleReviewSettings = (): GoogleReviewSettings => {
+  const stored = localStorage.getItem(GOOGLE_SETTINGS_KEY);
+  if (!stored) {
+    const seed: GoogleReviewSettings = {
+      apiKey: '',
+      placeId: 'ChIJzX4...SKYLAR_PH_PLACE_ID',
+      autoSync: true,
+      minimumRating: 4,
+      lastSyncedAt: new Date().toISOString()
+    };
+    localStorage.setItem(GOOGLE_SETTINGS_KEY, JSON.stringify(seed));
+    return seed;
+  }
+  return JSON.parse(stored);
+};
+
+export const saveGoogleReviewSettings = (settings: GoogleReviewSettings) => {
+  localStorage.setItem(GOOGLE_SETTINGS_KEY, JSON.stringify(settings));
+};
+
+export const syncGoogleReviews = async (): Promise<{ count: number; message: string }> => {
+  const settings = getGoogleReviewSettings();
+  const currentList = getTestimonials();
+  
+  // Simulated Google Places API sync with high rating filter
+  const googleSeedReviews: Testimonial[] = [
+    {
+      id: `g_synced_${Date.now()}_1`,
+      name: 'Ramon Garcia',
+      role: 'Renewable Plant Technician',
+      content: '5-star GWO training in Pampanga! Practical simulations for Working at Heights and First Aid were thoroughly executed by instructor Mark.',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+      rating: 5,
+      source: 'Google',
+      status: 'Approved',
+      isFeatured: true,
+      date: new Date().toISOString().split('T')[0],
+      googleReviewId: `g_place_${Date.now()}_1`,
+      locationName: 'Angeles City Training Centre'
+    },
+    {
+      id: `g_synced_${Date.now()}_2`,
+      name: 'Liezel De Guzman',
+      role: 'HSE Coordinator',
+      content: 'Enrolled 8 delegates for GWO Manual Handling and Fire Awareness. Very smooth administrative process and prompt response time.',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
+      rating: 5,
+      source: 'Google',
+      status: 'Approved',
+      isFeatured: true,
+      date: new Date().toISOString().split('T')[0],
+      googleReviewId: `g_place_${Date.now()}_2`,
+      locationName: 'SKYLAR EDUCATION ASIA'
+    }
+  ];
+
+  let addedCount = 0;
+  googleSeedReviews.forEach(rev => {
+    if (!currentList.some(t => t.name === rev.name || (t.googleReviewId && t.googleReviewId === rev.googleReviewId))) {
+      currentList.unshift(rev);
+      addedCount++;
+    }
+  });
+
+  settings.lastSyncedAt = new Date().toISOString();
+  saveGoogleReviewSettings(settings);
+  localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(currentList));
+  window.dispatchEvent(new Event('testimonialsUpdated'));
+
+  return {
+    count: addedCount,
+    message: addedCount > 0 ? `Successfully synced ${addedCount} new Google Reviews!` : 'Google Reviews up to date.'
+  };
+};
+
 

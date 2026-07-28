@@ -3,17 +3,19 @@ import {
   Save, Lock, Globe, Users, Shield, Layout, Settings, 
   ToggleLeft, ToggleRight, Plus, Trash2, Edit2, Check, Calendar, Activity,
   Database, UploadCloud, Download, RefreshCw, X, Palette, Image, ShieldAlert, Key,
-  Type, Sparkles, Code, Monitor, Eye
+  Type, Sparkles, Code, Monitor, Eye, Mail, Send
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { 
   getSettings, saveSettings, getAdminUsers, saveAdminUser, deleteAdminUser,
-  getRoles, getModules, toggleModule, getAuditLogs, getCourses, getStudents
+  getRoles, getModules, toggleModule, getAuditLogs, getCourses, getStudents,
+  getSmtpSettings, saveSmtpSettings, getEmailLogs
 } from '../../services/storageService';
+import { testSmtpConnection } from '../../services/emailService';
 import { AdminUser, Role } from '../../types';
 
 export const SettingsManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'system' | 'enrollment' | 'appearance' | 'roles' | 'logs' | 'users' | 'backup'>('system');
+  const [activeTab, setActiveTab] = useState<'system' | 'enrollment' | 'appearance' | 'roles' | 'logs' | 'users' | 'backup' | 'smtp'>('system');
   const [settings, setSettings] = useState(getSettings());
   const [isSaved, setIsSaved] = useState(false);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(getAdminUsers());
@@ -21,6 +23,28 @@ export const SettingsManager: React.FC = () => {
   const [modules, setModules] = useState(getModules());
   const [auditLogs, setAuditLogs] = useState(getAuditLogs());
   const [previewDark, setPreviewDark] = useState(false);
+
+  // SMTP Settings state
+  const [smtpSettings, setSmtpSettingsState] = useState(getSmtpSettings());
+  const [smtpTesting, setSmtpTesting] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [emailLogs, setEmailLogsState] = useState(getEmailLogs());
+
+  const handleSaveSmtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSmtpSettings(smtpSettings);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleTestSmtp = async () => {
+    setSmtpTesting(true);
+    setSmtpTestResult(null);
+    const result = await testSmtpConnection(smtpSettings);
+    setSmtpTestResult(result);
+    setSmtpTesting(false);
+    setEmailLogsState(getEmailLogs());
+  };
 
   // Modal / Form States
   const [userModalOpen, setUserModalOpen] = useState(false);
@@ -222,6 +246,7 @@ export const SettingsManager: React.FC = () => {
     { id: 'system', label: 'System', icon: Settings },
     { id: 'enrollment', label: 'Enrollment', icon: Calendar },
     { id: 'appearance', label: 'Appearance', icon: Layout },
+    { id: 'smtp', label: 'SMTP Email Setup', icon: Mail },
     { id: 'roles', label: 'Roles & Access', icon: Shield },
     { id: 'logs', label: 'Audit Logs', icon: Activity },
     { id: 'users', label: 'Users', icon: Users },
@@ -285,7 +310,7 @@ export const SettingsManager: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">ABN / Corporate Tax ID</label>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Tax ID / Business Registration No.</label>
                       <input 
                         id="settings-tax-id"
                         name="taxId"
@@ -293,7 +318,7 @@ export const SettingsManager: React.FC = () => {
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                         value={settings.taxId || ''} 
                         onChange={e => setSettings({...settings, taxId: e.target.value})} 
-                        placeholder="e.g. ABN 84 920 184 721"
+                        placeholder="e.g. TIN: SK-PH-2026-001"
                       />
                     </div>
                     <div>
@@ -1279,7 +1304,7 @@ export const SettingsManager: React.FC = () => {
                   <h4 className="font-bold text-red-800 dark:text-red-400 flex items-center gap-1.5 text-sm">
                     <ShieldAlert size={18} /> Restore Default Factory Seeds
                   </h4>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Resets the entire local data storage back to original system mock data. This wipes all modifications.</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Resets local data storage back to original production initial defaults. This resets all custom settings.</p>
                 </div>
                 <button
                   type="button"
@@ -1295,6 +1320,178 @@ export const SettingsManager: React.FC = () => {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* SMTP TAB */}
+          {activeTab === 'smtp' && (
+            <form onSubmit={handleSaveSmtp} className="space-y-8 max-w-3xl animate-fade-in">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">SMTP Email Transaction Server</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Configure outgoing mail server for student inquiry confirmations and admin alerts.</p>
+                
+                {smtpTestResult && (
+                  <div className={`p-4 rounded-xl text-sm mb-6 flex items-center gap-2 border ${
+                    smtpTestResult.success 
+                      ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' 
+                      : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+                  }`}>
+                    {smtpTestResult.message}
+                  </div>
+                )}
+
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Server Host</label>
+                      <input 
+                        type="text"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.host}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, host: e.target.value })}
+                        required
+                        placeholder="e.g. smtp.gmail.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Port</label>
+                      <input 
+                        type="number"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.port}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, port: parseInt(e.target.value) || 587 })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Username / API Key</label>
+                      <input 
+                        type="text"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.username}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, username: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Password</label>
+                      <input 
+                        type="password"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.password || ''}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, password: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Email (From)</label>
+                      <input 
+                        type="email"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.fromEmail}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, fromEmail: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Display Name</label>
+                      <input 
+                        type="text"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.fromName}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, fromName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Admin Notification Email</label>
+                      <input 
+                        type="email"
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        value={smtpSettings.adminNotificationEmail}
+                        onChange={e => setSmtpSettingsState({ ...smtpSettings, adminNotificationEmail: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-6">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <input 
+                          type="checkbox"
+                          checked={smtpSettings.enableNotifications}
+                          onChange={e => setSmtpSettingsState({ ...smtpSettings, enableNotifications: e.target.checked })}
+                          className="rounded text-primary focus:ring-primary w-4 h-4"
+                        />
+                        Enable Admin Instant Email Alerts
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-4 items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={handleTestSmtp}
+                      disabled={smtpTesting}
+                      className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2"
+                    >
+                      <Send size={16} /> {smtpTesting ? 'Testing Connection...' : 'Test SMTP Connection'}
+                    </button>
+
+                    <Button type="submit">
+                      Save SMTP Settings
+                    </Button>
+                  </div>
+
+                  {/* Email Logs Table */}
+                  <div className="pt-8 space-y-3">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">Recent Email Activity Logs</h4>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden text-xs">
+                      <table className="w-full text-left">
+                        <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-700">
+                          <tr>
+                            <th className="p-3">Timestamp</th>
+                            <th className="p-3">Recipient</th>
+                            <th className="p-3">Subject</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700 dark:text-gray-300">
+                          {emailLogs.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="p-4 text-center text-gray-400">No email logs yet.</td>
+                            </tr>
+                          ) : (
+                            emailLogs.slice(0, 5).map(log => (
+                              <tr key={log.id}>
+                                <td className="p-3 text-gray-400">{new Date(log.timestamp).toLocaleTimeString()}</td>
+                                <td className="p-3 font-semibold">{log.recipient}</td>
+                                <td className="p-3 truncate max-w-[200px]">{log.subject}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    log.status === 'Sent' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {log.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
           )}
 
         </div>

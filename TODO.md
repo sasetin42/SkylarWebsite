@@ -10,7 +10,7 @@
 ### Phase 2: Home.tsx Redesign
 - [ ] 2.1 Header/Navigation - Already done, verify alignment
 - [ ] 2.2 Hero Section - Change to static "HIGH RISK WORK LICENSING" headline
-- [ ] 2.3 Partner Logo Strip - Add exact logos (NRT, WorkSafe, GWO, ASQA, HSEQ)
+- [ ] 2.3 Partner Logo Strip - Add exact logos (GWO, WINDA, ISO, HSEQ)
 - [ ] 2.4 Popular Programs Section - Update grid and cards
 - [ ] 2.5 Industry-Leading Skills Section - Update feature cards
 - [ ] 2.6 Sign-Up/Enrollment Form - Update to "SKYLAR" / "JOIN WITH US"

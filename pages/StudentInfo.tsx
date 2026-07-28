@@ -57,7 +57,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon: Icon, title, desc }) =>
 const StudentAIChat = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Hi! I can help with student policies, dates, USI, or LMS questions. What do you need to know?' }
+    { role: 'model', text: 'Hi! I can help with student policies, dates, WINDA ID, or LMS questions. What do you need to know?' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [useReasoning, setUseReasoning] = useState(false);
@@ -139,7 +139,7 @@ const StudentAIChat = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={useReasoning ? "Ask a complex question..." : "Ask about USI, fees, or dates..."}
+            placeholder={useReasoning ? "Ask a complex question..." : "Ask about WINDA ID, fees, or dates..."}
             className="flex-1 pl-6 pr-14 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
           <button 
@@ -336,7 +336,7 @@ export const StudentInfo: React.FC = () => {
                   type="text" 
                   value={newsQuery}
                   onChange={(e) => setNewsQuery(e.target.value)}
-                  placeholder="e.g., 'Wind turbine safety trends 2025' or 'Hospitality wages Australia'"
+                  placeholder="e.g., 'Wind turbine safety trends 2025' or 'GWO BST certification rules'"
                   className="flex-1 px-4 py-3 bg-transparent text-white placeholder-blue-200 focus:outline-none"
                 />
                 <Button onClick={handleNewsSearch} disabled={isSearching} className="shrink-0 bg-accent text-secondary hover:bg-white hover:text-primary border-none w-32">
@@ -418,7 +418,7 @@ export const StudentInfo: React.FC = () => {
                 { title: 'Enrollment Form (PDF)' },
                 { title: 'Credit Transfer Application' },
                 { title: 'Complaint & Appeal Form' },
-                { title: 'USI Consent Form' }
+                { title: 'WINDA Delegate Registration Form' }
               ]).map((item, idx) => (
                 <li key={idx}>
                    <button className="w-full flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors group text-left">

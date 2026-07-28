@@ -134,8 +134,8 @@ export const Navbar: React.FC = () => {
             <Link to="/" className="flex items-center gap-2 group z-50">
               <img
                 src={(!isSolid || isDarkMode) ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.darkLogoUrl || LOGO_URL)}
-                alt="RidersBUD Safety Solutions"
-                className={`${isSolid ? 'h-10 md:h-[44px]' : 'h-12 md:h-[56px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 object-contain`}
+                alt="SKYLAR EDUCATION ASIA"
+                className={`${isSolid ? 'h-10 md:h-[44px]' : 'h-12 md:h-[56px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 object-contain ${!isSolid ? 'brightness-0 invert' : ''}`}
               />
             </Link>
 
@@ -230,25 +230,27 @@ export const Navbar: React.FC = () => {
                 </div>
               </Link>
 
-              <Link to="/checkout" className="relative group">
-                <div className={`p-2.5 rounded-full transition-all ${isSolid ? 'bg-gray-100 text-secondary hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-                  <ShoppingCart size={20} />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full shadow-sm animate-pop-in">
-                      {cartCount}
-                    </span>
-                  )}
-                </div>
-              </Link>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('openInquireModal'));
+                }}
+                className={`p-2.5 rounded-full transition-all relative group ${isSolid ? 'bg-gray-100 text-secondary hover:bg-gray-200' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                title="Inquire Now"
+              >
+                <ShoppingCart size={20} />
+              </button>
 
-              <Link to="/courses">
-                <button className={`px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-xl ${isSolid
-                    ? 'bg-primary text-white hover:bg-secondary'
-                    : 'bg-white text-secondary hover:bg-gray-100'
-                  }`}>
-                  Enroll Now
-                </button>
-              </Link>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('openInquireModal'));
+                }}
+                className={`px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-xl ${isSolid
+                    ? 'bg-accent text-secondary hover:bg-amber-400'
+                    : 'bg-accent text-secondary hover:bg-amber-400'
+                  }`}
+              >
+                Inquire Now
+              </button>
             </div>
 
             {/* Mobile Menu Toggle */}

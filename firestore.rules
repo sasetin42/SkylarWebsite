@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == 'iKbxm6RedwQ7l7piWwZkYT6XnR13' ||
+        request.auth.token.email == 'admin@gmail.com' ||
+        request.auth.token.email == 'admin@skylareducation.asia' ||
+        request.auth.token.email == 'admin@skylar.com.ph' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Super Admin'
+      );
+    }
+
+    // Public readable collections (Courses, Categories, Site Pages, Settings, Trainers, Locations)
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /site_pages/{pageId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /trainers/{trainerId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /locations/{locationId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() || request.auth.uid == userId;
+    }
+
+    // Student Data & Enrollments
+    match /students/{studentId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() || (isSignedIn() && request.auth.uid == studentId);
+    }
+
+    // Contact Submissions (Public write for forms, Admin read/delete)
+    match /contact_submissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Payments, Corporate Clients, Tickets, Audit Logs (Admin only)
+    match /payments/{paymentId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /corporate_clients/{clientId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /sections/{sectionId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+  }
+}

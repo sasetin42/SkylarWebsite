@@ -245,18 +245,16 @@ export const Checkout: React.FC = () => {
                           </div>
                        </div>
                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2">Unique Student Identifier (USI) <span className="font-normal text-gray-400">(Optional)</span></label>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">WINDA ID <span className="font-normal text-gray-400">(Optional for GWO delegates)</span></label>
                            <input 
-                              id="checkout-usi"
-                              name="usi"
+                              id="checkout-winda"
+                              name="windaId"
                               autoComplete="off"
                               type="text" 
-                              placeholder="Ex: 3BN88A992"
+                              placeholder="Ex: WINDA-123456"
                              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase"
-                             value={formData.usi}
-                             onChange={e => setFormData({...formData, usi: e.target.value})}
                           />
-                          <p className="text-xs text-gray-500 mt-2">Don't have a USI? Create one at <a href="#" className="text-primary underline">usi.gov.au</a></p>
+                          <p className="text-xs text-gray-500 mt-2">Need a WINDA ID? Register at <a href="https://winda.gwo.org" target="_blank" rel="noopener noreferrer" className="text-primary underline">winda.gwo.org</a></p>
                        </div>
                     </form>
                  </div>

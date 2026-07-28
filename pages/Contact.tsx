@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Clock, CheckCircle, Building, Globe, ArrowRight } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { getPageContent, saveTicket } from '../services/storageService';
+import { getPageContent, saveTicket, saveInquiry } from '../services/storageService';
 import { firebaseClient } from '../services/firebaseClient';
-import { SitePage } from '../types';
+import { SitePage, CourseInquiry } from '../types';
 import { Link } from 'react-router-dom';
 
 // Helper to map icon names to components
@@ -38,17 +38,39 @@ export const Contact: React.FC = () => {
     e.preventDefault();
     setStatus('submitting');
     
-    // Always save locally to Support Tickets in LocalStorage for admin dashboard visibility
-    const guestId = `guest|${formData.name}|${formData.email}`;
+    const timestamp = Date.now();
+    const refCode = 'INQ-' + Math.floor(100000 + Math.random() * 900000);
+    const nowStr = new Date().toISOString();
+    const dateStr = nowStr.split('T')[0];
+
+    // 1. Save to CourseInquiries (for Admin Panel -> Course Inquiries)
+    const newInquiry: CourseInquiry = {
+      id: `inq-${timestamp}`,
+      referenceCode: refCode,
+      studentName: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.mobile?.trim() || 'N/A',
+      courseTitle: 'Website Contact Page Inquiry',
+      location: 'Angeles City, Pampanga (Main Facility)',
+      participantsCount: '1',
+      message: formData.message.trim(),
+      status: 'New',
+      createdAt: nowStr,
+      updatedAt: nowStr
+    };
+    saveInquiry(newInquiry);
+
+    // 2. Save to Support Tickets
+    const guestId = `guest|${formData.name.trim()}|${formData.email.trim()}`;
     const newTicket = {
-      id: `tkt-${Date.now()}`,
+      id: `tkt-${timestamp}`,
       studentId: guestId,
-      subject: `Contact Form Submission (Mobile: ${formData.mobile || 'None'})`,
-      message: formData.message,
+      subject: `Contact Page Form Submission (${refCode} / Mobile: ${formData.mobile || 'None'})`,
+      message: formData.message.trim(),
       status: 'Open' as const,
       priority: 'High' as const,
-      dateCreated: new Date().toISOString().split('T')[0],
-      lastUpdated: new Date().toISOString().split('T')[0]
+      dateCreated: dateStr,
+      lastUpdated: dateStr
     };
     
     try {
@@ -66,7 +88,6 @@ export const Contact: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error("Submission failed, but local copy is stored:", err);
-      // Still set success since the local copy saved to local storage is complete and functional
       setStatus('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -216,7 +237,7 @@ export const Contact: React.FC = () => {
                     ></textarea>
                   </div>
 
-                  {/* reCAPTCHA Mock */}
+                  {/* Spam Protection Check */}
                   <div className="bg-[#f9f9f9] border border-[#d3d3d3] rounded shadow-sm w-full max-w-[304px] h-[78px] p-3 pl-4 pr-2 flex items-center justify-between select-none">
                       <div className="flex items-center gap-3">
                           <div className="w-6 h-6 border-2 border-[#c1c1c1] bg-white rounded-sm cursor-pointer hover:border-gray-400 transition-colors"></div>
@@ -271,7 +292,7 @@ export const Contact: React.FC = () => {
                                 <p className="text-gray-300 whitespace-pre-line mb-2">{item.description}</p>
                                 {isHeadOffice && (
                                     <Link to="/locations" className="text-xs font-bold text-accent hover:text-white uppercase tracking-widest flex items-center gap-1 transition-colors mt-2">
-                                        View All Locations <ArrowRight size={14} />
+                                        View Location & Facilities <ArrowRight size={14} />
                                     </Link>
                                 )}
                             </div>

@@ -105,17 +105,17 @@ export const TermsOfService: React.FC = () => {
           </Section>
 
           <Section id="services" icon={<BookOpen size={20} />} title="2. Training Services & Enrolment">
-            <p>SKYLAR EDUCATION ASIA provides internationally accredited vocational safety training, including but not limited to:</p>
+            <p>SKYLAR EDUCATION ASIA provides internationally certified safety training, including but not limited to:</p>
             <ul className="list-disc list-inside space-y-1 mt-2">
               <li><strong>GWO (Global Wind Organisation)</strong> — Basic Safety Training, Advanced Rescue, Blades</li>
-              <li><strong>High Risk Work Licensing</strong> — Dogging, Rigging, Crane Operations, Forklift</li>
+              <li><strong>Industrial High Risk Safety</strong> — Rigging, Crane Operations, Scaffolding</li>
               <li><strong>Industrial Safety Programs</strong> — Working at Heights, Confined Space, Fire Safety</li>
             </ul>
             <p className="mt-3">Enrolment is complete only upon receipt of full payment confirmation and written acceptance from SKYLAR EDUCATION ASIA. Course places are not guaranteed until confirmed in writing.</p>
           </Section>
 
           <Section id="payment" icon={<FileText size={20} />} title="3. Fees, Payment, and Refunds">
-            <p>All fees are quoted in Australian Dollars (AUD) or Philippine Peso (PHP) as applicable. Fees must be paid in full prior to the commencement of training unless a formal payment plan has been agreed in writing.</p>
+            <p>All fees are quoted in US Dollars (USD) or Philippine Peso (PHP) as applicable. Fees must be paid in full prior to the commencement of training unless a formal payment plan has been agreed in writing.</p>
             <div className="mt-3 space-y-2">
               <p><strong>Cancellation by Student:</strong></p>
               <ul className="list-disc list-inside space-y-1">
@@ -142,7 +142,7 @@ export const TermsOfService: React.FC = () => {
           </Section>
 
           <Section id="certification" icon={<CheckCircle size={20} />} title="5. Certification & Competency Assessment">
-            <p>Certification is issued only upon successful demonstration of all required competencies. SKYLAR EDUCATION ASIA cannot guarantee that every enrolled student will achieve certification. Assessment decisions are based on evidence gathered during training and must meet the standards set by the relevant training package or accrediting body (e.g., GWO, TESDA).</p>
+            <p>Certification is issued only upon successful demonstration of all required competencies. SKYLAR EDUCATION ASIA cannot guarantee that every enrolled student will achieve certification. Assessment decisions are based on evidence gathered during training and must meet the standards set by the Global Wind Organisation (GWO) or applicable industrial safety standards.</p>
             <p className="mt-3">If a student is deemed not yet competent (NYC), they may be offered a re-assessment opportunity at an additional fee. The number of re-assessment attempts is at the trainer's discretion.</p>
           </Section>
 
@@ -157,7 +157,7 @@ export const TermsOfService: React.FC = () => {
           </Section>
 
           <Section id="privacy" icon={<Shield size={20} />} title="7. Privacy & Data Protection">
-            <p>The collection, storage, and use of your personal information is governed by our Privacy Notice. By enrolling, you consent to the collection and use of your data as described therein, including mandatory disclosure to relevant government authorities as required by the National VET Data Collection and TESDA (Technical Education and Skills Development Authority) requirements.</p>
+            <p>The collection, storage, and use of your personal information is governed by our Privacy Notice. By enrolling, you consent to the collection and use of your data as described therein, including mandatory record registration in the GWO WINDA global database and applicable regulatory requirements.</p>
             <p className="mt-3 text-xs text-gray-500">See our full <a href="#/student-info/privacy-notice" className="text-primary underline">Privacy Notice</a> for complete details.</p>
           </Section>
 
@@ -173,7 +173,7 @@ export const TermsOfService: React.FC = () => {
           </Section>
 
           <Section id="governing-law" icon={<Globe size={20} />} title="9. Governing Law & Jurisdiction">
-            <p>These Terms are governed by the laws of the Republic of the Philippines. For Australian operations and students, the relevant laws of the Commonwealth of Australia and the state/territory of operation apply. Any disputes shall be submitted to the jurisdiction of the applicable courts of the relevant country.</p>
+            <p>These Terms are governed by the laws of the Republic of the Philippines. Any disputes shall be submitted to the exclusive jurisdiction of the applicable courts of the Philippines.</p>
             <p className="mt-3">SKYLAR EDUCATION ASIA encourages all disputes to be resolved through its internal complaints process prior to any formal legal action. See our <a href="#/student-info/complaints" className="text-primary underline">Complaints Policy</a>.</p>
           </Section>
 

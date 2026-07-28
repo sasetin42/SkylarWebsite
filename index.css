@@ -235,3 +235,69 @@ button, input, select, textarea {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+.logo-color-white {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Hero Slider Custom Smooth Animations */
+@keyframes kenBurnsSlow {
+  0% { transform: scale(1.08) translate(0, 0); }
+  50% { transform: scale(1.03) translate(-0.5%, -0.5%); }
+  100% { transform: scale(1.0) translate(0, 0); }
+}
+
+@keyframes heroFadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroZoomIn {
+  0% { opacity: 0; transform: scale(0.92); filter: blur(4px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes heroSlideLeft {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes heroSlideRight {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes heroBarExpand {
+  0% { width: 0px; opacity: 0; }
+  100% { width: 96px; opacity: 1; }
+}
+
+@keyframes progressFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-ken-burns {
+  animation: kenBurnsSlow 12s ease-out infinite alternate;
+}
+
+.animate-hero-fade-up {
+  animation: heroFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-zoom-in {
+  animation: heroZoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-slide-left {
+  animation: heroSlideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-slide-right {
+  animation: heroSlideRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-bar {
+  animation: heroBarExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

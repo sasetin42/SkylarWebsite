@@ -273,6 +273,8 @@ export const CourseDetail: React.FC = () => {
                   { id: 'durationOfTraining', title: 'What is the duration of training?', content: course?.durationOfTraining },
                   { id: 'whereDelivered', title: 'Where is the training delivered?', content: course?.whereDelivered },
                   { id: 'entryRequirementsRich', title: 'What are the entry requirements?', content: course?.entryRequirementsRich },
+                  { id: 'gwoModulesRich', title: 'GWO Standard Training Modules', content: course?.gwoModulesRich },
+                  { id: 'languageRequirements', title: 'Language & Prerequisites', content: course?.languageRequirements },
                   { id: 'assessment', title: 'Assessment', content: course?.assessment },
                   { id: 'certificationRecord', title: 'Certification/Training Record', content: course?.certificationRecord },
                   { id: 'validityPeriod', title: 'Validity Period', content: course?.validityPeriod },
@@ -427,16 +429,20 @@ export const CourseDetail: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <Button 
-                  onClick={handleEnrollNow}
-                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-secondary text-white hover:bg-primary border-none uppercase tracking-wider whitespace-nowrap"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('openInquireModal', { 
+                      detail: { courseId: course.id, courseTitle: course.title } 
+                    }));
+                  }}
+                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-accent text-secondary hover:bg-amber-400 border-none uppercase tracking-wider whitespace-nowrap"
                 >
-                  REGISTER NOW!
+                  INQUIRE NOW
                 </Button>
               </div>
 
               {course.depositAmount && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl text-center text-xs text-gray-500 font-medium leading-relaxed" style={{ marginTop: '20px', padding: '12px' }}>
-                  Register now to secure your spot! Your invoice will be prepared and issued upon successful enrolment.
+                  Inquire now to get course details, custom schedules, and corporate group pricing.
                 </div>
               )}
 
@@ -461,8 +467,15 @@ export const CourseDetail: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-             <Button onClick={handleEnrollNow} className="bg-secondary text-white hover:bg-primary font-bold px-6 py-3 md:px-8 shadow-lg text-sm md:text-base uppercase tracking-wider">
-                REGISTER NOW!
+             <Button 
+               onClick={() => {
+                 window.dispatchEvent(new CustomEvent('openInquireModal', { 
+                   detail: { courseId: course.id, courseTitle: course.title } 
+                 }));
+               }}
+               className="bg-accent text-secondary hover:bg-amber-400 font-bold px-6 py-3 md:px-8 shadow-lg text-sm md:text-base uppercase tracking-wider"
+             >
+                INQUIRE NOW
              </Button>
           </div>
         </div>

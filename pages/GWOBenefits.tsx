@@ -7,6 +7,8 @@ import {
   TrendingUp, Target, Heart, Clock, MapPin, Phone,
   GraduationCap, HardHat, Eye, Compass
 } from 'lucide-react';
+import { getTestimonials } from '../services/storageService';
+import { Testimonial } from '../types';
 
 const AnimatedCounter: React.FC<{ end: number; suffix?: string; duration?: number }> = ({ end, suffix = '', duration = 2000 }) => {
   const [count, setCount] = useState(0);
@@ -63,6 +65,17 @@ const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, ans
 
 export const GWOBenefits: React.FC = () => {
   const [activeModule, setActiveModule] = useState(0);
+  const [dynamicTestimonials, setDynamicTestimonials] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      const all = getTestimonials();
+      setDynamicTestimonials(all.filter(t => (t.status || 'Approved') === 'Approved'));
+    };
+    load();
+    window.addEventListener('testimonialsUpdated', load);
+    return () => window.removeEventListener('testimonialsUpdated', load);
+  }, []);
 
   const trainingModules = [
     { 
@@ -109,7 +122,7 @@ export const GWOBenefits: React.FC = () => {
       role: 'Wind Turbine Technician',
       company: 'Vestas',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100',
-      content: 'GWO certification completely transformed my career. Within 6 months of completing my training, I landed a role with one of the biggest wind energy companies in Australia.',
+      content: 'GWO certification completely transformed my career. Within 6 months of completing my training, I landed a role with one of the biggest wind energy companies in the Asia-Pacific region.',
       rating: 5
     },
     {
@@ -500,17 +513,28 @@ export const GWOBenefits: React.FC = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t, idx) => (
-              <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex gap-1 text-accent mb-4">
-                  {[1, 2, 3, 4, 5].map(star => <Star key={star} size={16} fill="currentColor" />)}
+            {(dynamicTestimonials.length > 0 ? dynamicTestimonials.slice(0, 6) : testimonials).map((t: any, idx: number) => (
+              <div key={t.id || idx} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex gap-1 text-accent">
+                      {Array.from({ length: t.rating || 5 }).map((_, star) => (
+                        <Star key={star} size={16} fill="currentColor" className="text-amber-500" />
+                      ))}
+                    </div>
+                    {t.source === 'Google' && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                        Google Verified
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 italic">"{t.content}"</p>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-6 italic">"{t.content}"</p>
                 <div className="flex items-center gap-4 border-t border-gray-100 pt-6">
-                  <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
+                  <img src={t.avatar || 'https://i.pravatar.cc/150?img=12'} alt={t.name} className="w-12 h-12 rounded-full object-cover border border-gray-200" />
                   <div>
                     <h4 className="font-bold text-secondary text-sm">{t.name}</h4>
-                    <p className="text-gray-400 text-xs">{t.role} at {t.company}</p>
+                    <p className="text-gray-400 text-xs">{t.role} {t.company ? `at ${t.company}` : ''}</p>
                   </div>
                 </div>
               </div>
@@ -528,7 +552,7 @@ export const GWOBenefits: React.FC = () => {
               Aligning with Renewable Energy Goals
             </h2>
             <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-10">
-              As Australia strives towards greater sustainability, GWO Certification supports these goals by developing a knowledgeable workforce. This accelerates the wind energy sector and contributes to national aspirations.
+              As energy markets worldwide strive towards greater sustainability, GWO Certification supports these goals by developing a highly skilled safety workforce. This accelerates the wind energy sector and contributes to global sustainability targets.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
               {[

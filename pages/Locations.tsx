@@ -11,11 +11,18 @@ import { Link } from 'react-router-dom';
 
 const LocationCard: React.FC<{ location: Location }> = ({ location }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+    <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
       <Link to={`/locations/${location.id}`} className="block h-64 overflow-hidden relative shrink-0">
-        <img src={location.image} alt={location.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <h3 className="absolute bottom-4 left-6 text-2xl font-bold text-white pr-4">{location.name}</h3>
+        <img 
+          src={location.image} 
+          alt={location.name} 
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/angeles-training-centre.jpg';
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent"></div>
+        <h3 className="absolute bottom-4 left-6 text-xl md:text-2xl font-bold font-heading text-white pr-4 leading-tight drop-shadow-md">{location.name}</h3>
       </Link>
       
       <div className="p-8 flex flex-col flex-1">
@@ -112,13 +119,13 @@ export const Locations: React.FC = () => {
               {/* Accent badges */}
               <div className="flex flex-wrap gap-2.5 mb-6">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
-                  📍 {LOCATIONS.length} Campuses
+                  📍 1 Permanent Centre + Nationwide Onsite
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                  Modern Facilities
+                  Angeles City, Pampanga
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                  Centrally Located
+                  Client Site Delivery Available
                 </span>
               </div>
               <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg animate-fade-in" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
@@ -142,7 +149,7 @@ export const Locations: React.FC = () => {
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
-                {hero?.description || 'Modern training facilities located centrally for your convenience. Find the campus closest to you.'}
+                {hero?.description || 'SKYLAR EDUCATION ASIA operates one permanent, purpose-built training centre in Angeles City, Pampanga, supplemented by flexible nationwide onsite training delivery at client facilities.'}
               </p>
             </div>
           </div>

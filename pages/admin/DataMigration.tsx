@@ -24,7 +24,6 @@ export const DataMigration: React.FC = () => {
     lastName: '',
     email: '',
     phone: '',
-    usi: '',
     windaId: ''
   });
 
@@ -34,17 +33,26 @@ export const DataMigration: React.FC = () => {
     const uploadedFile = e.target.files?.[0];
     if (uploadedFile) {
       setFile(uploadedFile);
-      // Simulate CSV parsing
-      setTimeout(() => {
-        // Mock data that "came from the file"
-        const mockParsed: CsvRow[] = [
-          { full_name: 'Robert Stark', email_addr: 'robb@winterfell.com', phone_num: '0400111222', legacy_id: 'OLD_001', gwo_id: '' },
-          { full_name: 'Jon Snow', email_addr: 'jon@wall.com', phone_num: '0400333444', legacy_id: 'OLD_002', gwo_id: 'WINDA-999' },
-          { full_name: 'Arya Stark', email_addr: 'arya@braavos.com', phone_num: '0400555666', legacy_id: 'OLD_003', gwo_id: '' },
-        ];
-        setParsedData(mockParsed);
-        setStep(2);
-      }, 1000);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string || '';
+        const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length > 0) {
+          const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+          const rows: CsvRow[] = [];
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+            const rowObj: CsvRow = {};
+            headers.forEach((header, index) => {
+              rowObj[header] = values[index] || '';
+            });
+            rows.push(rowObj);
+          }
+          setParsedData(rows);
+          setStep(2);
+        }
+      };
+      reader.readAsText(uploadedFile);
     }
   };
 
@@ -69,7 +77,6 @@ export const DataMigration: React.FC = () => {
           lastName: last || 'Unknown',
           email: row[mapping.email] || '',
           phone: row[mapping.phone] || '',
-          usi: row[mapping.usi] || undefined,
           windaId: row[mapping.windaId] || undefined,
           status: 'Active',
           progress: 0,

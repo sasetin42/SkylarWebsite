@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User, ArrowLeft, ShieldCheck } from 'lucide-react';
-import { getSettings } from '../../services/storageService';
+import { getSettings, getAdminUsers } from '../../services/storageService';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../services/firebaseClient';
 import { LOGO_URL } from '../../constants';
 
 export const AdminLogin: React.FC = () => {
   const settings = getSettings();
-  const [email, setEmail] = useState('admin@skylareducation.asia');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -19,13 +21,29 @@ export const AdminLogin: React.FC = () => {
     setError('');
     setLoading(true);
 
-    if (email === 'admin@skylareducation.asia' && password === 'admin') {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    try {
+      // 1. Live Firebase Authentication
+      await signInWithEmailAndPassword(auth, trimmedEmail, password);
       localStorage.setItem('isAdminAuthenticated', 'true');
       navigate('/admin/dashboard');
-    } else {
-      setError('Invalid credentials. Try admin@skylareducation.asia / admin');
+    } catch (firebaseErr: any) {
+      // 2. Local Admin Validation Check
+      const adminUsers = getAdminUsers();
+      const validAdmin = adminUsers.find(
+        u => u.email.toLowerCase() === trimmedEmail && u.status === 'Active'
+      );
+
+      if (validAdmin) {
+        localStorage.setItem('isAdminAuthenticated', 'true');
+        navigate('/admin/dashboard');
+      } else {
+        setError('Invalid credentials. Please enter a valid admin email and password.');
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -67,21 +85,10 @@ export const AdminLogin: React.FC = () => {
             <Link to="/" className="flex items-center gap-3 mb-8 w-fit hover:opacity-90 transition-opacity" title="Return Home">
               <img
                 src={settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL}
-                alt="RidersBUD Safety Solutions"
-                className="h-14 w-auto"
+                alt="SKYLAR EDUCATION ASIA"
+                className="h-20 md:h-24 w-auto object-contain"
               />
-              <div>
-                <p className="font-heading font-bold text-xl leading-none text-white">SKYLAR EDUCATION ASIA</p>
-              </div>
             </Link>
-
-            {/* Badge */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="p-2 bg-accent/20 border border-accent/30 rounded-lg">
-                <ShieldCheck className="text-accent" size={20} />
-              </div>
-              <span className="text-accent text-xs font-bold uppercase tracking-widest">Admin Portal</span>
-            </div>
 
             {/* Headline */}
             <h2 className="text-4xl xl:text-5xl font-bold mb-5 leading-tight">

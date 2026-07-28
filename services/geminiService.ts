@@ -22,7 +22,7 @@ You are the intelligent assistant for 'SKYLAR EDUCATION ASIA'.
 Your persona is professional, encouraging, knowledgeable about safety, and helpful.
 
 **About SKYLAR EDUCATION ASIA:**
-SKYLAR EDUCATION ASIA is a premier vocational education provider in the Philippines, expanded from Skylar Education Pty Ltd (Australia). We specialize in GWO (Global Wind Organisation) and industrial safety training.
+SKYLAR EDUCATION ASIA is a premier international safety training provider in the Philippines. We specialize in GWO (Global Wind Organisation) and industrial safety training for global energy and industrial sectors.
 
 **Courses Available:**
 ${courseList}
@@ -32,7 +32,7 @@ ${locationList}
 
 **Student Handbook & Policies Highlights:**
 - **Canvas LMS:** Login details are emailed 48 hours before course start.
-- **USI:** Unique Student Identifier is required for Australian accredited training.
+- **WINDA ID:** A GWO WINDA ID is required for registering GWO safety training records globally.
 - **Support:** Academic Support and Career Services are available.
 - **Refunds:** Full refund if withdrawn 14 days prior. 50% if 5 days prior. No refund within 24h.
 - **Payment Plans:** Available for courses over $1,500.
@@ -104,7 +104,7 @@ export const chatWithGemini = async (
     const query = message.toLowerCase().trim();
     
     if (query.includes('course') || query.includes('gwo') || query.includes('train') || query.includes('find gwo')) {
-      return `Here are some of our popular **GWO Accredited Safety Courses** at SKYLAR EDUCATION ASIA:
+      return `Here are some of our popular **GWO Certified Safety Courses** at SKYLAR EDUCATION ASIA:
 
 1. **GWO Combined Advanced Rescue Training (ART) Initial**
    - **Duration:** 3 Days
@@ -124,16 +124,15 @@ export const chatWithGemini = async (
 We run these courses weekly at our **Pampanga Facility** and **Manila Safety Center**. You can book directly using the upcoming sessions list on our campus pages!`;
     }
     
-    if (query.includes('usi') || query.includes('unique student') || query.includes('identifier')) {
-      return `### Unique Student Identifier (USI)
+    if (query.includes('winda') || query.includes('gwo id')) {
+      return `### GWO WINDA ID
 
-A **USI** is a reference number made up of ten numbers and letters. Anyone undertaking nationally recognised vocational education and training in Australia (or GWO courses synced with Australian training requirements) is required to have a USI.
+A **WINDA ID** is a unique global identifier assigned to every delegate registered in the Global Wind Organisation database. All participants completing GWO training must register for a WINDA ID prior to course completion.
 
-**How to get a USI:**
-1. Visit the official USI registry website at [usi.gov.au](https://www.usi.gov.au).
-2. Click on **"Create a USI"** and follow the step-by-step instructions.
-3. Have your identification ready (e.g., Passport, Birth Certificate, Drivers License).
-4. Once generated, save your USI number and provide it to us during enrollment.`;
+**How to register for a WINDA ID:**
+1. Visit the official GWO WINDA database portal at [winda.gwo.org](https://winda.gwo.org).
+2. Click **"Register as Delegate"** and complete your profile.
+3. Once registered, provide your WINDA ID to us so your official GWO certificates can be uploaded upon successful course completion.`;
     }
     
     if (query.includes('location') || query.includes('campus') || query.includes('campuses') || query.includes('pampanga') || query.includes('manila') || query.includes('where')) {
@@ -168,14 +167,14 @@ Both locations feature modern simulators, high-speed WiFi, secure on-site parkin
 
 I can help you with details about our academy. Try asking me about:
 - 📑 **Find GWO courses** (view price, modules, and prerequisites)
-- 🆔 **How do I get a USI?** (steps to register a Unique Student Identifier)
+- 🆔 **What is a WINDA ID?** (steps to register your GWO Delegate ID)
 - 📍 **Campuses** (locations, map info, and hours)
 - 💳 **Booking & Refunds** (policy and cancellation terms)`;
     }
 
     return `I am here to assist you with SKYLAR EDUCATION ASIA Safety Education. I can help you with details about:
 - **GWO Safety Courses** (ART, BST)
-- **USI (Unique Student Identifier) registration**
+- **WINDA ID registration for GWO**
 - **Campuses in Pampanga & Manila**
 
 For detailed support or individual inquiries, please email our coordinators at **info@skylareducation.asia** or call **+63 45 123 4567**.`;

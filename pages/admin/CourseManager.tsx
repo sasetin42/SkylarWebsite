@@ -1414,13 +1414,13 @@ export const CourseManager: React.FC = () => {
                   <label htmlFor="isGwo" className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer">GWO Certified Course</label>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">RTO Code</label>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Provider / GWO Code</label>
                   <input 
                     type="text" 
-                    id="course-rto-code"
-                    name="courseRtoCode"
+                    id="course-provider-code"
+                    name="courseProviderCode"
                     autoComplete="off"
-                    placeholder="e.g. RTO 21647"
+                    placeholder="e.g. GWO-PH-001"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white shadow-sm"
                     value={formData.rtoCode || ''}
                     onChange={e => setFormData({...formData, rtoCode: e.target.value})}
@@ -1492,9 +1492,9 @@ export const CourseManager: React.FC = () => {
                   onChange={(val) => setFormData(prev => ({ ...prev, whereDelivered: val }))}
                 />
                 <RichTextSectionEditor
-                  label="Accredited Units"
-                  value={formData.accreditedUnitsRich || ''}
-                  onChange={(val) => setFormData(prev => ({ ...prev, accreditedUnitsRich: val }))}
+                  label="GWO Modules & Specifications"
+                  value={formData.gwoModulesRich || ''}
+                  onChange={(val) => setFormData(prev => ({ ...prev, gwoModulesRich: val }))}
                 />
                 <RichTextSectionEditor
                   label="What are the entry requirements?"
@@ -1502,9 +1502,9 @@ export const CourseManager: React.FC = () => {
                   onChange={(val) => setFormData(prev => ({ ...prev, entryRequirementsRich: val }))}
                 />
                 <RichTextSectionEditor
-                  label="Language, Literacy & Numeracy (LLN)"
-                  value={formData.lln || ''}
-                  onChange={(val) => setFormData(prev => ({ ...prev, lln: val }))}
+                  label="Language & Prerequisite Skills"
+                  value={formData.languageRequirements || ''}
+                  onChange={(val) => setFormData(prev => ({ ...prev, languageRequirements: val }))}
                 />
                 <RichTextSectionEditor
                   label="Assessment"

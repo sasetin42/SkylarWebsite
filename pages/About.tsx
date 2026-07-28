@@ -62,7 +62,7 @@ export const About: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm py-2 px-3.5 rounded-xl border border-white/20">
                         <ShieldCheck size={16} className="text-secondary flex-shrink-0" />
-                        <span className="text-xs font-bold text-secondary">GWO Accredited</span>
+                        <span className="text-xs font-bold text-secondary">Internationally Certified</span>
                     </div>
                     <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm py-2 px-3.5 rounded-xl border border-white/20">
                         <Flame size={16} className="text-secondary flex-shrink-0" />

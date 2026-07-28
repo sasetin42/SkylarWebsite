@@ -60,7 +60,7 @@ export const EnrollmentManager: React.FC = () => {
       const uploadedTypes = student.documents?.map(d => d.type) || [];
       const missing = requiredDocs.filter(r => !uploadedTypes.includes(r as any));
       
-      if (!student.usi) missing.push('USI');
+      if (!student.windaId) missing.push('WINDA ID');
       
       return {
           complete: missing.length === 0,
@@ -212,10 +212,10 @@ export const EnrollmentManager: React.FC = () => {
                             <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                                 <h4 className="font-bold text-sm text-gray-800 dark:text-white mb-3">Requirements Checklist</h4>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600 dark:text-gray-400">USI Verified</span>
-                                        {selectedStudent.usi ? <CheckCircle size={16} className="text-green-500"/> : <XCircle size={16} className="text-red-500"/>}
-                                    </div>
+                                     <div className="flex justify-between items-center text-sm">
+                                         <span className="text-gray-600 dark:text-gray-400">WINDA ID Registered</span>
+                                         {selectedStudent.windaId ? <CheckCircle size={16} className="text-green-500"/> : <XCircle size={16} className="text-red-500"/>}
+                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-gray-600 dark:text-gray-400">Identity Docs</span>
                                         {selectedStudent.documents?.some(d => d.type === 'Identity') ? <CheckCircle size={16} className="text-green-500"/> : <XCircle size={16} className="text-red-500"/>}

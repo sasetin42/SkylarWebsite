@@ -17,7 +17,7 @@ const DEFAULT_SLIDES = [
   {
     id: 1,
     title: "Our Courses",
-    subtitle: "Browse our extensive range of accredited qualifications and short courses designed for industry.",
+    subtitle: "Browse our extensive range of GWO certified safety courses and industrial training.",
     image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
   }
 ];
@@ -531,7 +531,17 @@ export const Courses: React.FC = () => {
                         <Link to={`/courses/${course.id}`}>
                           <Button variant="outline" size="sm" className="px-5 rounded-lg text-xs font-bold">View Details</Button>
                         </Link>
-                        <Button size="sm" className="px-5 rounded-lg text-xs font-bold bg-secondary text-white hover:bg-primary" onClick={() => addToCart(course.id)}>Add to Cart</Button>
+                        <Button 
+                          size="sm" 
+                          className="px-5 rounded-lg text-xs font-bold bg-accent text-secondary hover:bg-amber-400" 
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('openInquireModal', { 
+                              detail: { courseId: course.id, courseTitle: course.title } 
+                            }));
+                          }}
+                        >
+                          Inquire Now
+                        </Button>
                       </div>
                     </div>
                   </div>

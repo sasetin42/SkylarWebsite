@@ -57,10 +57,10 @@ export const CorporateManager: React.FC = () => {
                   <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Company Name</label>
                   <input id="corp-company-name" name="companyName" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.companyName || ''} onChange={e => setFormData({...formData, companyName: e.target.value})} required />
               </div>
-              <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">ABN</label>
-                  <input id="corp-abn" name="abn" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.abn || ''} onChange={e => setFormData({...formData, abn: e.target.value})} required />
-              </div>
+               <div>
+                   <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Tax ID / Business Reg No.</label>
+                   <input id="corp-tax-id" name="taxId" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.taxId || ''} onChange={e => setFormData({...formData, taxId: e.target.value})} required />
+               </div>
               <div>
                   <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Contact Person</label>
                   <input id="corp-contact-person" name="contactPerson" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.contactPerson || ''} onChange={e => setFormData({...formData, contactPerson: e.target.value})} required />
@@ -100,7 +100,7 @@ export const CorporateManager: React.FC = () => {
                         </div>
                     </div>
                     <h3 className="font-bold text-xl text-secondary dark:text-white mb-1">{client.companyName}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 font-mono">ABN: {client.abn}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 font-mono">Tax ID: {client.taxId}</p>
                     
                     <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl">
                         <div className="flex items-center gap-3">

@@ -39,7 +39,10 @@ import { FinanceManager } from './pages/admin/FinanceManager'; // New
 import { SectionManager } from './pages/admin/SectionManager'; // New
 import { SupportManager } from './pages/admin/SupportManager'; // New
 import { CategoryManager } from './pages/admin/CategoryManager'; // New
+import { InquiriesManager } from './pages/admin/InquiriesManager'; // New
+import { TestimonialsManager } from './pages/admin/TestimonialsManager'; // New
 import { ScrollToTop } from './components/ScrollToTop';
+import { InquireModal } from './components/InquireModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
 import { getThemeSettings, getPageContent, initializeFirebase, getSettings } from './services/storageService';
@@ -137,6 +140,23 @@ const PublicLayout: React.FC = () => {
   const location = useLocation();
   const p = location.pathname;
 
+  const [isInquireModalOpen, setIsInquireModalOpen] = useState(false);
+  const [inquireModalCourse, setInquireModalCourse] = useState<{ courseId?: string; courseTitle?: string }>({});
+
+  useEffect(() => {
+    const handleOpenModal = (e: any) => {
+      if (e.detail) {
+        setInquireModalCourse({ courseId: e.detail.courseId, courseTitle: e.detail.courseTitle });
+      } else {
+        setInquireModalCourse({});
+      }
+      setIsInquireModalOpen(true);
+    };
+
+    window.addEventListener('openInquireModal', handleOpenModal);
+    return () => window.removeEventListener('openInquireModal', handleOpenModal);
+  }, []);
+
   // Pages that manage their own top-padding internally (have premium hero sections with pt-[80px])
   const hasSelfPaddedHero = 
     p === '/' ||
@@ -158,6 +178,12 @@ const PublicLayout: React.FC = () => {
       <Footer />
       <GeminiChat />
       <ScrollToTop />
+      <InquireModal
+        isOpen={isInquireModalOpen}
+        onClose={() => setIsInquireModalOpen(false)}
+        initialCourseId={inquireModalCourse.courseId}
+        initialCourseTitle={inquireModalCourse.courseTitle}
+      />
     </div>
   );
 };
@@ -352,6 +378,8 @@ const App: React.FC = () => {
               <Route path="finance" element={<FinanceManager />} />
               <Route path="classes" element={<SectionManager />} />
               <Route path="support" element={<SupportManager />} />
+              <Route path="inquiries" element={<InquiriesManager />} />
+              <Route path="testimonials" element={<TestimonialsManager />} />
               <Route path="*" element={<div className="p-8 text-gray-500">Module under construction</div>} />
             </Route>
           </Routes>
