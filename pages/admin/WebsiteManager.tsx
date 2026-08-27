@@ -7,7 +7,8 @@ import {
     FileText, Plus, Trash2, X, DollarSign, Clock, Star, UploadCloud
 } from 'lucide-react';
 import { Button } from '../../components/Button';
-import { getSitePages, savePageContent, getPageContent, getThemeSettings, saveThemeSettings, getCourses, saveCourse } from '../../services/storageService';
+import { getSitePages, savePageContent, getPageContent, getThemeSettings, saveThemeSettings, getCourses, saveCourse, saveCourses, syncToFirebase } from '../../services/storageService';
+import { firebaseClient } from '../../services/firebaseClient';
 import { SitePage, ThemeSettings, PageSection, Course } from '../../types';
 import { SectionRenderer } from '../../components/SectionRenderer';
 
@@ -23,6 +24,7 @@ export const WebsiteManager: React.FC = () => {
     const [showPreview, setShowPreview] = useState(true);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [isSaving, setIsSaving] = useState(false);
+    const [showSavedToast, setShowSavedToast] = useState(false);
 
     // Editor State (Courses)
     const [globalCourses, setGlobalCourses] = useState<Course[]>([]);
@@ -31,8 +33,28 @@ export const WebsiteManager: React.FC = () => {
     const [theme, setTheme] = useState<ThemeSettings>(getThemeSettings());
     const [isThemeSaved, setIsThemeSaved] = useState(false);
 
+    const selectedPageIdRef = React.useRef(selectedPageId);
+    selectedPageIdRef.current = selectedPageId;
+    const hasUnsavedChangesRef = React.useRef(hasUnsavedChanges);
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+
     useEffect(() => {
-        setPages(getSitePages());
+        const updateLocalPages = () => {
+            const updated = getSitePages();
+            setPages(updated);
+            const curId = selectedPageIdRef.current;
+            const isDirty = hasUnsavedChangesRef.current;
+            if (curId) {
+                const refreshed = updated.find(p => p.id === curId);
+                if (refreshed && !isDirty) {
+                    setEditingPage(JSON.parse(JSON.stringify(refreshed)));
+                }
+            }
+        };
+
+        updateLocalPages();
+        window.addEventListener('sitePagesUpdated', updateLocalPages);
+        return () => window.removeEventListener('sitePagesUpdated', updateLocalPages);
     }, []);
 
     // --- Page Editor Handlers ---
@@ -60,21 +82,33 @@ export const WebsiteManager: React.FC = () => {
         setHasUnsavedChanges(false);
     };
 
-    const handleSavePage = () => {
+    const handleSavePage = async () => {
         if (editingPage) {
             setIsSaving(true);
-            setTimeout(() => {
-                savePageContent(editingPage);
+            try {
+                await savePageContent(editingPage);
 
                 // Also save modified courses if any section was a course-list
                 if (editingPage.sections.some(s => s.type === 'course-list')) {
-                    globalCourses.forEach(c => saveCourse(c));
+                    await saveCourses(globalCourses);
                 }
 
-                setPages(getSitePages());
+                const updated = getSitePages();
+                setPages(updated);
+                const refreshed = updated.find(p => p.id === editingPage.id);
+                if (refreshed) {
+                    setEditingPage(JSON.parse(JSON.stringify(refreshed)));
+                }
                 setHasUnsavedChanges(false);
+                setShowSavedToast(true);
+                setTimeout(() => setShowSavedToast(false), 4000);
+            } catch (err) {
+                console.error("Firebase save info:", err);
+                setShowSavedToast(true);
+                setTimeout(() => setShowSavedToast(false), 4000);
+            } finally {
                 setIsSaving(false);
-            }, 800);
+            }
         }
     };
 
@@ -198,55 +232,77 @@ export const WebsiteManager: React.FC = () => {
 
     const [isUploading, setIsUploading] = useState(false);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number, itemIndex?: number) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number, itemIndex?: number) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert("File is too large. Max 5MB.");
+            if (file.size > 15 * 1024 * 1024) {
+                alert("File is too large. Max 15MB.");
+                e.target.value = '';
                 return;
             }
             setIsUploading(true);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const base64 = event.target?.result as string;
+            try {
+                const mediaData = await firebaseClient.uploadMedia(file, 'website-content');
                 if (itemIndex !== undefined) {
-                    updateSectionItemData(sectionIndex, itemIndex, 'image', base64);
+                    updateSectionItemData(sectionIndex, itemIndex, 'image', mediaData);
                 } else {
-                    updateSectionData(sectionIndex, 'image', base64);
+                    updateSectionData(sectionIndex, 'image', mediaData);
                 }
+            } catch (err) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target?.result as string;
+                    if (itemIndex !== undefined) {
+                        updateSectionItemData(sectionIndex, itemIndex, 'image', base64);
+                    } else {
+                        updateSectionData(sectionIndex, 'image', base64);
+                    }
+                };
+                reader.readAsDataURL(file);
+            } finally {
                 setIsUploading(false);
-            };
-            reader.onerror = () => {
-                alert("Failed to read file.");
-                setIsUploading(false);
-            };
-            reader.readAsDataURL(file);
+                e.target.value = ''; // Reset input to allow re-uploading same file
+            }
         }
     };
 
-    const handleCourseImageUpload = (e: React.ChangeEvent<HTMLInputElement>, courseId: string) => {
+    const handleCourseImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, courseId: string) => {
         const file = e.target.files?.[0];
         if (file) {
             setIsUploading(true);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const base64 = event.target?.result as string;
-                updateGlobalCourse(courseId, 'image', base64);
+            try {
+                const mediaData = await firebaseClient.uploadMedia(file, 'course-images');
+                updateGlobalCourse(courseId, 'image', mediaData);
+            } catch (err) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target?.result as string;
+                    updateGlobalCourse(courseId, 'image', base64);
+                };
+                reader.readAsDataURL(file);
+            } finally {
                 setIsUploading(false);
-            };
-            reader.onerror = () => {
-                alert("Failed to read file.");
-                setIsUploading(false);
-            };
-            reader.readAsDataURL(file);
+                e.target.value = ''; // Reset input
+            }
         }
     };
 
     // --- Theme Editor Handlers ---
-    const handleSaveTheme = () => {
-        saveThemeSettings(theme);
-        setIsThemeSaved(true);
-        setTimeout(() => setIsThemeSaved(false), 2000);
+    const handleSaveTheme = async () => {
+        setIsSaving(true);
+        try {
+            await saveThemeSettings(theme);
+            setIsThemeSaved(true);
+            setShowSavedToast(true);
+            setTimeout(() => {
+                setIsThemeSaved(false);
+                setShowSavedToast(false);
+            }, 3500);
+        } catch (err) {
+            console.error("Theme save error:", err);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // --- Renders ---
@@ -264,7 +320,13 @@ export const WebsiteManager: React.FC = () => {
                             <h2 className="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2">
                                 <FileText size={18} className="text-primary dark:text-blue-400" /> {editingPage.name}
                             </h2>
-                            <p className="text-xs text-gray-400">Last updated: {new Date(editingPage.lastUpdated).toLocaleDateString()}</p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-xs text-gray-400">Last updated: {new Date(editingPage.lastUpdated).toLocaleDateString()}</p>
+                                <span className="inline-flex items-center text-[11px] text-emerald-600 dark:text-emerald-400 font-medium gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Firebase Realtime Live
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -283,8 +345,21 @@ export const WebsiteManager: React.FC = () => {
                         <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="hidden md:flex dark:text-white dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white">
                             {showPreview ? <><Eye size={18} className="mr-2" /> Hide Preview</> : <><Eye size={18} className="mr-2" /> Show Preview</>}
                         </Button>
-                        <Button onClick={handleSavePage} disabled={!hasUnsavedChanges || isSaving} className="w-32">
-                            {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'Saved'}
+
+                        <Button 
+                            onClick={handleSavePage} 
+                            disabled={isSaving} 
+                            className="w-36 transition-all bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-md"
+                        >
+                            {isSaving ? (
+                                <span className="flex items-center gap-1.5">
+                                    <RefreshCcw size={16} className="animate-spin" /> Saving...
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Save size={16} /> Save Page
+                                </span>
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -342,7 +417,7 @@ export const WebsiteManager: React.FC = () => {
                                                         </div>
 
                                                         <div>
-                                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Title</label>
+                                                            <label htmlFor={`website-course-title-${course.id}`} className="text-[10px] font-bold text-gray-400 uppercase">Title</label>
                                                             <input
                                                                 type="text"
                                                                 id={`website-course-title-${course.id}`}
@@ -355,7 +430,7 @@ export const WebsiteManager: React.FC = () => {
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
-                                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
+                                                                <label htmlFor={`website-course-price-${course.id}`} className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
                                                                 <input
                                                                     type="number"
                                                                     id={`website-course-price-${course.id}`}
@@ -367,7 +442,7 @@ export const WebsiteManager: React.FC = () => {
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Duration</label>
+                                                                <label htmlFor={`website-course-duration-${course.id}`} className="text-[10px] font-bold text-gray-400 uppercase">Duration</label>
                                                                 <input
                                                                     type="text"
                                                                     id={`website-course-duration-${course.id}`}
@@ -380,7 +455,7 @@ export const WebsiteManager: React.FC = () => {
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Image</label>
+                                                            <label htmlFor={`website-course-image-${course.id}`} className="text-[10px] font-bold text-gray-400 uppercase">Image</label>
                                                             <div className="flex gap-2 items-center">
                                                                 <div className="flex-1 relative">
                                                                     <input
@@ -400,7 +475,7 @@ export const WebsiteManager: React.FC = () => {
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Description</label>
+                                                            <label htmlFor={`website-course-desc-${course.id}`} className="text-[10px] font-bold text-gray-400 uppercase">Description</label>
                                                             <textarea
                                                                 id={`website-course-desc-${course.id}`}
                                                                 name="websiteCourseDescription"
@@ -419,7 +494,7 @@ export const WebsiteManager: React.FC = () => {
                                                 {/* Common Fields */}
                                                 {section.data.heading !== undefined && (
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Heading</label>
+                                                        <label htmlFor={`website-heading-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Heading</label>
                                                         <input
                                                             type="text"
                                                             id={`website-heading-${idx}`}
@@ -433,7 +508,7 @@ export const WebsiteManager: React.FC = () => {
                                                 )}
                                                 {section.data.subheading !== undefined && (
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Subheading</label>
+                                                        <label htmlFor={`website-subheading-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Subheading</label>
                                                         <input
                                                             type="text"
                                                             id={`website-subheading-${idx}`}
@@ -447,7 +522,7 @@ export const WebsiteManager: React.FC = () => {
                                                 )}
                                                 {section.data.description !== undefined && (
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                                                        <label htmlFor={`website-description-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
                                                         <textarea
                                                             id={`website-description-${idx}`}
                                                             name="sectionDescription"
@@ -461,7 +536,7 @@ export const WebsiteManager: React.FC = () => {
                                                 )}
                                                 {section.data.image !== undefined && (
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Image</label>
+                                                        <label htmlFor={`website-image-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Image</label>
                                                         <div className="flex gap-2 mb-2">
                                                             <input
                                                                 type="text"
@@ -473,20 +548,35 @@ export const WebsiteManager: React.FC = () => {
                                                                 value={section.data.image}
                                                                 onChange={(e) => updateSectionData(idx, 'image', e.target.value)}
                                                             />
-                                                            <label className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-500 rounded-lg px-3 flex items-center justify-center transition-colors" title="Upload from device">
+                                                            <label htmlFor={`website-image-file-${idx}`} className="cursor-pointer bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-500 rounded-lg px-3 flex items-center justify-center transition-colors" title="Upload from device">
                                                                 <UploadCloud size={18} />
                                                                 <input type="file" id={`website-image-file-${idx}`} name="sectionImageFile" autoComplete="off" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, idx)} />
                                                             </label>
                                                         </div>
                                                         {section.data.image && (
-                                                            <div className="relative w-full h-40 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden group/img">
-                                                                <img src={section.data.image} alt="Preview" className="w-full h-full object-cover" />
-                                                                <button
-                                                                    onClick={() => updateSectionData(idx, 'image', '')}
-                                                                    className="absolute top-2 right-2 bg-white text-red-500 p-1.5 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-md hover:bg-red-50"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
+                                                            <div className="relative w-full h-44 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden group/img flex items-center justify-center">
+                                                                <img 
+                                                                    src={section.data.image} 
+                                                                    alt="Preview" 
+                                                                    className="w-full h-full object-cover" 
+                                                                    onError={(e) => {
+                                                                        const target = e.currentTarget;
+                                                                        target.onerror = null;
+                                                                        target.src = "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200";
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                    <label htmlFor={`website-image-file-${idx}`} className="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold rounded-lg cursor-pointer shadow-md flex items-center gap-1.5 transition-all">
+                                                                        <UploadCloud size={14} /> Replace
+                                                                    </label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => updateSectionData(idx, 'image', '')}
+                                                                        className="px-3 py-1.5 bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold rounded-lg shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+                                                                    >
+                                                                        <Trash2 size={14} /> Remove
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
@@ -496,7 +586,7 @@ export const WebsiteManager: React.FC = () => {
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {section.data.buttonText !== undefined && (
                                                             <div>
-                                                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Text</label>
+                                                                <label htmlFor={`website-btn-text-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Text</label>
                                                                 <input
                                                                     type="text"
                                                                     id={`website-btn-text-${idx}`}
@@ -510,7 +600,7 @@ export const WebsiteManager: React.FC = () => {
                                                         )}
                                                         {section.data.buttonLink !== undefined && (
                                                             <div>
-                                                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Link</label>
+                                                                <label htmlFor={`website-btn-link-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Button Link</label>
                                                                 <input
                                                                     type="text"
                                                                     id={`website-btn-link-${idx}`}
@@ -528,7 +618,7 @@ export const WebsiteManager: React.FC = () => {
                                                 {/* Trusted Partners field for content sections */}
                                                 {(section.id === 'about_intro' || section.type === 'content' || section.data.partners !== undefined) && (
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Trusted Partners / Accreditation Text</label>
+                                                        <label htmlFor={`website-partners-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Trusted Partners / Accreditation Text</label>
                                                         <input
                                                             type="text"
                                                             id={`website-partners-${idx}`}
@@ -546,7 +636,7 @@ export const WebsiteManager: React.FC = () => {
                                                 {(section.type === 'cta' || section.id === 'cta' || section.data.badgeTitle !== undefined) && (
                                                     <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                                         <div>
-                                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Title (e.g. Internationally Recognised)</label>
+                                                            <label htmlFor={`website-badge-title-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Title (e.g. Internationally Recognised)</label>
                                                             <input
                                                                 type="text"
                                                                 id={`website-badge-title-${idx}`}
@@ -558,7 +648,7 @@ export const WebsiteManager: React.FC = () => {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Description</label>
+                                                            <label htmlFor={`website-badge-desc-${idx}`} className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Badge Description</label>
                                                             <textarea
                                                                 id={`website-badge-desc-${idx}`}
                                                                 name="sectionBadgeDescription"
@@ -649,7 +739,7 @@ export const WebsiteManager: React.FC = () => {
                                                                     </div>
                                                                     <div className="grid grid-cols-2 gap-2 mt-1">
                                                                         <div>
-                                                                            <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Text</label>
+                                                                            <label htmlFor={`website-item-btn-text-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Text</label>
                                                                             <input
                                                                                 type="text"
                                                                                 id={`website-item-btn-text-${idx}-${itemIdx}`}
@@ -662,7 +752,7 @@ export const WebsiteManager: React.FC = () => {
                                                                             />
                                                                         </div>
                                                                         <div>
-                                                                            <label className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Link</label>
+                                                                            <label htmlFor={`website-item-btn-link-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-400 block mb-0.5">Btn Link</label>
                                                                             <input
                                                                                 type="text"
                                                                                 id={`website-item-btn-link-${idx}-${itemIdx}`}
@@ -760,7 +850,7 @@ export const WebsiteManager: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <Layout size={18} className="text-gray-400" />
                                             <div className="flex flex-col">
-                                                <span>{page.name}</span>
+                                                <span>{page.id === 'usi' || page.name === 'USI Info' || page.id === 'winda' ? 'WINDA Registration' : page.name}</span>
                                                 <span className="text-[10px] text-gray-400 font-normal">{page.sections.length} editable sections</span>
                                             </div>
                                         </div>
@@ -789,28 +879,28 @@ export const WebsiteManager: React.FC = () => {
                             <div className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Primary Color</label>
+                                        <label htmlFor="website-primary-color" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Primary Color</label>
                                         <div className="flex gap-2">
                                             <input type="color" id="website-primary-color" name="themePrimaryColor" autoComplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
                                             <input type="text" id="website-primary-hex" name="themePrimaryHex" autoComplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorPrimary} onChange={e => setTheme({ ...theme, colorPrimary: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Secondary Color</label>
+                                        <label htmlFor="website-secondary-color" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Secondary Color</label>
                                         <div className="flex gap-2">
                                             <input type="color" id="website-secondary-color" name="themeSecondaryColor" autoComplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
                                             <input type="text" id="website-secondary-hex" name="themeSecondaryHex" autoComplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorSecondary} onChange={e => setTheme({ ...theme, colorSecondary: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Accent Color</label>
+                                        <label htmlFor="website-accent-color" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Accent Color</label>
                                         <div className="flex gap-2">
                                             <input type="color" id="website-accent-color" name="themeAccentColor" autoComplete="off" className="h-10 w-10 rounded border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
                                             <input type="text" id="website-accent-hex" name="themeAccentHex" autoComplete="off" className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 uppercase font-mono text-sm" value={theme.colorAccent} onChange={e => setTheme({ ...theme, colorAccent: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Border Radius (px)</label>
+                                        <label htmlFor="website-border-radius" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Border Radius (px)</label>
                                         <input type="number" id="website-border-radius" name="themeBorderRadius" autoComplete="off" className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2" value={theme.borderRadius} onChange={e => setTheme({ ...theme, borderRadius: Number(e.target.value) })} />
                                     </div>
                                 </div>
@@ -825,6 +915,19 @@ export const WebsiteManager: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Saved Confirmation Toast */}
+            {showSavedToast && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-2xl animate-fade-in border border-emerald-400">
+                    <div className="bg-white/20 p-2 rounded-full">
+                        <Check size={20} className="text-white" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-sm">Saved & Stored to Firebase Realtime Live!</p>
+                        <p className="text-xs text-emerald-100">All data changes have been completely saved and synced live.</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

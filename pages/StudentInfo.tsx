@@ -57,7 +57,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon: Icon, title, desc }) =>
 const StudentAIChat = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Hi! I can help with student policies, dates, WINDA ID, or LMS questions. What do you need to know?' }
+    { role: 'model', text: 'Hi! I can help with student policies, dates, WINDA ID, or training questions. What do you need to know?' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [useReasoning, setUseReasoning] = useState(false);
@@ -165,9 +165,13 @@ export const StudentInfo: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    // Load CMS content
-    const content = getPageContent('student-info');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('student-info');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const handleNewsSearch = async () => {
@@ -292,9 +296,9 @@ export const StudentInfo: React.FC = () => {
                                 Read full policy <ArrowRight size={14}/>
                             </Link>
                         ) : (
-                            <a href="#" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+                            <Link to="/student-info" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
                                 Read full policy <ArrowRight size={14}/>
-                            </a>
+                            </Link>
                         )}
                     </div>
                   );
@@ -385,21 +389,21 @@ export const StudentInfo: React.FC = () => {
             </h3>
             <div className="space-y-4">
               {(dates?.items || [
-                { title: 'Feb 24', description: 'Semester 1 Begins', icon: 'start' },
-                { title: 'Mar 10', description: 'Census Date', icon: 'critical' },
-                { title: 'Apr 14', description: 'Mid-Semester Break', icon: 'break' },
-                { title: 'Jun 02', description: 'Final Assessment Week', icon: 'exam' },
+                { title: 'Weekly', description: 'GWO BST Course Intakes (Mon-Fri)', icon: 'start' },
+                { title: 'Monthly', description: 'GWO ART & Refresher Intakes', icon: 'critical' },
+                { title: 'Bi-Weekly', description: 'BTT Technical Training Workshops', icon: 'break' },
+                { title: 'Ongoing', description: 'WINDA Certification Uploads', icon: 'exam' },
               ]).map((item, idx) => {
                 const type = item.icon || 'default';
                 return (
                 <div key={idx} className="flex gap-4 items-center">
                   <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center shrink-0 border ${
-                    type === 'critical' ? 'bg-red-50 border-red-100 text-red-600' : 
-                    type === 'break' ? 'bg-green-50 border-green-100 text-green-600' :
+                    type === 'critical' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
+                    type === 'break' ? 'bg-blue-50 border-blue-100 text-blue-600' :
                     'bg-gray-50 border-gray-100 text-secondary'
                   }`}>
-                    <span className="text-xs font-bold uppercase">{item.title.split(' ')[0]}</span>
-                    <span className="text-sm font-bold">{item.title.split(' ')[1]}</span>
+                    <span className="text-[10px] font-bold uppercase">{item.title.split(' ')[0]}</span>
+                    <span className="text-xs font-bold">{item.title.split(' ')[1] || '•'}</span>
                   </div>
                   <span className="text-sm font-medium text-gray-700">{item.description}</span>
                 </div>
@@ -414,9 +418,9 @@ export const StudentInfo: React.FC = () => {
             </h3>
             <ul className="space-y-3">
               {(downloads?.items || [
-                { title: 'Student Handbook 2025' },
+                { title: 'Student Handbook 2026' },
                 { title: 'Enrollment Form (PDF)' },
-                { title: 'Credit Transfer Application' },
+                { title: 'Pre-Training Assessment Guide' },
                 { title: 'Complaint & Appeal Form' },
                 { title: 'WINDA Delegate Registration Form' }
               ]).map((item, idx) => (
@@ -431,8 +435,8 @@ export const StudentInfo: React.FC = () => {
             <div className="mt-8 pt-6 border-t border-white/10">
               <h4 className="font-bold text-sm mb-2 text-accent">Need something else?</h4>
               <p className="text-xs text-gray-300 mb-4">Contact student administration for specific document requests.</p>
-              <a href="mailto:admin@skylareducation.edu.au" className="flex items-center gap-2 text-sm font-bold hover:text-accent transition-colors">
-                <Mail size={16} /> admin@skylareducation.edu.au
+              <a href="mailto:info@skylareducation.asia" className="flex items-center gap-2 text-sm font-bold hover:text-accent transition-colors">
+                <Mail size={16} /> info@skylareducation.asia
               </a>
             </div>
           </div>

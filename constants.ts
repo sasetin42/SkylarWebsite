@@ -18,7 +18,7 @@ export const COURSES: Course[] = ([
     title: 'GWO Combined Advanced Rescue Training (ART) Initial',
     category: 'Global Wind Organisation',
     shortDescription: 'Discover the essential skills needed for advanced rescue operations in the wind industry.',
-    fullDescription: 'Discover the essential skills needed for advanced rescue operations in the wind industry with our comprehensive GWO Combined Advanced Rescue Training Initial. Learn from experienced trainers in realistic scenarios to ensure your readiness for any emergency.',
+    fullDescription: 'Discover the essential skills needed for advanced rescue operations in the wind industry with our comprehensive GWO Combined Advanced Rescue Training Initial. Learn from certified instructors in realistic scenarios to ensure your readiness for any emergency.',
     price: 1890,
     duration: '3 Days',
     level: 'Available',
@@ -74,7 +74,7 @@ export const COURSES: Course[] = ([
       'Minimum age of 18 years'
     ],
     targetAudience: [
-      'Experienced wind turbine technicians requiring bi-annual refresher certification',
+      'Active wind turbine technicians requiring bi-annual refresher certification',
       'Active members of turbine rescue teams'
     ]
   },
@@ -285,22 +285,12 @@ export const LOCATIONS: Location[] = [
   {
     id: 'ph-facility',
     name: 'SKYLAR EDUCATION ASIA - Angeles City Training Centre',
-    address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
-    phone: '+63 45 123 4567',
-    email: 'info@skylareducation.asia',
+    address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, 2009 Pampanga, Philippines',
+    phone: '+63 968 382 4294 / +63 915 902 9406',
+    email: 'bon@skylarasia.com / junrey@skylarasia.com',
     image: '/angeles-training-centre.jpg',
     coordinates: { lat: 15.14, lng: 120.59 },
     state: 'Pampanga'
-  },
-  {
-    id: 'onsite-delivery',
-    name: 'Nationwide Onsite Delivery (Client Facilities)',
-    address: 'Available Onsite at Client Facilities Nationwide Across the Philippines',
-    phone: '+63 45 123 4567',
-    email: 'onsite@skylareducation.asia',
-    image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200',
-    coordinates: { lat: 14.5995, lng: 120.9842 },
-    state: 'Nationwide'
   }
 ];
 

@@ -1,20 +1,88 @@
-import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings } from '../types';
+import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings, EmailTemplate } from '../types';
 import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS } from '../constants';
+import { DEFAULT_EMAIL_TEMPLATES } from './emailTemplates';
 import { firebaseClient } from './firebaseClient';
 
-// Intercept localStorage.setItem to sync with Firebase in the background
+// Intercept localStorage.setItem to sync with Firebase in real time with high-performance debouncing
+const pendingFirebaseSyncs = new Map<string, Promise<void>>();
+const debounceTimers = new Map<string, any>();
+
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key: string, value: string) => {
   originalSetItem(key, value);
   if (key.startsWith('apex_')) {
     try {
       const parsed = JSON.parse(value);
-      firebaseClient.upsert(key, { value: parsed }).catch(() => {});
+
+      // If site_pages aggregated JSON is large, persist individual pages to 'site_pages' collection
+      if (key === SITE_PAGES_KEY && value.length > 400000) {
+        if (Array.isArray(parsed)) {
+          parsed.forEach((pg: any) => {
+            if (pg.id) {
+              firebaseClient.upsertDoc('site_pages', pg.id, pg).catch(() => {});
+            }
+          });
+        }
+        return;
+      }
+
+      // Ensure single document payload never exceeds Firestore hard limits
+      if (value.length > 850000) {
+        return;
+      }
+
+      // Clear existing debounce timer for this specific key
+      if (debounceTimers.has(key)) {
+        clearTimeout(debounceTimers.get(key));
+      }
+
+      const timer = setTimeout(() => {
+        debounceTimers.delete(key);
+        const promise = firebaseClient.upsert(key, { value: parsed, updatedAt: new Date().toISOString() });
+        pendingFirebaseSyncs.set(key, promise);
+        promise.catch(() => {
+          // Gracefully suppress write stream warning if network is offline or quota exceeded
+        });
+        promise.finally(() => {
+          if (pendingFirebaseSyncs.get(key) === promise) {
+            pendingFirebaseSyncs.delete(key);
+          }
+        });
+      }, 150);
+
+      debounceTimers.set(key, timer);
     } catch (e) {
       // Ignore parse errors (non-JSON strings)
     }
   }
 };
+
+/**
+ * Returns a promise that resolves when all pending Firebase realtime write operations for the given key (or all keys) complete.
+ */
+export const syncToFirebase = async (key?: string): Promise<void> => {
+  if (key) {
+    if (debounceTimers.has(key)) {
+      clearTimeout(debounceTimers.get(key));
+      debounceTimers.delete(key);
+      const val = localStorage.getItem(key);
+      if (val) {
+        try {
+          const parsed = JSON.parse(val);
+          const promise = firebaseClient.upsert(key, { value: parsed, updatedAt: new Date().toISOString() });
+          pendingFirebaseSyncs.set(key, promise);
+          await promise;
+          return;
+        } catch (e) {}
+      }
+    }
+    const promise = pendingFirebaseSyncs.get(key);
+    if (promise) await promise;
+  } else {
+    await Promise.all(Array.from(pendingFirebaseSyncs.values()));
+  }
+};
+
 
 
 // Keys
@@ -60,7 +128,7 @@ const CATEGORY_NAME_CORRECTIONS: Record<string, string> = {
 export const getCategories = (): Category[] => {
   const stored = localStorage.getItem(CATEGORIES_KEY);
   if (!stored) {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(SEED_CATEGORIES));
+    originalSetItem(CATEGORIES_KEY, JSON.stringify(SEED_CATEGORIES));
     return SEED_CATEGORIES;
   }
   const categories: Category[] = JSON.parse(stored);
@@ -75,7 +143,7 @@ export const getCategories = (): Category[] => {
     return cat;
   });
   if (changed) {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(corrected));
+    originalSetItem(CATEGORIES_KEY, JSON.stringify(corrected));
   }
   return corrected;
 };
@@ -125,7 +193,7 @@ export const isInCart = (courseId: string): boolean => {
 export const getCourses = (): Course[] => {
   const stored = localStorage.getItem(COURSES_KEY);
   if (!stored) {
-    localStorage.setItem(COURSES_KEY, JSON.stringify(SEED_COURSES));
+    originalSetItem(COURSES_KEY, JSON.stringify(SEED_COURSES));
     return SEED_COURSES;
   }
   const parsed = JSON.parse(stored) as Course[];
@@ -135,6 +203,7 @@ export const getCourses = (): Course[] => {
     return {
       ...seed,
       ...c,
+      accordionSections: c.accordionSections || seed.accordionSections,
       courseBenefits: c.courseBenefits || seed.courseBenefits,
       isThisCourseForMe: c.isThisCourseForMe || seed.isThisCourseForMe,
       careerOpportunities: c.careerOpportunities || seed.careerOpportunities,
@@ -157,20 +226,88 @@ export const getCourseById = (id: string): Course | undefined => {
   return getCourses().find(c => c.id === id);
 };
 
-export const saveCourse = (course: Course) => {
+export const saveCourse = async (course: Course): Promise<void> => {
+  let finalCourse = { ...course };
+  
+  // 1. Process and upload course cover image if present
+  if (finalCourse.image && finalCourse.image.startsWith('data:')) {
+    try {
+      const mediaData = await firebaseClient.uploadMedia(
+        finalCourse.image, 
+        'course-covers', 
+        `course_${finalCourse.id}_${Date.now()}.jpg`
+      );
+      finalCourse.image = mediaData;
+    } catch (e) {
+      console.warn(`[saveCourse] Cloud image upload fallback for ${finalCourse.id}:`, e);
+    }
+  }
+
+  // 2. Update local state
   const courses = getCourses();
-  const index = courses.findIndex(c => c.id === course.id);
+  const index = courses.findIndex(c => c.id === finalCourse.id);
   if (index >= 0) {
-    courses[index] = course;
+    courses[index] = finalCourse;
   } else {
-    courses.push(course);
+    courses.push(finalCourse);
   }
   localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
+
+  // 3. Guarantee full Firestore sync
+  try {
+    await Promise.allSettled([
+      syncToFirebase(COURSES_KEY),
+      firebaseClient.upsertDoc('courses', finalCourse.id, finalCourse)
+    ]);
+  } catch (e) {
+    console.warn(`[saveCourse] Firestore cloud sync note:`, e);
+  }
 };
 
-export const deleteCourse = (id: string) => {
+export const saveCourses = async (courses: Course[]): Promise<void> => {
+  const hasBase64 = courses.some(c => c.image && c.image.startsWith('data:'));
+  let processedCourses = courses;
+
+  if (hasBase64) {
+    processedCourses = await Promise.all(courses.map(async (c) => {
+      if (c.image && c.image.startsWith('data:')) {
+        try {
+          const mediaData = await firebaseClient.uploadMedia(
+            c.image, 
+            'course-covers', 
+            `course_${c.id}_${Date.now()}.jpg`
+          );
+          return { ...c, image: mediaData };
+        } catch (e) {
+          return c;
+        }
+      }
+      return c;
+    }));
+  }
+
+  localStorage.setItem(COURSES_KEY, JSON.stringify(processedCourses));
+  try {
+    await Promise.allSettled([
+      syncToFirebase(COURSES_KEY),
+      ...processedCourses.map(c => c.id ? firebaseClient.upsertDoc('courses', c.id, c) : Promise.resolve())
+    ]);
+  } catch (e) {
+    console.warn(`[saveCourses] Firestore cloud sync note:`, e);
+  }
+};
+
+export const deleteCourse = async (id: string): Promise<void> => {
   const courses = getCourses().filter(c => c.id !== id);
   localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
+  try {
+    await Promise.allSettled([
+      syncToFirebase(COURSES_KEY),
+      firebaseClient.deleteDoc('courses', id)
+    ]);
+  } catch (e) {
+    console.warn(`[deleteCourse] Firestore delete note:`, e);
+  }
 };
 
 // --- Student Management ---
@@ -179,7 +316,7 @@ export const getStudents = (): Student[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-export const saveStudent = (student: Student) => {
+export const saveStudent = async (student: Student): Promise<void> => {
   const students = getStudents();
   const index = students.findIndex(s => s.id === student.id);
   if (index >= 0) {
@@ -188,19 +325,25 @@ export const saveStudent = (student: Student) => {
     students.push(student);
   }
   localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+  try {
+    firebaseClient.upsertDoc('students', student.id, student).catch(() => {});
+  } catch (e) {}
 };
 
-export const deleteStudent = (id: string) => {
+export const deleteStudent = async (id: string): Promise<void> => {
   const students = getStudents().filter(s => s.id !== id);
   localStorage.setItem(STUDENTS_KEY, JSON.stringify(students));
+  try {
+    firebaseClient.deleteDoc('students', id).catch(() => {});
+  } catch (e) {}
 };
 
 // --- Settings ---
 const DEFAULT_SETTINGS: InstituteSettings = {
   instituteName: "SKYLAR EDUCATION ASIA",
-  contactEmail: "info@skylareducation.asia",
-  contactPhone: "+63 45 123 4567",
-  address: "Lot 2 Liwayway St., Angeles City, Pampanga",
+  contactEmail: "bon@skylarasia.com / junrey@skylarasia.com",
+  contactPhone: "+63 968 382 4294 / +63 915 902 9406",
+  address: "Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, 2009 Pampanga, Philippines",
   
   operatingHours: "Mon-Fri 8am-5pm",
   siteAnnouncement: "",
@@ -226,6 +369,7 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   passingScore: 80,
   fontFamily: "Outfit",
   animationSpeed: "smooth",
+  footerDescription: "Skylar Education Asia is an affiliate of Skylar Education Pty Ltd (Australia). Training is delivered by Skylar Education Asia, while certifications are issued through Skylar Education Pty Ltd Australia in accordance with applicable international training standards.",
   layoutStyle: "wide",
   customCss: ""
 };
@@ -235,8 +379,26 @@ export const getSettings = (): InstituteSettings => {
   return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
 };
 
-export const saveSettings = (settings: InstituteSettings) => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+export const saveSettings = async (settings: InstituteSettings): Promise<void> => {
+  const finalSettings = { ...settings };
+  const logoFields: (keyof InstituteSettings)[] = [
+    'lightLogoUrl', 'darkLogoUrl', 'loadingLogoUrl', 'faviconUrl', 'collapsedLogoUrl', 'uncollapsedLogoUrl'
+  ];
+
+  for (const field of logoFields) {
+    const val = finalSettings[field];
+    if (typeof val === 'string' && val.startsWith('data:')) {
+      try {
+        const mediaData = await firebaseClient.uploadMedia(val, 'branding', `${String(field)}_${Date.now()}.jpg`);
+        (finalSettings as any)[field] = mediaData;
+      } catch (e) {}
+    }
+  }
+
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(finalSettings));
+  try {
+    firebaseClient.upsertDoc('settings', 'institute_settings', finalSettings).catch(() => {});
+  } catch (e) {}
   window.dispatchEvent(new Event('themeUpdated'));
 };
 
@@ -246,10 +408,10 @@ export const getTrainers = (): Trainer[] => {
   if (!stored) {
       // Seed trainers
       const seedTrainers = [
-          { id: 't1', firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah.j@skylar.edu', specialties: [], qualifications: ['TAE40116'], isActive: true },
-          { id: 't2', firstName: 'Mike', lastName: 'Ross', email: 'mike.r@skylar.edu', specialties: [], qualifications: ['TAE40116'], isActive: true }
+          { id: 't1', firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah.j@skylareducation.asia', specialties: ['GWO BST', 'Working at Heights'], qualifications: ['GWO Certified Instructor', 'First Aid Trainer'], isActive: true },
+          { id: 't2', firstName: 'Mike', lastName: 'Ross', email: 'mike.r@skylareducation.asia', specialties: ['Confined Space', 'Rescue'], qualifications: ['GWO Certified Instructor', 'NEBOSH International'], isActive: true }
       ];
-      localStorage.setItem(TRAINERS_KEY, JSON.stringify(seedTrainers));
+      originalSetItem(TRAINERS_KEY, JSON.stringify(seedTrainers));
       return seedTrainers;
   }
   return JSON.parse(stored);
@@ -261,7 +423,7 @@ export const getSessions = (): Session[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-export const saveSession = (session: Session) => {
+export const saveSession = async (session: Session): Promise<void> => {
   const sessions = getSessions();
   const index = sessions.findIndex(s => s.id === session.id);
   if (index >= 0) {
@@ -272,7 +434,7 @@ export const saveSession = (session: Session) => {
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
 };
 
-export const deleteSession = (id: string) => {
+export const deleteSession = async (id: string): Promise<void> => {
   const sessions = getSessions().filter(s => s.id !== id);
   localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
 };
@@ -283,7 +445,7 @@ export const getCorporateClients = (): CorporateClient[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-export const saveCorporateClient = (client: CorporateClient) => {
+export const saveCorporateClient = async (client: CorporateClient): Promise<void> => {
   const clients = getCorporateClients();
   const index = clients.findIndex(c => c.id === client.id);
   if (index >= 0) {
@@ -292,11 +454,13 @@ export const saveCorporateClient = (client: CorporateClient) => {
     clients.push(client);
   }
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+  await syncToFirebase(CLIENTS_KEY);
 };
 
-export const deleteCorporateClient = (id: string) => {
+export const deleteCorporateClient = async (id: string): Promise<void> => {
   const clients = getCorporateClients().filter(c => c.id !== id);
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+  await syncToFirebase(CLIENTS_KEY);
 };
 
 // --- Site Pages (CMS) ---
@@ -313,7 +477,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: 'SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training',
                 description: 'Internationally certified training provider delivering GWO and industrial safety courses across key locations.',
-                buttonText: 'Browse Courses',
+                buttonText: 'Inquire Now',
                 buttonLink: '/courses',
                 image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1920',
                 items: [
@@ -321,21 +485,21 @@ const SEED_PAGES: SitePage[] = [
                         title: "SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training", 
                         description: "Leading safety training and services for a sustainable future. GWO certified, internationally recognised, multiple locations.", 
                         image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "Browse Courses",
+                        buttonText: "Inquire Now",
                         buttonLink: "/courses"
                     },
                     { 
                         title: "New Course! GWO Basic Technical Training (BTT)", 
                         description: "Gain essential technical knowledge, practical skills, and safety awareness required for onshore and offshore wind turbines.", 
                         image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "View GWO BTT Course",
+                        buttonText: "Inquire Now",
                         buttonLink: "/courses/gwo-btt"
                     },
                     { 
                         title: "International Safety & GWO Certifications", 
                         description: "Certified wind energy, high-risk work, and industrial safety training delivered by international rescue professionals.", 
                         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "Contact Us",
+                        buttonText: "Inquire Now",
                         buttonLink: "/contact"
                     }
                 ]
@@ -471,7 +635,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Ready to Advance Your Career?",
                 subheading: "Upskill with SKYLAR EDUCATION ASIA today. Book your spot now - classes fill up quickly.",
-                buttonText: "Browse Courses Now",
+                buttonText: "Inquire Now",
                 buttonLink: "/courses",
                 badgeTitle: "Internationally Recognised",
                 badgeDescription: "All GWO and safety training qualifications are aligned with internationally recognised standards."
@@ -524,7 +688,7 @@ const SEED_PAGES: SitePage[] = [
                     },
                     { 
                         title: "Our Credentials", 
-                        description: "• Industry-Relevant Accreditation\n• Experienced Instructors\n• Flexibility in Training Delivery", 
+                        description: "• Industry-Relevant Accreditation\n• Certified Instructors\n• Flexibility in Training Delivery", 
                         icon: "Award" 
                     }
                 ]
@@ -546,7 +710,7 @@ const SEED_PAGES: SitePage[] = [
             label: 'Our Team',
             type: 'team',
             data: {
-                heading: "Our Expert Trainers",
+                heading: "Our Team",
                 description: "Meet the professionals who will guide you through your training.",
                 items: [
                     { 
@@ -636,7 +800,7 @@ const SEED_PAGES: SitePage[] = [
                 subheading: "EXCELLENCE IN SAFETY TRAINING",
                 description: "Discover how GWO Certification can unlock new career opportunities, boost your technical proficiency, and make you an asset in the growing wind energy industry. Don’t wait to elevate your career—learn more about the certification process and how it can set you apart in the renewable energy sector.",
                 image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=1200", 
-                buttonText: "Find Out More Today",
+                buttonText: "Inquire Now",
                 buttonLink: "/contact"
             }
         },
@@ -694,7 +858,7 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: "Need Custom Training?",
                 subheading: "We offer tailored corporate packages for large groups.",
-                buttonText: "Contact Us",
+                buttonText: "Inquire Now",
                 buttonLink: "/contact"
             }
         }
@@ -748,9 +912,10 @@ const SEED_PAGES: SitePage[] = [
             data: {
                 heading: 'Contact Information',
                 items: [
-                    { title: "Head Office", description: "Lot 2 Liwayway St., Angeles City, Pampanga", icon: "MapPin" },
-                    { title: "Phone", description: "+63 45 123 4567", icon: "Phone" },
-                    { title: "Email", description: "info@skylareducation.asia", icon: "Mail" }
+                    { title: "Head Office", description: "Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, 2009 Pampanga, Philippines", icon: "MapPin" },
+                    { title: "Phone / WhatsApp", description: "+63 968 382 4294\n+63 915 902 9406", icon: "Phone" },
+                    { title: "Email Inquiries", description: "bon@skylarasia.com\njunrey@skylarasia.com", icon: "Mail" },
+                    { title: "Facebook Page", description: "facebook.com/skylarasiapac", icon: "Globe" }
                 ]
             }
         },
@@ -820,7 +985,7 @@ const SEED_PAGES: SitePage[] = [
             type: 'features',
             data: {
                 items: [
-                    { title: "Student Portal", description: "LMS Login", icon: "BookOpen" },
+                    { title: "Student Portal", description: "Online Learning", icon: "BookOpen" },
                     { title: "Timetables", description: "Class Schedules", icon: "Calendar" },
                     { title: "Support", description: "Get Help", icon: "LifeBuoy" },
                     { title: "Library", description: "Resources", icon: "Globe" }
@@ -1067,7 +1232,7 @@ o make an inquiry about our privacy policy`
     ] 
   },
   { 
-    id: 'usi', 
+    id: 'winda', 
     name: 'WINDA Registration', 
     lastUpdated: new Date().toISOString(), 
     sections: [
@@ -1093,7 +1258,7 @@ Your WINDA ID creates a permanent, verified record of your completed GWO safety 
             }
         },
         {
-            id: 'usi_accordions',
+            id: 'winda_accordions',
             label: 'WINDA Guide Accordions',
             type: 'accordion',
             data: {
@@ -1290,6 +1455,43 @@ export const getSitePages = (): SitePage[] => {
         }
       });
     }
+    if (p.id === 'student-info') {
+      p.sections.forEach(s => {
+        if (s.id === 'quick_links' && s.data.items) {
+          s.data.items.forEach((item: any) => {
+            if (item.title === 'Student Portal' && (item.description === 'LMS Login' || item.description?.includes('LMS'))) {
+              item.description = 'Online Learning';
+              migrated = true;
+            }
+          });
+        }
+      });
+    }
+    if (p.id === 'usi' || p.id === 'winda') {
+      p.id = 'winda';
+      if (p.name === 'USI Info' || p.name === 'USI' || !p.name) {
+        p.name = 'WINDA Registration';
+      }
+      migrated = true;
+    }
+    if (p.id === 'about') {
+      p.sections.forEach(s => {
+        if (s.id === 'team') {
+          if (s.data.heading === 'Our Expert Trainers' || s.data.heading === 'Our Trainers') {
+            s.data.heading = 'Our Team';
+            migrated = true;
+          }
+        }
+        if (s.id === 'mission' && s.data.items) {
+          s.data.items.forEach((item: any) => {
+            if (item.title === 'Our Credentials' && item.description?.includes('Experienced Instructors')) {
+              item.description = item.description.replace('Experienced Instructors', 'Certified Instructors');
+              migrated = true;
+            }
+          });
+        }
+      });
+    }
     if (p.id === 'locations') {
       p.sections.forEach(s => {
         if (s.id === 'hero' && (s.data.image?.includes('photo-1486406146926') || s.data.image?.includes('photo-1486325212027'))) {
@@ -1300,7 +1502,7 @@ export const getSitePages = (): SitePage[] => {
     }
   });
   if (migrated) {
-    localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(pages));
+    originalSetItem(SITE_PAGES_KEY, JSON.stringify(pages));
   }
   return pages;
 };
@@ -1309,13 +1511,80 @@ export const getPageContent = (id: string): SitePage | undefined => {
   return getSitePages().find(p => p.id === id);
 };
 
-export const savePageContent = (page: SitePage) => {
-  const pages = getSitePages();
-  const index = pages.findIndex(p => p.id === page.id);
-  if (index >= 0) {
-    pages[index] = { ...page, lastUpdated: new Date().toISOString() };
-    localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(pages));
+export const savePageContent = async (page: SitePage): Promise<void> => {
+  // Fast path: Check if any base64 images exist that require media uploading
+  const hasBase64Images = (page.sections || []).some(section => {
+    if (typeof section.data?.image === 'string' && section.data.image.startsWith('data:')) return true;
+    if (Array.isArray(section.data?.items)) {
+      return section.data.items.some((item: any) => typeof item?.image === 'string' && item.image.startsWith('data:'));
+    }
+    return false;
+  });
+
+  let updatedSections = page.sections || [];
+
+  if (hasBase64Images) {
+    updatedSections = await Promise.all((page.sections || []).map(async (section) => {
+      const updatedSec = { ...section, data: { ...section.data } };
+      
+      // Process section image
+      if (typeof updatedSec.data.image === 'string' && updatedSec.data.image.startsWith('data:')) {
+        try {
+          updatedSec.data.image = await firebaseClient.uploadMedia(
+            updatedSec.data.image,
+            'website-content',
+            `section_${updatedSec.id}_${Date.now()}.jpg`
+          );
+        } catch (e) {}
+      }
+
+      // Process items in section
+      if (Array.isArray(updatedSec.data.items)) {
+        updatedSec.data.items = await Promise.all(updatedSec.data.items.map(async (item: any, itemIdx: number) => {
+          const updatedItem = { ...item };
+          if (typeof updatedItem.image === 'string' && updatedItem.image.startsWith('data:')) {
+            try {
+              updatedItem.image = await firebaseClient.uploadMedia(
+                updatedItem.image,
+                'website-content',
+                `item_${updatedSec.id}_${itemIdx}_${Date.now()}.jpg`
+              );
+            } catch (e) {}
+          }
+          return updatedItem;
+        }));
+      }
+
+      return updatedSec;
+    }));
   }
+
+  const processedPage: SitePage = {
+    ...page,
+    sections: updatedSections,
+    lastUpdated: new Date().toISOString()
+  };
+
+  const pages = getSitePages();
+  const index = pages.findIndex(p => p.id === processedPage.id);
+  if (index >= 0) {
+    pages[index] = processedPage;
+  } else {
+    pages.push(processedPage);
+  }
+  localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(pages));
+
+  // Directly persist individual page document to Firestore collection 'site_pages'
+  try {
+    firebaseClient.upsertDoc('site_pages', processedPage.id, processedPage).catch((err) => {
+      console.warn(`Firestore document sync notice for site_pages/${processedPage.id}:`, err?.message || err);
+    });
+  } catch (e) {
+    console.warn("Direct site_page firestore write notice:", e);
+  }
+
+  // Notify all views, live preview, and components in real time
+  window.dispatchEvent(new Event('sitePagesUpdated'));
 };
 
 // --- Migration Logs ---
@@ -1392,17 +1661,19 @@ export const getAdminUsers = (): AdminUser[] => {
   return JSON.parse(stored);
 };
 
-export const saveAdminUser = (user: AdminUser) => {
+export const saveAdminUser = async (user: AdminUser): Promise<void> => {
     const users = getAdminUsers();
     const index = users.findIndex(u => u.id === user.id);
     if(index >= 0) users[index] = user;
     else users.push(user);
     localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
+    await syncToFirebase(ADMIN_USERS_KEY);
 };
 
-export const deleteAdminUser = (id: string) => {
+export const deleteAdminUser = async (id: string): Promise<void> => {
     const users = getAdminUsers().filter(u => u.id !== id);
     localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
+    await syncToFirebase(ADMIN_USERS_KEY);
 };
 
 // --- Roles ---
@@ -1478,10 +1749,11 @@ export const getThemeSettings = (): ThemeSettings => {
   return theme;
 };
 
-export const saveThemeSettings = (theme: ThemeSettings) => {
+export const saveThemeSettings = async (theme: ThemeSettings): Promise<void> => {
   theme.fontHeading = "'Maven Pro', sans-serif";
   theme.fontSans = "'Maven Pro', sans-serif";
   localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+  await syncToFirebase(THEME_KEY);
   window.dispatchEvent(new Event('themeUpdated'));
 };
 
@@ -1491,10 +1763,11 @@ export const getPayments = (): PaymentRecord[] => {
     return stored ? JSON.parse(stored) : [];
 };
 
-export const savePayment = (payment: PaymentRecord) => {
+export const savePayment = async (payment: PaymentRecord): Promise<void> => {
     const payments = getPayments();
     payments.unshift(payment);
     localStorage.setItem(PAYMENTS_KEY, JSON.stringify(payments));
+    await syncToFirebase(PAYMENTS_KEY);
 };
 
 // --- Sections ---
@@ -1503,17 +1776,19 @@ export const getSections = (): SchoolSection[] => {
     return stored ? JSON.parse(stored) : [];
 };
 
-export const saveSection = (section: SchoolSection) => {
+export const saveSection = async (section: SchoolSection): Promise<void> => {
     const sections = getSections();
     const index = sections.findIndex(s => s.id === section.id);
     if (index >= 0) sections[index] = section;
     else sections.push(section);
     localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections));
+    await syncToFirebase(SECTIONS_KEY);
 };
 
-export const deleteSection = (id: string) => {
+export const deleteSection = async (id: string): Promise<void> => {
     const sections = getSections().filter(s => s.id !== id);
     localStorage.setItem(SECTIONS_KEY, JSON.stringify(sections));
+    await syncToFirebase(SECTIONS_KEY);
 };
 
 // --- Support ---
@@ -1522,12 +1797,13 @@ export const getTickets = (): SupportTicket[] => {
     return stored ? JSON.parse(stored) : [];
 };
 
-export const saveTicket = (ticket: SupportTicket) => {
+export const saveTicket = async (ticket: SupportTicket): Promise<void> => {
     const tickets = getTickets();
     const index = tickets.findIndex(t => t.id === ticket.id);
     if (index >= 0) tickets[index] = ticket;
     else tickets.push(ticket);
     localStorage.setItem(TICKETS_KEY, JSON.stringify(tickets));
+    await syncToFirebase(TICKETS_KEY);
 };
 
 // --- Firebase Initialization & Seeding ---
@@ -1536,10 +1812,10 @@ export const initializeFirebase = async (): Promise<void> => {
     const data = await firebaseClient.getAll();
     const dbKeys = new Set(Object.keys(data));
     
-    // 1. Populate what we got from Firebase
+    // 1. Populate what we got from Firebase (use originalSetItem to prevent feedback loop)
     Object.entries(data).forEach(([key, item]: [string, any]) => {
       if (item.value) {
-        localStorage.setItem(key, JSON.stringify(item.value));
+        originalSetItem(key, JSON.stringify(item.value));
       }
     });
 
@@ -1572,17 +1848,87 @@ export const initializeFirebase = async (): Promise<void> => {
       const settings = getSettings();
       await firebaseClient.upsert(SETTINGS_KEY, { value: settings });
     }
+    if (!dbKeys.has(TESTIMONIALS_KEY)) {
+      const testimonials = getTestimonials();
+      await firebaseClient.upsert(TESTIMONIALS_KEY, { value: testimonials });
+    }
+    if (!dbKeys.has(CATEGORIES_KEY)) {
+      const categories = getCategories();
+      await firebaseClient.upsert(CATEGORIES_KEY, { value: categories });
+    }
+    if (!dbKeys.has(STUDENTS_KEY)) {
+      const students = getStudents();
+      await firebaseClient.upsert(STUDENTS_KEY, { value: students });
+    }
 
-    // 3. Real-Time Live Data Sync Listener
+    // 3. Real-Time Live Data Sync Listener (use originalSetItem to prevent feedback loop)
     firebaseClient.subscribeToCollection('data', (items) => {
+      let themeChanged = false;
+      let cartChanged = false;
+      let testimonialsChanged = false;
+      let coursesChanged = false;
+      let pagesChanged = false;
+
       items.forEach((item) => {
         if (item.id && item.value) {
-          localStorage.setItem(item.id, JSON.stringify(item.value));
+          const current = localStorage.getItem(item.id);
+          const nextStr = JSON.stringify(item.value);
+          if (current !== nextStr) {
+            originalSetItem(item.id, nextStr);
+            if (item.id === THEME_KEY || item.id === SETTINGS_KEY) {
+              themeChanged = true;
+            }
+            if (item.id === CART_KEY) {
+              cartChanged = true;
+            }
+            if (item.id === TESTIMONIALS_KEY) {
+              testimonialsChanged = true;
+            }
+            if (item.id === COURSES_KEY) {
+              coursesChanged = true;
+            }
+            if (item.id === SITE_PAGES_KEY) {
+              pagesChanged = true;
+            }
+          }
         }
       });
-      window.dispatchEvent(new Event('themeUpdated'));
-      window.dispatchEvent(new Event('cartUpdated'));
+
+      if (themeChanged) {
+        window.dispatchEvent(new Event('themeUpdated'));
+      }
+      if (cartChanged) {
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+      if (testimonialsChanged) {
+        window.dispatchEvent(new Event('testimonialsUpdated'));
+      }
+      if (coursesChanged) {
+        window.dispatchEvent(new Event('coursesUpdated'));
+      }
+      if (pagesChanged) {
+        window.dispatchEvent(new Event('sitePagesUpdated'));
+      }
     });
+
+    // 4. Granular Document-Level Sync for 'site_pages' collection
+    try {
+      firebaseClient.subscribeToCollection('site_pages', (remotePages) => {
+        if (remotePages && remotePages.length > 0) {
+          const localPages = getSitePages();
+          const mergedMap = new Map<string, SitePage>();
+          localPages.forEach(p => mergedMap.set(p.id, p));
+          remotePages.forEach(rp => {
+            if (rp.id && rp.sections) {
+              mergedMap.set(rp.id, rp as SitePage);
+            }
+          });
+          const updatedList = Array.from(mergedMap.values());
+          originalSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+          window.dispatchEvent(new Event('sitePagesUpdated'));
+        }
+      });
+    } catch (e) {}
   } catch (error) {
     // Firebase unavailable — app runs entirely from localStorage
   }
@@ -1706,6 +2052,46 @@ export const addEmailLog = (log: EmailLog) => {
   localStorage.setItem(EMAIL_LOGS_KEY, JSON.stringify(logs.slice(0, 100)));
 };
 
+// --- Email Templates Management ---
+const EMAIL_TEMPLATES_KEY = 'apex_email_templates_v1';
+
+export const getEmailTemplates = (): EmailTemplate[] => {
+  const stored = localStorage.getItem(EMAIL_TEMPLATES_KEY);
+  if (!stored) {
+    localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(DEFAULT_EMAIL_TEMPLATES));
+    return DEFAULT_EMAIL_TEMPLATES;
+  }
+  return JSON.parse(stored);
+};
+
+export const saveEmailTemplate = async (template: EmailTemplate): Promise<void> => {
+  const templates = getEmailTemplates();
+  const index = templates.findIndex(t => t.id === template.id);
+  const updatedTemplate = { ...template, updatedAt: new Date().toISOString() };
+  
+  if (index >= 0) {
+    templates[index] = updatedTemplate;
+  } else {
+    templates.push(updatedTemplate);
+  }
+  
+  localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(templates));
+  try {
+    firebaseClient.upsertDoc('email_templates', updatedTemplate.id, updatedTemplate).catch(() => {});
+  } catch (e) {}
+  window.dispatchEvent(new Event('emailTemplatesUpdated'));
+};
+
+export const resetEmailTemplates = async (): Promise<void> => {
+  localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(DEFAULT_EMAIL_TEMPLATES));
+  try {
+    DEFAULT_EMAIL_TEMPLATES.forEach(t => {
+      firebaseClient.upsertDoc('email_templates', t.id, t).catch(() => {});
+    });
+  } catch (e) {}
+  window.dispatchEvent(new Event('emailTemplatesUpdated'));
+};
+
 // --- Testimonials & Google Reviews Management ---
 const TESTIMONIALS_KEY = 'apex_testimonials_data_v1';
 const GOOGLE_SETTINGS_KEY = 'apex_google_review_settings_v1';
@@ -1744,10 +2130,10 @@ export const getTestimonials = (): Testimonial[] => {
       },
       {
         id: 't1',
-        name: 'James Wilson',
-        role: 'Wind Turbine Technician',
-        content: 'The GWO training at SKYLAR EDUCATION ASIA was exceptional. The simulators are exactly like what we use offshore.',
-        avatar: 'https://i.pravatar.cc/150?img=11',
+        name: 'Arnel Bautista',
+        role: 'Lead Wind Turbine Technician',
+        content: 'The GWO BST and Working at Heights training at SKYLAR EDUCATION ASIA was exceptional. The climbing simulators in Angeles City replicate real-world turbine conditions in Ilocos Norte.',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
         rating: 5,
         source: 'Google',
         status: 'Approved',
@@ -1756,10 +2142,10 @@ export const getTestimonials = (): Testimonial[] => {
       },
       {
         id: 't2',
-        name: 'Sarah Chen',
-        role: 'Safety Officer',
-        content: 'Excellent facilities and knowledgeable trainers. Highly recommended for industrial safety training.',
-        avatar: 'https://i.pravatar.cc/150?img=5',
+        name: 'Engr. Maria Santos-Cruz',
+        role: 'HSE & Safety Compliance Officer',
+        content: 'Excellent facilities and certified instructors. Completed our team DOLE OSH and GWO safety modules with seamless WINDA cloud registration.',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
         rating: 5,
         source: 'Google',
         status: 'Approved',
@@ -1768,10 +2154,10 @@ export const getTestimonials = (): Testimonial[] => {
       },
       {
         id: 't3',
-        name: 'Michael Rodriguez',
-        role: 'Site Supervisor',
-        content: 'The hands-on approach really helped our team understand the critical safety procedures effectively.',
-        avatar: 'https://i.pravatar.cc/150?img=12',
+        name: 'Danilo Reyes',
+        role: 'Senior Rigger & Heights Specialist',
+        content: 'The hands-on nacelle evacuation and manual handling training directly prepared our crew for high-risk offshore and onshore wind assignments across the Philippines.',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150',
         rating: 5,
         source: 'Website',
         status: 'Approved',
@@ -1780,10 +2166,10 @@ export const getTestimonials = (): Testimonial[] => {
       },
       {
         id: 't4',
-        name: 'Emma Thompson',
-        role: 'Renewable Energy Engineer',
-        content: 'A world-class training center. The instruction quality is on par with the best international standards.',
-        avatar: 'https://i.pravatar.cc/150?img=9',
+        name: 'Engr. Jerome Villanueva',
+        role: 'Renewable Energy Project Engineer',
+        content: 'A world-class training center in Central Luzon. The instruction quality and international GWO alignment are on par with leading global training academies.',
+        avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=150',
         rating: 5,
         source: 'Website',
         status: 'Approved',
@@ -1797,40 +2183,57 @@ export const getTestimonials = (): Testimonial[] => {
   return JSON.parse(stored);
 };
 
-export const saveTestimonial = (testimonial: Testimonial) => {
+export const saveTestimonial = async (testimonial: Testimonial): Promise<void> => {
+  let finalTestimonial = { ...testimonial };
+  if (finalTestimonial.avatar && finalTestimonial.avatar.startsWith('data:')) {
+    try {
+      finalTestimonial.avatar = await firebaseClient.uploadMedia(
+        finalTestimonial.avatar,
+        'testimonials',
+        `avatar_${finalTestimonial.id}_${Date.now()}.jpg`
+      );
+    } catch (e) {}
+  }
+
   const list = getTestimonials();
-  const index = list.findIndex(t => t.id === testimonial.id);
+  const index = list.findIndex(t => t.id === finalTestimonial.id);
   if (index >= 0) {
-    list[index] = testimonial;
+    list[index] = finalTestimonial;
   } else {
-    list.unshift(testimonial);
+    list.unshift(finalTestimonial);
   }
   localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+  try {
+    firebaseClient.upsertDoc('testimonials', finalTestimonial.id, finalTestimonial).catch(() => {});
+  } catch (e) {}
   window.dispatchEvent(new Event('testimonialsUpdated'));
 };
 
-export const deleteTestimonial = (id: string) => {
+export const deleteTestimonial = async (id: string): Promise<void> => {
   const list = getTestimonials().filter(t => t.id !== id);
   localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+  await syncToFirebase(TESTIMONIALS_KEY);
   window.dispatchEvent(new Event('testimonialsUpdated'));
 };
 
-export const toggleTestimonialStatus = (id: string) => {
+export const toggleTestimonialStatus = async (id: string): Promise<void> => {
   const list = getTestimonials();
   const item = list.find(t => t.id === id);
   if (item) {
     item.status = item.status === 'Approved' ? 'Hidden' : 'Approved';
     localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+    await syncToFirebase(TESTIMONIALS_KEY);
     window.dispatchEvent(new Event('testimonialsUpdated'));
   }
 };
 
-export const toggleTestimonialFeatured = (id: string) => {
+export const toggleTestimonialFeatured = async (id: string): Promise<void> => {
   const list = getTestimonials();
   const item = list.find(t => t.id === id);
   if (item) {
     item.isFeatured = !item.isFeatured;
     localStorage.setItem(TESTIMONIALS_KEY, JSON.stringify(list));
+    await syncToFirebase(TESTIMONIALS_KEY);
     window.dispatchEvent(new Event('testimonialsUpdated'));
   }
 };

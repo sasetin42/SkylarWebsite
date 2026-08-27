@@ -1,9 +1,53 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return (
+        request.auth.uid == 'iKbxm6RedwQ7l7piWwZkYT6XnR13' ||
+        request.auth.token.email == 'admin@gmail.com' ||
+        request.auth.token.email == 'admin@skylareducation.asia' ||
+        request.auth.token.email == 'admin@skylar.com.ph'
+      );
+    }
+
+    // Public Media Assets (Course Images, Branding Logos, Website Content Uploads)
+    match /website-content/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    match /branding/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    match /course-images/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    match /course-covers/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    // Student Identification & Certificate Files
+    match /students/{studentId}/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    // General Uploads Path
+    match /uploads/{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    // Fallback Rule
     match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }
+
+
+

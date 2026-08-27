@@ -7,9 +7,13 @@ export const Team: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    // Load content from 'about' page where team data lives in CMS structure
-    const content = getPageContent('about');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('about');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const teamSection = pageContent?.sections.find(s => s.id === 'team')?.data;

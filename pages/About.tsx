@@ -10,9 +10,13 @@ export const About: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    // Load content
-    const content = getPageContent('about');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('about');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   // Filter out GWO specific sections for the main About page
@@ -55,7 +59,7 @@ export const About: React.FC = () => {
                     Ready to launch your career in Renewable Energy?
                 </h2>
                 <p className="text-sm md:text-base font-semibold text-secondary/80 leading-relaxed mb-6">
-                    Join Asia's leading training safety academy. Gain GWO-approved certs, build hands-on skills with top industry instructors, and step directly into in-demand jobs.
+                    Develop the skills, confidence, and competency required to work safely in the global wind industry. Our internationally aligned training combines realistic practical scenarios with industry-specific instruction to prepare individuals for real-world operations.
                 </p>
 
                 {/* Micro highlights grid */}
@@ -76,12 +80,13 @@ export const About: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full sm:w-auto lg:min-w-[280px]">
-                <Link to="/courses" className="w-full">
-                    <button className="w-full bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-secondary/15 transform hover:-translate-y-0.5 transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-2 border-2 border-transparent hover:border-secondary">
-                        <span>Enroll Instantly</span>
-                        <ArrowRight size={16} />
-                    </button>
-                </Link>
+                <button 
+                    onClick={() => window.dispatchEvent(new CustomEvent('openInquireModal'))}
+                    className="w-full bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:shadow-secondary/15 transform hover:-translate-y-0.5 transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-2 border-2 border-transparent hover:border-secondary"
+                >
+                    <span>Inquire Now</span>
+                    <ArrowRight size={16} />
+                </button>
                 <Link to="/contact" className="w-full">
                     <button className="w-full bg-white/20 hover:bg-white/35 text-secondary font-bold py-4 px-8 rounded-2xl border border-secondary/20 hover:border-secondary/40 transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-2 backdrop-blur-sm">
                         <span>Talk to an Advisor</span>

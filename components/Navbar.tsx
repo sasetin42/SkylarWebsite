@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
       path: '/student-info',
       subItems: [
         { name: 'Student Hub', path: '/student-info', icon: Laptop },
-        { name: 'Online Enrolments', path: '/student-info/online-enrolments', icon: FileText },
+        // { name: 'Online Enrolments', path: '/student-info/online-enrolments', icon: FileText }, // Hidden for now; re-enable once phase 2 is ready
         { name: 'Policies & Refund', path: '/student-info/refund-policy', icon: CreditCard },
         { name: 'Privacy Notice', path: '/student-info/privacy-notice', icon: Lock },
         { name: 'Complaints', path: '/student-info/complaints', icon: AlertCircle },
@@ -332,15 +332,19 @@ export const Navbar: React.FC = () => {
               )}
             </div>
           ))}
-          <Link to="/courses" onClick={() => setIsMobileMenuOpen(false)} className="mt-4">
-            <button className="w-full py-4 bg-accent text-secondary font-bold rounded-xl text-lg shadow-xl">
-              Enroll Now
-            </button>
-          </Link>
+          <button 
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              window.dispatchEvent(new CustomEvent('openInquireModal'));
+            }} 
+            className="w-full mt-4 py-4 bg-accent text-secondary font-bold rounded-xl text-lg shadow-xl uppercase tracking-wider"
+          >
+            Inquire Now
+          </button>
         </div>
 
         <div className="mt-auto pb-8 text-center text-white/40 text-sm">
-          <p>© 2025 SKYLAR EDUCATION ASIA</p>
+          <p>© {new Date().getFullYear()} SKYLAR EDUCATION ASIA</p>
           <div className="flex justify-center gap-4 mt-4">
             <Link to="/admin" className="hover:text-white transition-colors">Admin</Link>
           </div>

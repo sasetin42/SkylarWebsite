@@ -32,7 +32,7 @@ const SITE_PAGES = [
   { id: 'team', title: 'Our Training Instructors & Team', path: '/about/team', description: 'Meet the expert GWO and safety instructors at SKYLAR EDUCATION ASIA.', tags: 'team members staff trainers instructors experts' },
   { id: 'locations', title: 'SKYLAR EDUCATION ASIA Campus Locations', path: '/locations', description: 'Find our state-of-the-art training facilities and campus contacts.', tags: 'campus locations map pampanga manila angeles tondo philippines addresses' },
   { id: 'news', title: 'Industry Insights & News', path: '/news', description: 'Stay updated with renewable energy trends, training tips, and news.', tags: 'blog news insights articles updates safety standards' },
-  { id: 'winda', title: 'GWO WINDA Registration', path: '/student-info/usi', description: 'How to register your Global Wind Organisation (WINDA) Delegate ID.', tags: 'winda gwo id delegate registration global database identity' },
+  { id: 'winda', title: 'GWO WINDA Registration', path: '/student-info', description: 'How to register your Global Wind Organisation (WINDA) Delegate ID.', tags: 'winda gwo id delegate registration global database identity' },
   { id: 'refund-policy', title: 'Fees and Refund Policy', path: '/student-info/refund-policy', description: 'Review our course fees, cooling-off periods, and refund procedures.', tags: 'refund policy fees payment cancellation terms condition' },
   { id: 'privacy-notice', title: 'Student Privacy Notice', path: '/student-info/privacy-notice', description: 'How SKYLAR EDUCATION ASIA protects your personal information and student records.', tags: 'privacy notice data protection policy student files security' },
   { id: 'online-enrolments', title: 'Online Enrolments Guide', path: '/student-info/online-enrolments', description: 'Step-by-step guide to enrolling online and submitting required identity documents.', tags: 'enrollment online process register application identity upload' },
@@ -111,50 +111,60 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    const courses = getCourses();
-    setFeaturedCourses(courses.slice(0, 8));
-    const content = getPageContent('home');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const courses = getCourses();
+      setFeaturedCourses(courses.slice(0, 8));
+      const content = getPageContent('home');
+      if (content) setPageContent(content);
 
-    // Get top 3 categories dynamically
-    const allCats = getCategories();
-    const parentCats = allCats.filter(c => !c.parentId);
-    const top3 = parentCats.slice(0, 3);
-    
-    const getCatImage = (catName: string, index: number, isSub: boolean = false) => {
-      const courseWithImg = courses.find(c => (isSub ? c.subCategory === catName : c.category === catName) && c.image);
-      if (courseWithImg) return courseWithImg.image;
-      // Wind energy themed images for sub-categories (safety, rescue, technical training scenarios)
-      const subDefaults = [
-        "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // worker at wind turbine base
-        "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800", // safety harness / rope rescue
-        "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=800", // wind turbine close-up blades
-        "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=800", // renewable energy field
-        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm sunset
-        "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800", // offshore wind turbines
-      ];
-      // Wind energy themed images for main categories
-      const parentDefaults = [
-        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm at sunset (BST)
-        "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // wind turbine worker climbing (ART)
-        "/BTT-Image-1024x683.jpg", // Basic Technical Training (BTT) - locally uploaded image
-      ];
-      const defaults = isSub ? subDefaults : parentDefaults;
-      return defaults[index % defaults.length];
+      // Get top 3 categories dynamically
+      const allCats = getCategories();
+      const parentCats = allCats.filter(c => !c.parentId);
+      const top3 = parentCats.slice(0, 3);
+      
+      const getCatImage = (catName: string, index: number, isSub: boolean = false) => {
+        const courseWithImg = courses.find(c => (isSub ? c.subCategory === catName : c.category === catName) && c.image);
+        if (courseWithImg) return courseWithImg.image;
+        // Wind energy themed images for sub-categories (safety, rescue, technical training scenarios)
+        const subDefaults = [
+          "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // worker at wind turbine base
+          "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800", // safety harness / rope rescue
+          "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=800", // wind turbine close-up blades
+          "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=800", // renewable energy field
+          "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm sunset
+          "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800", // offshore wind turbines
+        ];
+        // Wind energy themed images for main categories
+        const parentDefaults = [
+          "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=800", // wind farm at sunset (BST)
+          "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800", // wind turbine worker climbing (ART)
+          "/BTT-Image-1024x683.jpg", // Basic Technical Training (BTT) - locally uploaded image
+        ];
+        const defaults = isSub ? subDefaults : parentDefaults;
+        return defaults[index % defaults.length];
+      };
+
+      setMainCategories(top3.map((cat, idx) => {
+        const subs = allCats.filter(c => c.parentId === cat.id);
+        return {
+          id: cat.id,
+          name: cat.name,
+          image: getCatImage(cat.name, idx, false),
+          subCategories: subs.map((s, sIdx) => ({
+            name: s.name,
+            image: getCatImage(s.name, sIdx, true)
+          }))
+        };
+      }));
     };
 
-    setMainCategories(top3.map((cat, idx) => {
-      const subs = allCats.filter(c => c.parentId === cat.id);
-      return {
-        id: cat.id,
-        name: cat.name,
-        image: getCatImage(cat.name, idx, false),
-        subCategories: subs.map((s, sIdx) => ({
-          name: s.name,
-          image: getCatImage(s.name, sIdx, true)
-        }))
-      };
-    }));
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    window.addEventListener('coursesUpdated', loadContent);
+    return () => {
+      window.removeEventListener('sitePagesUpdated', loadContent);
+      window.removeEventListener('coursesUpdated', loadContent);
+    };
   }, []);
 
   useEffect(() => {
@@ -166,7 +176,7 @@ const Home: React.FC = () => {
       image: cmsHero?.image || "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
       heading: cmsHero?.heading || "Safety Training Specialists",
       description: cmsHero?.description || "The premier international provider of GWO and Industrial Safety training.",
-      buttonText: cmsHero?.buttonText || "View All Courses",
+      buttonText: cmsHero?.buttonText || "Inquire Now",
       buttonLink: cmsHero?.buttonLink || "/courses"
     };
 
@@ -176,7 +186,7 @@ const Home: React.FC = () => {
         image: item.image || "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
         heading: item.title || "Safety Training Specialists",
         description: item.description || "",
-        buttonText: item.buttonText || "View All Courses",
+        buttonText: item.buttonText || "Inquire Now",
         buttonLink: item.buttonLink || "/courses"
       }));
       setSlides([mainSlide, ...extraSlides]);
@@ -188,16 +198,16 @@ const Home: React.FC = () => {
           image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
           heading: "GWO Global Standards",
           description: "Internationally recognised safety training for the wind energy sector.",
-          buttonText: "View GWO Courses",
+          buttonText: "Inquire Now",
           buttonLink: "/courses?category=GWO"
         },
         {
           id: 3,
           image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
-          heading: "High Risk Work Licensing",
-          description: "Get licensed for Dogging, Rigging, and Forklift operations with expert trainers.",
-          buttonText: "View Construction",
-          buttonLink: "/courses?category=Construction"
+          heading: "Industrial Safety & High Risk Work",
+          description: "Comprehensive certified safety training for working at heights, confined space, and rescue operations.",
+          buttonText: "Inquire Now",
+          buttonLink: "/courses?category=Industrial Safety & High Risk Work"
         }
       ];
       setSlides(defaultSlides);
@@ -1492,12 +1502,13 @@ const Home: React.FC = () => {
 
             {/* Buttons placed directly below Internationally Recognised */}
             <div className="flex flex-col sm:flex-row md:flex-col gap-3.5 pt-2">
-              <Link to={cta?.buttonLink || "/courses"} className="w-full">
-                <button className="w-full bg-accent text-secondary hover:bg-white hover:text-secondary font-extrabold py-4 px-8 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-300 transform hover:-translate-y-1 text-base md:text-lg flex items-center justify-center gap-3">
-                  {cta?.buttonText || "Browse Courses Now"}
-                  <ArrowRight size={22} strokeWidth={2.5} />
-                </button>
-              </Link>
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('openInquireModal'))}
+                className="w-full bg-accent text-secondary hover:bg-white hover:text-secondary font-extrabold py-4 px-8 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-300 transform hover:-translate-y-1 text-base md:text-lg flex items-center justify-center gap-3 uppercase tracking-wider"
+              >
+                {cta?.buttonText || "Inquire Now"}
+                <ArrowRight size={22} strokeWidth={2.5} />
+              </button>
               <Link to="/contact" className="w-full">
                 <button className="w-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20 font-bold py-4 px-8 rounded-2xl transition-all duration-300 text-base md:text-lg flex items-center justify-center gap-3">
                   Contact Support

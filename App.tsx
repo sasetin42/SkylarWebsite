@@ -141,12 +141,16 @@ const PublicLayout: React.FC = () => {
   const p = location.pathname;
 
   const [isInquireModalOpen, setIsInquireModalOpen] = useState(false);
-  const [inquireModalCourse, setInquireModalCourse] = useState<{ courseId?: string; courseTitle?: string }>({});
+  const [inquireModalCourse, setInquireModalCourse] = useState<{ courseId?: string; courseTitle?: string; initialDate?: string }>({});
 
   useEffect(() => {
     const handleOpenModal = (e: any) => {
       if (e.detail) {
-        setInquireModalCourse({ courseId: e.detail.courseId, courseTitle: e.detail.courseTitle });
+        setInquireModalCourse({ 
+          courseId: e.detail.courseId, 
+          courseTitle: e.detail.courseTitle,
+          initialDate: e.detail.initialDate
+        });
       } else {
         setInquireModalCourse({});
       }
@@ -183,6 +187,7 @@ const PublicLayout: React.FC = () => {
         onClose={() => setIsInquireModalOpen(false)}
         initialCourseId={inquireModalCourse.courseId}
         initialCourseTitle={inquireModalCourse.courseTitle}
+        initialDate={inquireModalCourse.initialDate}
       />
     </div>
   );
@@ -260,7 +265,7 @@ const App: React.FC = () => {
           {/* Logo with unconditional white filter for dark loading screen */}
           <img
             src={logoSrc}
-            alt="RidersBUD Safety Solutions"
+            alt="SKYLAR EDUCATION ASIA"
             style={{
               height: '96px',
               width: 'auto',

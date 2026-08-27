@@ -180,10 +180,11 @@ export const CategoryManager: React.FC = () => {
             <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
               <div className="p-6 overflow-y-auto space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="category-name" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                     Category Name *
                   </label>
                   <input
+                    id="category-name"
                     type="text"
                     required
                     value={formData.name || ''}
@@ -194,10 +195,11 @@ export const CategoryManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="category-parent" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                     Parent Category (Optional)
                   </label>
                   <select
+                    id="category-parent"
                     value={formData.parentId || ''}
                     onChange={e => setFormData({ ...formData, parentId: e.target.value })}
                     className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:text-white"
@@ -210,10 +212,11 @@ export const CategoryManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="category-desc" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
                     Description
                   </label>
                   <textarea
+                    id="category-desc"
                     rows={4}
                     value={formData.description || ''}
                     onChange={e => setFormData({ ...formData, description: e.target.value })}

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { CourseInquiry } from '../../types';
 import { getInquiries, updateInquiryStatus, deleteInquiry } from '../../services/storageService';
-import { Search, Filter, Mail, Phone, Calendar, MapPin, Building, Users, Eye, Trash2, CheckCircle, Clock, FileText, Download, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
+import { 
+  Search, Filter, Mail, Phone, Calendar, MapPin, Building, Users, Eye, Trash2, 
+  CheckCircle, Clock, FileText, Download, MessageSquare, AlertCircle, RefreshCw, 
+  Copy, ExternalLink, Send, Check, Sparkles, Radio
+} from 'lucide-react';
 
 export const InquiriesManager: React.FC = () => {
   const [inquiries, setInquiries] = useState<CourseInquiry[]>([]);
@@ -9,6 +13,7 @@ export const InquiriesManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [selectedLocation, setSelectedLocation] = useState<string>('All');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [activeInquiry, setActiveInquiry] = useState<CourseInquiry | null>(null);
   const [adminNote, setAdminNote] = useState('');
@@ -21,7 +26,14 @@ export const InquiriesManager: React.FC = () => {
   useEffect(() => {
     reloadData();
     window.addEventListener('inquiriesUpdated', reloadData);
-    return () => window.removeEventListener('inquiriesUpdated', reloadData);
+    
+    // Live interval sync (every 5 seconds) for real-time live monitoring
+    const interval = setInterval(reloadData, 5000);
+
+    return () => {
+      window.removeEventListener('inquiriesUpdated', reloadData);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -55,6 +67,12 @@ export const InquiriesManager: React.FC = () => {
     if (activeInquiry && activeInquiry.id === id) {
       setActiveInquiry({ ...activeInquiry, status: newStatus });
     }
+  };
+
+  const handleCopyRef = (refCode: string, id: string) => {
+    navigator.clipboard.writeText(refCode);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleSaveNote = () => {
@@ -126,24 +144,29 @@ export const InquiriesManager: React.FC = () => {
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
         <div>
-          <h2 className="text-2xl font-bold font-heading text-white flex items-center gap-3">
-            <MessageSquare className="text-accent" /> Course Inquiries Monitoring
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">Real-time student and corporate training inquiry tracking</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold font-heading text-white flex items-center gap-3">
+              <MessageSquare className="text-accent" /> Course Inquiries Monitoring
+            </h2>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Data Sync
+            </span>
+          </div>
+          <p className="text-slate-400 text-sm mt-1">Real-time student, corporate group, and delegate intake tracking</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={reloadData}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-colors"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
             title="Refresh Inquiries"
           >
-            <RefreshCw size={18} />
+            <RefreshCw size={15} /> Sync Now
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="px-4 py-2.5 bg-accent hover:bg-amber-400 text-secondary font-bold rounded-xl transition-all flex items-center gap-2 text-sm shadow-md"
+            className="px-4 py-2.5 bg-accent hover:bg-amber-400 text-secondary font-bold rounded-xl transition-all flex items-center gap-2 text-sm shadow-md cursor-pointer"
           >
             <Download size={16} /> Export CSV
           </button>
@@ -152,7 +175,7 @@ export const InquiriesManager: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-center text-slate-400 mb-2 text-xs font-bold uppercase tracking-wider">
             <span>Total Inquiries</span>
             <FileText size={18} className="text-slate-500" />
@@ -160,7 +183,7 @@ export const InquiriesManager: React.FC = () => {
           <p className="text-3xl font-bold text-white">{totalCount}</p>
         </div>
 
-        <div className="bg-slate-900 border border-amber-500/30 p-5 rounded-2xl">
+        <div className="bg-slate-900 border border-amber-500/30 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-center text-amber-400 mb-2 text-xs font-bold uppercase tracking-wider">
             <span>New / Unread</span>
             <AlertCircle size={18} className="text-amber-400" />
@@ -168,7 +191,7 @@ export const InquiriesManager: React.FC = () => {
           <p className="text-3xl font-bold text-amber-400">{newCount}</p>
         </div>
 
-        <div className="bg-slate-900 border border-blue-500/30 p-5 rounded-2xl">
+        <div className="bg-slate-900 border border-blue-500/30 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-center text-blue-400 mb-2 text-xs font-bold uppercase tracking-wider">
             <span>In Progress / Quoted</span>
             <Phone size={18} className="text-blue-400" />
@@ -176,7 +199,7 @@ export const InquiriesManager: React.FC = () => {
           <p className="text-3xl font-bold text-blue-400">{contactedCount}</p>
         </div>
 
-        <div className="bg-slate-900 border border-green-500/30 p-5 rounded-2xl">
+        <div className="bg-slate-900 border border-green-500/30 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-center text-green-400 mb-2 text-xs font-bold uppercase tracking-wider">
             <span>Resolved / Enrolled</span>
             <CheckCircle size={18} className="text-green-400" />
@@ -185,8 +208,8 @@ export const InquiriesManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Search & Filter Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 justify-between">
+      {/* Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
@@ -204,7 +227,7 @@ export const InquiriesManager: React.FC = () => {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="py-2.5 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none text-xs font-semibold"
+              className="py-2.5 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none text-xs font-semibold cursor-pointer"
             >
               <option value="All">All Statuses</option>
               <option value="New">New</option>
@@ -218,10 +241,11 @@ export const InquiriesManager: React.FC = () => {
           <select
             value={selectedLocation}
             onChange={(e) => setSelectedLocation(e.target.value)}
-            className="py-2.5 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none text-xs font-semibold"
+            className="py-2.5 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none text-xs font-semibold cursor-pointer"
           >
             <option value="All">All Locations</option>
-            <option value="Pampanga Facility">Pampanga Facility</option>
+            <option value="Pampanga Facility">Angeles City (Pampanga)</option>
+            <option value="Angeles City Training Centre, Pampanga">Angeles Training Centre</option>
             <option value="Manila Safety Center">Manila Safety Center</option>
             <option value="On-Site Corporate Facility">On-Site Corporate</option>
           </select>
@@ -252,63 +276,112 @@ export const InquiriesManager: React.FC = () => {
               ) : (
                 filteredInquiries.map((inquiry) => (
                   <tr key={inquiry.id} className="hover:bg-slate-800/50 transition-colors group">
-                    <td className="py-4 px-6 font-mono font-bold text-accent">
-                      {inquiry.referenceCode}
+                    <td className="py-4 px-6 font-mono font-bold">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-accent">{inquiry.referenceCode}</span>
+                        <button
+                          onClick={() => handleCopyRef(inquiry.referenceCode, inquiry.id)}
+                          className="text-slate-500 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-800"
+                          title="Copy Reference Code"
+                        >
+                          {copiedId === inquiry.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                        </button>
+                      </div>
                     </td>
 
                     <td className="py-4 px-6">
-                      <div className="font-bold text-white">{inquiry.studentName}</div>
-                      <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                        <span>{inquiry.email}</span> &bull; <span>{inquiry.phone}</span>
+                      <div className="font-bold text-white text-base">{inquiry.studentName}</div>
+                      <div className="text-xs text-slate-400 flex flex-wrap items-center gap-2 mt-1">
+                        <a href={`mailto:${inquiry.email}`} className="hover:text-blue-400 transition-colors flex items-center gap-1">
+                          <Mail size={12} className="text-slate-500" /> {inquiry.email}
+                        </a>
+                        <span>&bull;</span>
+                        <a href={`tel:${inquiry.phone}`} className="hover:text-emerald-400 transition-colors flex items-center gap-1 font-mono">
+                          <Phone size={12} className="text-slate-500" /> {inquiry.phone}
+                        </a>
                       </div>
                       {inquiry.company && (
-                        <span className="inline-block mt-1 text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-                          {inquiry.company}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-slate-200 truncate max-w-[220px]">
-                        {inquiry.courseTitle}
-                      </div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                        <MapPin size={12} className="text-accent shrink-0" /> {inquiry.location}
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6 text-xs text-slate-300">
-                      <div className="font-medium text-slate-200">{inquiry.participantsCount}</div>
-                      {inquiry.preferredDate && (
-                        <div className="text-slate-400 mt-0.5 flex items-center gap-1">
-                          <Calendar size={12} /> {inquiry.preferredDate}
+                        <div className="mt-1 flex items-center gap-1 text-[11px] bg-slate-800/80 px-2 py-0.5 rounded-md text-amber-300/90 w-fit border border-slate-700/60">
+                          <Building size={11} className="text-amber-400" /> {inquiry.company}
                         </div>
                       )}
                     </td>
 
                     <td className="py-4 px-6">
-                      {getStatusBadge(inquiry.status)}
+                      <div className="font-semibold text-slate-100 truncate max-w-[240px]">
+                        {inquiry.courseTitle}
+                      </div>
+                      <div className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                        <MapPin size={12} className="text-accent shrink-0" /> {inquiry.location}
+                      </div>
                     </td>
 
-                    <td className="py-4 px-6 text-right space-x-2">
-                      <button
-                        onClick={() => {
-                          setActiveInquiry(inquiry);
-                          setAdminNote(inquiry.notes || '');
-                        }}
-                        className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-semibold"
-                        title="View Details"
-                      >
-                        <Eye size={16} /> View
-                      </button>
+                    <td className="py-4 px-6 text-xs text-slate-300">
+                      <div className="font-semibold text-slate-200">{inquiry.participantsCount}</div>
+                      {inquiry.preferredDate ? (
+                        <div className="text-slate-400 mt-1 flex items-center gap-1 bg-slate-950/40 px-2 py-0.5 rounded border border-slate-800/60 w-fit">
+                          <Calendar size={12} className="text-accent" /> {inquiry.preferredDate}
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 italic mt-1 block">Flexible Date</span>
+                      )}
+                    </td>
 
-                      <button
-                        onClick={() => handleDelete(inquiry.id)}
-                        className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors inline-flex items-center"
-                        title="Delete Record"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <td className="py-4 px-6">
+                      <div className="space-y-1">
+                        {getStatusBadge(inquiry.status)}
+                        <select
+                          value={inquiry.status}
+                          onChange={(e) => handleStatusChange(inquiry.id, e.target.value as CourseInquiry['status'])}
+                          className="mt-1 block text-[11px] bg-slate-950 border border-slate-800 text-slate-300 rounded px-2 py-1 outline-none cursor-pointer hover:border-slate-700"
+                        >
+                          <option value="New">Set New</option>
+                          <option value="Contacted">Set Contacted</option>
+                          <option value="Quoted">Set Quoted</option>
+                          <option value="Resolved">Set Resolved</option>
+                          <option value="Archived">Set Archived</option>
+                        </select>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {inquiry.phone && (
+                          <a
+                            href={`https://wa.me/${inquiry.phone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            title="Direct Message on WhatsApp"
+                          >
+                            <Send size={15} />
+                          </a>
+                        )}
+                        <a
+                          href={`mailto:${inquiry.email}?subject=Follow-up regarding your Skylar Education inquiry ${inquiry.referenceCode}`}
+                          className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                          title="Compose Email"
+                        >
+                          <Mail size={15} />
+                        </a>
+                        <button
+                          onClick={() => {
+                            setActiveInquiry(inquiry);
+                            setAdminNote(inquiry.notes || '');
+                          }}
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg transition-colors inline-flex items-center gap-1 text-xs font-semibold"
+                          title="View Full Details & Notes"
+                        >
+                          <Eye size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(inquiry.id)}
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

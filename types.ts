@@ -1,4 +1,10 @@
 
+export interface CourseAccordionSection {
+  id: string;
+  title: string;
+  content: string;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -23,7 +29,9 @@ export interface Course {
   deliveryMode?: string;
   whatToBring?: string[];
   depositAmount?: number;
-  // Collapsible Rich-Text Sections
+  // Dynamic Collapsible Accordion Sections
+  accordionSections?: CourseAccordionSection[];
+  // Legacy Collapsible Rich-Text Sections (for backward compatibility)
   courseBenefits?: string;
   isThisCourseForMe?: string;
   careerOpportunities?: string;
@@ -121,6 +129,7 @@ export interface Student {
   lastName: string;
   email: string;
   phone: string;
+  photoUrl?: string;
   windaId?: string; // GWO ID
   employer?: string;
   enrolledCourseId: string;
@@ -209,6 +218,7 @@ export interface InstituteSettings {
   tuitionCurrency?: string;
   classSizeLimit?: number;
   passingScore?: number;
+  footerDescription?: string;
 }
 
 // --- Admin Settings Types ---
@@ -390,5 +400,20 @@ export interface EmailLog {
   status: 'Sent' | 'Failed' | 'Queued';
   timestamp: string;
   errorDetails?: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: 'Student' | 'Admin' | 'Enrollment' | 'Certification' | 'Reminder';
+  subject: string;
+  headline: string;
+  badgeText?: string;
+  body: string;
+  buttonText?: string;
+  buttonUrl?: string;
+  footerNote?: string;
+  updatedAt?: string;
 }
 

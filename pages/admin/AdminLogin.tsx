@@ -158,7 +158,7 @@ export const AdminLogin: React.FC = () => {
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+                <label htmlFor="login-email" className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
                 <div className="relative group/input">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-accent transition-colors w-5 h-5" />
                   <input
@@ -175,7 +175,7 @@ export const AdminLogin: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                <label htmlFor="login-password" className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
                 <div className="relative group/input">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-accent transition-colors w-5 h-5" />
                   <input
@@ -196,7 +196,13 @@ export const AdminLogin: React.FC = () => {
                   <input type="checkbox" id="login-remember" name="remember" autoComplete="off" className="mr-2 w-4 h-4 rounded bg-slate-800 border-white/10 text-accent focus:ring-offset-slate-900 focus:ring-accent" />
                   Remember me
                 </label>
-                <a href="#" className="text-accent hover:text-yellow-300 transition-colors font-medium">Forgot Password?</a>
+                <button
+                  type="button"
+                  onClick={() => alert('For password resets, please contact system administration at support@skylareducation.asia.')}
+                  className="text-accent hover:text-yellow-300 transition-colors font-medium cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
               </div>
 
               <button

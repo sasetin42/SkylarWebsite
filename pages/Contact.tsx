@@ -25,8 +25,13 @@ export const Contact: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    const content = getPageContent('contact');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('contact');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -247,7 +252,7 @@ export const Contact: React.FC = () => {
                           <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA" className="w-8 h-8 opacity-70 mb-0.5" />
                           <div className="text-[10px] text-gray-500 text-center leading-tight">
                               reCAPTCHA<br/>
-                              <span className="text-[8px] text-gray-500"><a href="#" className="hover:underline">Privacy</a> - <a href="#" className="hover:underline">Terms</a></span>
+                              <span className="text-[8px] text-gray-500"><Link to="/student-info/privacy-notice" className="hover:underline">Privacy</Link> - <Link to="/terms-of-service" className="hover:underline">Terms</Link></span>
                           </div>
                       </div>
                   </div>
@@ -263,7 +268,7 @@ export const Contact: React.FC = () => {
                         Sending...
                       </span>
                     ) : (
-                      'Send Enquiry'
+                      'Inquire Now'
                     )}
                   </button>
                 </form>

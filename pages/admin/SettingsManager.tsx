@@ -3,19 +3,22 @@ import {
   Save, Lock, Globe, Users, Shield, Layout, Settings, 
   ToggleLeft, ToggleRight, Plus, Trash2, Edit2, Check, Calendar, Activity,
   Database, UploadCloud, Download, RefreshCw, X, Palette, Image, ShieldAlert, Key,
-  Type, Sparkles, Code, Monitor, Eye, Mail, Send
+  Type, Sparkles, Code, Monitor, Eye, Mail, Send, Smartphone, FileText, CheckCircle2,
+  Copy, ExternalLink, Sliders
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { 
   getSettings, saveSettings, getAdminUsers, saveAdminUser, deleteAdminUser,
   getRoles, getModules, toggleModule, getAuditLogs, getCourses, getStudents,
-  getSmtpSettings, saveSmtpSettings, getEmailLogs
+  getSmtpSettings, saveSmtpSettings, getEmailLogs, getEmailTemplates, saveEmailTemplate, resetEmailTemplates
 } from '../../services/storageService';
-import { testSmtpConnection } from '../../services/emailService';
-import { AdminUser, Role } from '../../types';
+import { testSmtpConnection, sendCustomTemplateEmail } from '../../services/emailService';
+import { generateFullEmailHtml, AVAILABLE_MERGE_TAGS, renderMergeTags } from '../../services/emailTemplates';
+import { firebaseClient } from '../../services/firebaseClient';
+import { AdminUser, Role, EmailTemplate } from '../../types';
 
 export const SettingsManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'system' | 'enrollment' | 'appearance' | 'roles' | 'logs' | 'users' | 'backup' | 'smtp'>('system');
+  const [activeTab, setActiveTab] = useState<'system' | 'enrollment' | 'appearance' | 'smtp' | 'email-templates' | 'roles' | 'logs' | 'users' | 'backup'>('system');
   const [settings, setSettings] = useState(getSettings());
   const [isSaved, setIsSaved] = useState(false);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(getAdminUsers());
@@ -29,6 +32,60 @@ export const SettingsManager: React.FC = () => {
   const [smtpTesting, setSmtpTesting] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [emailLogs, setEmailLogsState] = useState(getEmailLogs());
+
+  // Email Templates state
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(getEmailTemplates());
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(emailTemplates[0]?.id || 'inquiry-confirmation');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewMode, setPreviewMode] = useState<'visual' | 'code'>('visual');
+  const [testEmailRecipient, setTestEmailRecipient] = useState<string>('admissions@skylaredasia.ph');
+  const [sendingTestEmail, setSendingTestEmail] = useState<boolean>(false);
+  const [testEmailStatus, setTestEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [copiedTag, setCopiedTag] = useState<string | null>(null);
+
+  const selectedTemplate = emailTemplates.find(t => t.id === selectedTemplateId) || emailTemplates[0];
+
+  const handleUpdateCurrentTemplate = (fields: Partial<EmailTemplate>) => {
+    if (!selectedTemplate) return;
+    const updated = { ...selectedTemplate, ...fields };
+    const updatedList = emailTemplates.map(t => t.id === updated.id ? updated : t);
+    setEmailTemplates(updatedList);
+  };
+
+  const handleSaveCurrentTemplate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedTemplate) return;
+    await saveEmailTemplate(selectedTemplate);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleResetTemplates = async () => {
+    if (window.confirm("Are you sure you want to reset all email templates to default master designs?")) {
+      await resetEmailTemplates();
+      const defaults = getEmailTemplates();
+      setEmailTemplates(defaults);
+      setSelectedTemplateId(defaults[0]?.id || 'inquiry-confirmation');
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!selectedTemplate || !testEmailRecipient) return;
+    setSendingTestEmail(true);
+    setTestEmailStatus(null);
+    const res = await sendCustomTemplateEmail(selectedTemplate, testEmailRecipient);
+    setTestEmailStatus(res);
+    setSendingTestEmail(false);
+    setEmailLogsState(getEmailLogs());
+  };
+
+  const handleCopyTag = (tag: string) => {
+    navigator.clipboard.writeText(tag);
+    setCopiedTag(tag);
+    setTimeout(() => setCopiedTag(null), 1500);
+  };
 
   const handleSaveSmtp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,35 +149,49 @@ export const SettingsManager: React.FC = () => {
 
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading' | 'collapsed' | 'uncollapsed') => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading' | 'collapsed' | 'uncollapsed') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("Image file size should be less than 2MB.");
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Image file size exceeds 10MB. Please select a smaller file.");
+        e.target.value = '';
         return;
       }
       setIsUploadingLogo(true);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
+      try {
+        const mediaData = await firebaseClient.uploadMedia(file, 'branding', `${type}_logo_${Date.now()}.png`);
         setSettings(prev => {
           const next = { ...prev };
-          if (type === 'light') next.lightLogoUrl = base64;
-          else if (type === 'dark') next.darkLogoUrl = base64;
-          else if (type === 'loading') next.loadingLogoUrl = base64;
-          else if (type === 'favicon') next.faviconUrl = base64;
-          else if (type === 'collapsed') next.collapsedLogoUrl = base64;
-          else if (type === 'uncollapsed') next.uncollapsedLogoUrl = base64;
+          if (type === 'light') next.lightLogoUrl = mediaData;
+          else if (type === 'dark') next.darkLogoUrl = mediaData;
+          else if (type === 'loading') next.loadingLogoUrl = mediaData;
+          else if (type === 'favicon') next.faviconUrl = mediaData;
+          else if (type === 'collapsed') next.collapsedLogoUrl = mediaData;
+          else if (type === 'uncollapsed') next.uncollapsedLogoUrl = mediaData;
           saveSettings(next);
           return next;
         });
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target?.result as string;
+          setSettings(prev => {
+            const next = { ...prev };
+            if (type === 'light') next.lightLogoUrl = base64;
+            else if (type === 'dark') next.darkLogoUrl = base64;
+            else if (type === 'loading') next.loadingLogoUrl = base64;
+            else if (type === 'favicon') next.faviconUrl = base64;
+            else if (type === 'collapsed') next.collapsedLogoUrl = base64;
+            else if (type === 'uncollapsed') next.uncollapsedLogoUrl = base64;
+            saveSettings(next);
+            return next;
+          });
+        };
+        reader.readAsDataURL(file);
+      } finally {
         setIsUploadingLogo(false);
-      };
-      reader.onerror = () => {
-        alert("Failed to read file.");
-        setIsUploadingLogo(false);
-      };
-      reader.readAsDataURL(file);
+        e.target.value = '';
+      }
     }
   };
 
@@ -247,6 +318,7 @@ export const SettingsManager: React.FC = () => {
     { id: 'enrollment', label: 'Enrollment', icon: Calendar },
     { id: 'appearance', label: 'Appearance', icon: Layout },
     { id: 'smtp', label: 'SMTP Email Setup', icon: Mail },
+    { id: 'email-templates', label: 'Email Templates', icon: FileText },
     { id: 'roles', label: 'Roles & Access', icon: Shield },
     { id: 'logs', label: 'Audit Logs', icon: Activity },
     { id: 'users', label: 'Users', icon: Users },
@@ -396,6 +468,19 @@ export const SettingsManager: React.FC = () => {
                       className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white" 
                       value={settings.address} 
                       onChange={e => setSettings({...settings, address: e.target.value})} 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Footer Description (Below Logo)</label>
+                    <textarea 
+                      id="settings-footer-desc"
+                      name="footerDescription"
+                      autoComplete="off"
+                      className="w-full p-3 h-20 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all dark:text-white text-xs leading-relaxed" 
+                      value={settings.footerDescription || ''} 
+                      onChange={e => setSettings({...settings, footerDescription: e.target.value})} 
+                      placeholder="Skylar Education Asia is an affiliate of Skylar Education Pty Ltd (Australia)..."
                     />
                   </div>
 
@@ -1342,8 +1427,9 @@ export const SettingsManager: React.FC = () => {
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Server Host</label>
+                      <label htmlFor="smtp-host" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Server Host</label>
                       <input 
+                        id="smtp-host"
                         type="text"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.host}
@@ -1354,8 +1440,9 @@ export const SettingsManager: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Port</label>
+                      <label htmlFor="smtp-port" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Port</label>
                       <input 
+                        id="smtp-port"
                         type="number"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.port}
@@ -1367,8 +1454,9 @@ export const SettingsManager: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Username / API Key</label>
+                      <label htmlFor="smtp-username" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Username / API Key</label>
                       <input 
+                        id="smtp-username"
                         type="text"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.username}
@@ -1378,8 +1466,9 @@ export const SettingsManager: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Password</label>
+                      <label htmlFor="smtp-password" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Password</label>
                       <input 
+                        id="smtp-password"
                         type="password"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.password || ''}
@@ -1390,8 +1479,9 @@ export const SettingsManager: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Email (From)</label>
+                      <label htmlFor="smtp-sender-email" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Email (From)</label>
                       <input 
+                        id="smtp-sender-email"
                         type="email"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.fromEmail}
@@ -1401,8 +1491,9 @@ export const SettingsManager: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Display Name</label>
+                      <label htmlFor="smtp-sender-name" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Display Name</label>
                       <input 
+                        id="smtp-sender-name"
                         type="text"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.fromName}
@@ -1414,8 +1505,9 @@ export const SettingsManager: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Admin Notification Email</label>
+                      <label htmlFor="smtp-admin-email" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Admin Notification Email</label>
                       <input 
+                        id="smtp-admin-email"
                         type="email"
                         className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
                         value={smtpSettings.adminNotificationEmail}
@@ -1492,6 +1584,344 @@ export const SettingsManager: React.FC = () => {
                 </div>
               </div>
             </form>
+          )}
+
+          {/* EMAIL TEMPLATES TAB */}
+          {activeTab === 'email-templates' && (
+            <div className="animate-fade-in space-y-6 w-full">
+              {/* Header Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4 gap-4">
+                <div>
+                  <h3 className="text-xl font-bold font-heading text-secondary dark:text-white flex items-center gap-2">
+                    <Mail className="text-amber-500" size={22} />
+                    Transactional Email Templates
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    Design and customize branded responsive HTML emails sent to candidates, sponsors, and admissions.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetTemplates}
+                    className="px-3 py-2 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw size={13} /> Reset Defaults
+                  </button>
+                  <Button
+                    type="button"
+                    onClick={() => handleSaveCurrentTemplate()}
+                    className="flex items-center gap-1.5 shadow-md"
+                  >
+                    {isSaved ? <span className="flex items-center gap-1"><Check size={16} /> Saved</span> : <span className="flex items-center gap-1"><Save size={16} /> Save Template</span>}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Template Selector Ribbon */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
+                {emailTemplates.map(tmpl => {
+                  const isSelected = tmpl.id === selectedTemplateId;
+                  return (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTemplateId(tmpl.id);
+                        setTestEmailStatus(null);
+                      }}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected 
+                          ? 'bg-amber-500/10 border-amber-500/60 dark:bg-amber-500/15 shadow-sm' 
+                          : 'bg-white dark:bg-gray-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                          isSelected ? 'bg-amber-500 text-slate-950 font-extrabold' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {tmpl.category}
+                        </span>
+                        {isSelected && <CheckCircle2 size={14} className="text-amber-500" />}
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                        {tmpl.name}
+                      </h4>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Main Workspace: 2-Column Split (Editor & Live Preview) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+                
+                {/* Left Column: Template Form & Merge Tags (7 Cols) */}
+                <div className="lg:col-span-6 xl:col-span-6 space-y-5">
+                  
+                  {/* Subject & Header Fields */}
+                  <div className="bg-slate-50/70 dark:bg-gray-900/40 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-2">
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <Sliders size={14} className="text-amber-500" /> Header &amp; Subject Details
+                      </h4>
+                      <span className="text-[11px] text-slate-400 font-mono">ID: {selectedTemplate.id}</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        Email Subject Line
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedTemplate.subject}
+                        onChange={e => handleUpdateCurrentTemplate({ subject: e.target.value })}
+                        className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Headline Banner Title
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedTemplate.headline}
+                          onChange={e => handleUpdateCurrentTemplate({ headline: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Badge Label
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedTemplate.badgeText || ''}
+                          onChange={e => handleUpdateCurrentTemplate({ badgeText: e.target.value })}
+                          placeholder="e.g. INQUIRY CONFIRMED"
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body Text Editor */}
+                  <div className="bg-slate-50/70 dark:bg-gray-900/40 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Email Body Content (Markdown Supported)
+                      </label>
+                      <span className="text-[10px] text-slate-400">Use **bold**, - list items, ### headers</span>
+                    </div>
+
+                    <textarea
+                      rows={9}
+                      value={selectedTemplate.body}
+                      onChange={e => handleUpdateCurrentTemplate({ body: e.target.value })}
+                      className="w-full p-3 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono leading-relaxed text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                    />
+
+                    {/* Quick Insert Merge Tags Toolbar */}
+                    <div className="pt-2">
+                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-amber-500" /> Click to Copy Merge Tag:
+                        {copiedTag && <span className="text-emerald-500 text-[10px] lowercase">copied {copiedTag}!</span>}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {AVAILABLE_MERGE_TAGS.map(t => (
+                          <button
+                            key={t.tag}
+                            type="button"
+                            onClick={() => handleCopyTag(t.tag)}
+                            title={`Sample: ${t.sample} (Click to copy)`}
+                            className="px-2 py-1 bg-white dark:bg-gray-800 hover:bg-amber-500/10 hover:border-amber-500/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10.5px] font-mono transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <Copy size={10} className="text-slate-400" /> {t.tag}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA Button & Footer Fields */}
+                  <div className="bg-slate-50/70 dark:bg-gray-900/40 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-4 shadow-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Button Text
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedTemplate.buttonText || ''}
+                          onChange={e => handleUpdateCurrentTemplate({ buttonText: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Button Action URL
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedTemplate.buttonUrl || ''}
+                          onChange={e => handleUpdateCurrentTemplate({ buttonUrl: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        Footer Compliance Note
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedTemplate.footerNote || ''}
+                        onChange={e => handleUpdateCurrentTemplate({ footerNote: e.target.value })}
+                        className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Send Test Email Card */}
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Send size={13} /> Dispatch Live Test Email
+                      </span>
+                      <span className="text-[10px] text-amber-800/80 dark:text-amber-400">Uses configured SMTP server</span>
+                    </div>
+
+                    {testEmailStatus && (
+                      <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                        testEmailStatus.success ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300'
+                      }`}>
+                        {testEmailStatus.message}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={testEmailRecipient}
+                        onChange={e => setTestEmailRecipient(e.target.value)}
+                        placeholder="recipient@example.com"
+                        className="flex-1 p-2 bg-white dark:bg-gray-800 border border-amber-500/30 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSendTestEmail}
+                        disabled={sendingTestEmail || !testEmailRecipient}
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-colors shrink-0 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Send size={13} /> {sendingTestEmail ? 'Sending...' : 'Send Test'}
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Right Column: Live Email Preview Frame (6 Cols) */}
+                <div className="lg:col-span-6 xl:col-span-6 space-y-3">
+                  
+                  {/* Viewport Control Bar */}
+                  <div className="flex items-center justify-between p-2 bg-slate-100 dark:bg-gray-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDevice('desktop')}
+                        className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          previewDevice === 'desktop' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Monitor size={14} /> Desktop (600px)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDevice('mobile')}
+                        className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          previewDevice === 'mobile' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Smartphone size={14} /> Mobile (380px)
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewMode(previewMode === 'visual' ? 'code' : 'visual')}
+                        className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Code size={13} /> {previewMode === 'visual' ? 'View HTML' : 'View Visual'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Device Sandbox Container */}
+                  <div className="bg-slate-200/70 dark:bg-[#030c1b] p-4 sm:p-6 rounded-3xl border border-slate-300/80 dark:border-slate-800 flex justify-center min-h-[640px] items-start overflow-x-auto shadow-inner">
+                    <div
+                      className={`transition-all duration-300 bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 text-slate-800 ${
+                        previewDevice === 'mobile' ? 'w-[375px]' : 'w-full max-w-[580px]'
+                      }`}
+                    >
+                      {/* Fake Client Header */}
+                      <div className="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                        <span className="truncate">Subject: {renderMergeTags(selectedTemplate.subject, {
+                          reference_code: 'INQ-2026-8492',
+                          course_title: 'GWO Basic Safety Training',
+                          student_name: 'Engr. Juan Dela Cruz',
+                          start_date: '7 Sept 2026'
+                        })}</span>
+                        <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded shrink-0">Preview</span>
+                      </div>
+
+                      {previewMode === 'visual' ? (
+                        <div className="p-0 select-text">
+                          <iframe
+                            key={`${selectedTemplate.id}-${previewDevice}-${JSON.stringify(selectedTemplate)}`}
+                            srcDoc={generateFullEmailHtml(selectedTemplate, {
+                              student_name: 'Engr. Juan Dela Cruz',
+                              student_email: 'juan.delacruz@example.com',
+                              student_phone: '+63 912 345 6789',
+                              course_title: 'GWO Basic Safety Training (BST) Standard',
+                              reference_code: 'INQ-2026-8492',
+                              preferred_date: '7 – 10 September 2026',
+                              start_date: '7 September 2026',
+                              participants: '1 Person',
+                              company_name: 'Apex Renewable Energy Inc.',
+                              location: 'Angeles City Training Centre, Pampanga'
+                            })}
+                            title="Email Live Preview"
+                            className="w-full h-[620px] border-0"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-slate-900 text-slate-100 text-xs font-mono h-[620px] overflow-y-auto">
+                          <pre className="whitespace-pre-wrap">
+                            {generateFullEmailHtml(selectedTemplate, {
+                              student_name: 'Engr. Juan Dela Cruz',
+                              student_email: 'juan.delacruz@example.com',
+                              course_title: 'GWO Basic Safety Training (BST) Standard',
+                              reference_code: 'INQ-2026-8492',
+                              preferred_date: '7 – 10 September 2026',
+                              start_date: '7 September 2026',
+                              participants: '1 Person',
+                              company_name: 'Apex Renewable Energy Inc.',
+                              location: 'Angeles City Training Centre, Pampanga'
+                            })}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
           )}
 
         </div>

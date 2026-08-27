@@ -31,7 +31,7 @@ ${courseList}
 ${locationList}
 
 **Student Handbook & Policies Highlights:**
-- **Canvas LMS:** Login details are emailed 48 hours before course start.
+- **Student Portal:** Login and access details are provided upon enrolment.
 - **WINDA ID:** A GWO WINDA ID is required for registering GWO safety training records globally.
 - **Support:** Academic Support and Career Services are available.
 - **Refunds:** Full refund if withdrawn 14 days prior. 50% if 5 days prior. No refund within 24h.
@@ -140,17 +140,13 @@ A **WINDA ID** is a unique global identifier assigned to every delegate register
 
 We operate two premium safety training centers:
 
-1. **Pampanga Facility (Angeles City)**
-   - **Address:** Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga
-   - **Phone:** +63 45 123 4567
-   - **Email:** info@skylareducation.asia
-   
-2. **Manila Safety Center (Tondo)**
-   - **Address:** Pier 18, Port Area, Tondo, Manila, Metro Manila, Philippines
-   - **Phone:** +63 2 8234 5678
-   - **Email:** manila@skylareducation.asia
+1. **Angeles City Training Centre (Pampanga)**
+   - **Address:** Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, 2009 Pampanga, Philippines
+   - **Phone / WhatsApp:** +63 968 382 4294 / +63 915 902 9406
+   - **Email:** bon@skylarasia.com / junrey@skylarasia.com
+   - **Facebook:** [facebook.com/skylarasiapac](https://www.facebook.com/skylarasiapac/)
 
-Both locations feature modern simulators, high-speed WiFi, secure on-site parking, and a comfortable student lounge.`;
+Our facility features modern safety simulators, high-speed WiFi, secure on-site parking, and a comfortable student lounge.`;
     }
     
     if (query.includes('refund') || query.includes('policy') || query.includes('cancel')) {
@@ -159,7 +155,7 @@ Both locations feature modern simulators, high-speed WiFi, secure on-site parkin
 - **Refund Eligibility:** You are eligible for a full refund if you cancel your booking at least 7 days before the training start date.
 - **Rescheduling:** You can reschedule your training date once free of charge up to 72 hours before your session.
 - **No-Show:** Cancellations or failure to attend without 72 hours notice will forfeit the booking deposit.
-- Contact support at **info@skylareducation.asia** for any manual refunds.`;
+- Contact support at **bon@skylarasia.com** or **junrey@skylarasia.com** for any manual refunds.`;
     }
     
     if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('greet') || query.includes('help')) {
@@ -168,21 +164,23 @@ Both locations feature modern simulators, high-speed WiFi, secure on-site parkin
 I can help you with details about our academy. Try asking me about:
 - 📑 **Find GWO courses** (view price, modules, and prerequisites)
 - 🆔 **What is a WINDA ID?** (steps to register your GWO Delegate ID)
-- 📍 **Campuses** (locations, map info, and hours)
+- 📍 **Campuses & Contact** (Angeles City facility, hotline numbers, and Facebook page)
 - 💳 **Booking & Refunds** (policy and cancellation terms)`;
     }
 
     return `I am here to assist you with SKYLAR EDUCATION ASIA Safety Education. I can help you with details about:
-- **GWO Safety Courses** (ART, BST)
+- **GWO Safety Courses** (ART, BST, BTT)
 - **WINDA ID registration for GWO**
-- **Campuses in Pampanga & Manila**
+- **Training Centre in Angeles City, Pampanga**
+- **Official Facebook Updates** ([facebook.com/skylarasiapac](https://www.facebook.com/skylarasiapac/))
 
-For detailed support or individual inquiries, please email our coordinators at **info@skylareducation.asia** or call **+63 45 123 4567**.`;
+For detailed support or individual inquiries, please email our coordinators at **bon@skylarasia.com** / **junrey@skylarasia.com** or call **+63 968 382 4294 / +63 915 902 9406**.`;
   }
 };
 
 /**
- * Generate Images using Gemini 3 Pro Image Preview
+ * Generate Images directly without requiring an external API key.
+ * Attempts Gemini 3 Pro API if configured, otherwise renders high-quality thematic course artwork on canvas.
  */
 export const generateCourseImage = async (
     prompt: string, 
@@ -190,32 +188,221 @@ export const generateCourseImage = async (
     size: string = "1K"
 ): Promise<string | null> => {
     try {
-        // Must reuse current key
-        const ai = getAiClient();
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-image-preview',
-            contents: {
-                parts: [{ text: prompt }]
-            },
-            config: {
-                imageConfig: {
-                    aspectRatio: aspectRatio as any,
-                    imageSize: size as any 
+        const apiKey = process.env.API_KEY || (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY);
+        if (apiKey && apiKey !== 'undefined' && apiKey !== '') {
+            const ai = getAiClient();
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-image-preview',
+                contents: {
+                    parts: [{ text: prompt }]
+                },
+                config: {
+                    imageConfig: {
+                        aspectRatio: aspectRatio as any,
+                        imageSize: size as any 
+                    }
+                }
+            });
+            
+            for (const part of response.candidates?.[0]?.content?.parts || []) {
+                if (part.inlineData) {
+                    return `data:image/png;base64,${part.inlineData.data}`;
                 }
             }
-        });
-        
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) {
-                return `data:image/png;base64,${part.inlineData.data}`;
-            }
         }
-        return null;
     } catch (e) {
-        console.error("Image Gen Error", e);
-        return null;
+        console.warn("Direct API image gen unavailable, creating local high-definition artwork:", e);
     }
-}
+
+    // Direct client-side generation without API key requirement
+    return createThematicCourseGraphic(prompt, aspectRatio);
+};
+
+/**
+ * Procedurally generates a professional, high-resolution course badge / hero visual directly in browser canvas
+ */
+const createThematicCourseGraphic = (prompt: string, aspectRatio: string = "16:9"): string => {
+    let width = 1200;
+    let height = 675;
+
+    if (aspectRatio === '1:1') {
+        width = 800;
+        height = 800;
+    } else if (aspectRatio === '4:3') {
+        width = 1000;
+        height = 750;
+    } else if (aspectRatio === '3:4') {
+        width = 750;
+        height = 1000;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+        return 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200';
+    }
+
+    // Determine color theme based on prompt keywords
+    const lower = prompt.toLowerCase();
+    let colStart = '#0b192c';
+    let colEnd = '#1E3E62';
+    let accent = '#F39E00';
+    let titleBadge = 'SKYLAR SAFETY TRAINING';
+    let subIcon = '⚡';
+
+    if (lower.includes('fire') || lower.includes('awareness')) {
+        colStart = '#1a0b0b';
+        colEnd = '#421616';
+        accent = '#FF5722';
+        titleBadge = 'FIRE SAFETY & AWARENESS';
+        subIcon = '🔥';
+    } else if (lower.includes('first aid') || lower.includes('medical') || lower.includes('rescue')) {
+        colStart = '#09211c';
+        colEnd = '#0e453a';
+        accent = '#10B981';
+        titleBadge = 'FIRST AID & EMERGENCY RESCUE';
+        subIcon = '🩹';
+    } else if (lower.includes('wind') || lower.includes('turbine') || lower.includes('gwo') || lower.includes('blade')) {
+        colStart = '#041024';
+        colEnd = '#0f2b48';
+        accent = '#EBB108';
+        titleBadge = 'GLOBAL WIND ORGANISATION';
+        subIcon = '💨';
+    } else if (lower.includes('height') || lower.includes('climb') || lower.includes('harness')) {
+        colStart = '#111827';
+        colEnd = '#1f2937';
+        accent = '#3B82F6';
+        titleBadge = 'WORKING AT HEIGHTS & ACCESS';
+        subIcon = '🧗';
+    }
+
+    // Rich gradient background
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, colStart);
+    bgGrad.addColorStop(0.7, colEnd);
+    bgGrad.addColorStop(1, '#040d1a');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Decorative geometric grid / lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.lineWidth = 1;
+    const gridSize = 40;
+    for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+
+    // Glowing atmospheric radial orb
+    const radial = ctx.createRadialGradient(width * 0.8, height * 0.25, 20, width * 0.8, height * 0.25, width * 0.6);
+    radial.addColorStop(0, accent + '40');
+    radial.addColorStop(0.6, accent + '08');
+    radial.addColorStop(1, 'transparent');
+    ctx.fillStyle = radial;
+    ctx.fillRect(0, 0, width, height);
+
+    // Diagonal safety accent stripe at top-right
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(width - 160, 0);
+    ctx.lineTo(width, 0);
+    ctx.lineTo(width, 160);
+    ctx.closePath();
+    ctx.fill();
+
+    // Secondary stripe
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.moveTo(width - 180, 0);
+    ctx.lineTo(width - 165, 0);
+    ctx.lineTo(width, 165);
+    ctx.lineTo(width, 180);
+    ctx.closePath();
+    ctx.fill();
+
+    // Header badge
+    const badgeY = Math.max(50, height * 0.15);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    const badgeW = 320;
+    const badgeH = 36;
+    ctx.beginPath();
+    ctx.roundRect(60, badgeY, badgeW, badgeH, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = accent;
+    ctx.font = 'bold 13px system-ui, -apple-system, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${subIcon}  ${titleBadge}`, 76, badgeY + badgeH / 2);
+
+    // Title / Prompt text (word wrapped)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+    ctx.textBaseline = 'top';
+
+    const words = prompt.split(' ');
+    let line = '';
+    let textY = badgeY + 56;
+    const maxTextWidth = width - 160;
+    const maxLines = 4;
+    let lineCount = 0;
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxTextWidth && n > 0) {
+            lineCount++;
+            if (lineCount >= maxLines) {
+                ctx.fillText(line + '...', 60, textY);
+                line = '';
+                break;
+            }
+            ctx.fillText(line, 60, textY);
+            line = words[n] + ' ';
+            textY += 46;
+        } else {
+            line = testLine;
+        }
+    }
+    if (line) {
+        ctx.fillText(line, 60, textY);
+    }
+
+    // Bottom Branding bar
+    const footerY = height - 60;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(0, footerY - 15, width, 75);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.beginPath();
+    ctx.moveTo(0, footerY - 15);
+    ctx.lineTo(width, footerY - 15);
+    ctx.stroke();
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SKYLAR EDUCATION ASIA • ACCREDITED SAFETY CERTIFICATION', 60, footerY + 15);
+
+    ctx.fillStyle = accent;
+    ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('STANDARD VERIFIED ✓', width - 60, footerY + 15);
+
+    return canvas.toDataURL('image/jpeg', 0.92);
+};
 
 /**
  * Search Grounding for Industry News using Gemini 2.5 Flash

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Star, Plus, Trash2, Edit2, X, Search, Filter, RefreshCw, 
-  Settings, Globe, CheckCircle, Eye, EyeOff, Sparkles, MessageSquare
+  Settings, Globe, CheckCircle, Eye, EyeOff, Sparkles, MessageSquare,
+  UploadCloud, Loader, Camera, Check
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Testimonial, GoogleReviewSettings } from '../../types';
@@ -10,6 +11,7 @@ import {
   toggleTestimonialStatus, toggleTestimonialFeatured, 
   getGoogleReviewSettings, saveGoogleReviewSettings, syncGoogleReviews 
 } from '../../services/storageService';
+import { firebaseClient } from '../../services/firebaseClient';
 
 export const TestimonialsManager: React.FC = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(getTestimonials());
@@ -22,6 +24,7 @@ export const TestimonialsManager: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   
   // Sync Status
   const [isSyncing, setIsSyncing] = useState(false);
@@ -72,11 +75,36 @@ export const TestimonialsManager: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Avatar image exceeds 10MB limit.");
+        e.target.value = '';
+        return;
+      }
+      setIsUploadingAvatar(true);
+      try {
+        const mediaData = await firebaseClient.uploadMedia(file, 'testimonials', `avatar_${Date.now()}.jpg`);
+        setFormData(prev => ({ ...prev, avatar: mediaData }));
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setFormData(prev => ({ ...prev, avatar: event.target?.result as string }));
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsUploadingAvatar(false);
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.content) return;
     
-    saveTestimonial(formData as Testimonial);
+    await saveTestimonial(formData as Testimonial);
     setIsEditModalOpen(false);
   };
 
@@ -407,8 +435,9 @@ export const TestimonialsManager: React.FC = () => {
             <form onSubmit={handleSaveForm} className="space-y-4 text-sm">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Author Name *</label>
+                  <label htmlFor="testimonial-name" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Author Name *</label>
                   <input
+                    id="testimonial-name"
                     type="text"
                     required
                     value={formData.name || ''}
@@ -419,8 +448,9 @@ export const TestimonialsManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Role / Job Title *</label>
+                  <label htmlFor="testimonial-role" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Role / Job Title *</label>
                   <input
+                    id="testimonial-role"
                     type="text"
                     required
                     value={formData.role || ''}
@@ -433,8 +463,9 @@ export const TestimonialsManager: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Rating Stars</label>
+                  <label htmlFor="testimonial-rating" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Rating Stars</label>
                   <select
+                    id="testimonial-rating"
                     value={formData.rating || 5}
                     onChange={e => setFormData({ ...formData, rating: parseInt(e.target.value) || 5 })}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
@@ -448,8 +479,9 @@ export const TestimonialsManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Source</label>
+                  <label htmlFor="testimonial-source" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Source</label>
                   <select
+                    id="testimonial-source"
                     value={formData.source || 'Website'}
                     onChange={e => setFormData({ ...formData, source: e.target.value as any })}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
@@ -461,8 +493,9 @@ export const TestimonialsManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Status</label>
+                  <label htmlFor="testimonial-status" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Status</label>
                   <select
+                    id="testimonial-status"
                     value={formData.status || 'Approved'}
                     onChange={e => setFormData({ ...formData, status: e.target.value as any })}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
@@ -474,19 +507,52 @@ export const TestimonialsManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Avatar Image URL</label>
-                <input
-                  type="url"
-                  value={formData.avatar || ''}
-                  onChange={e => setFormData({ ...formData, avatar: e.target.value })}
-                  className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
-                  placeholder="https://..."
-                />
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">
+                  Author Photo / Avatar
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 shrink-0">
+                    <img 
+                      src={formData.avatar || 'https://i.pravatar.cc/150?img=12'} 
+                      alt="Avatar Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    {isUploadingAvatar && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Loader className="animate-spin text-white" size={16} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2">
+                    <label className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition-all shadow-sm ${isUploadingAvatar ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleAvatarUpload}
+                        disabled={isUploadingAvatar}
+                      />
+                      <Camera size={14} />
+                      {isUploadingAvatar ? 'Uploading to Firebase...' : 'Upload New Photo'}
+                    </label>
+
+                    <input
+                      id="testimonial-avatar"
+                      type="url"
+                      value={formData.avatar || ''}
+                      onChange={e => setFormData({ ...formData, avatar: e.target.value })}
+                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-xs dark:text-white"
+                      placeholder="Or paste image URL (https://...)"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Review Content *</label>
+                <label htmlFor="testimonial-content" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Review Content *</label>
                 <textarea
+                  id="testimonial-content"
                   rows={4}
                   required
                   value={formData.content || ''}
@@ -540,8 +606,9 @@ export const TestimonialsManager: React.FC = () => {
 
             <form onSubmit={handleSaveSettings} className="space-y-4 text-sm">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Google Places API Key</label>
+                <label htmlFor="testimonial-api-key" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Google Places API Key</label>
                 <input
+                  id="testimonial-api-key"
                   type="password"
                   value={googleSettings.apiKey || ''}
                   onChange={e => setGoogleSettings({ ...googleSettings, apiKey: e.target.value })}
@@ -552,8 +619,9 @@ export const TestimonialsManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Google Place ID</label>
+                <label htmlFor="testimonial-place-id" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Google Place ID</label>
                 <input
+                  id="testimonial-place-id"
                   type="text"
                   value={googleSettings.placeId || ''}
                   onChange={e => setGoogleSettings({ ...googleSettings, placeId: e.target.value })}
@@ -564,8 +632,9 @@ export const TestimonialsManager: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Minimum Star Rating</label>
+                  <label htmlFor="testimonial-min-rating" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Minimum Star Rating</label>
                   <select
+                    id="testimonial-min-rating"
                     value={googleSettings.minimumRating || 4}
                     onChange={e => setGoogleSettings({ ...googleSettings, minimumRating: parseInt(e.target.value) || 4 })}
                     className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"

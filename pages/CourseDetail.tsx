@@ -217,7 +217,7 @@ export const CourseDetail: React.FC = () => {
                       Course Overview
                   </h2>
                   <div 
-                    className="prose max-w-none text-gray-600 leading-relaxed space-y-4 html-description overview-section-content"
+                    className="prose max-w-none text-gray-800 dark:text-gray-200 leading-relaxed html-description overview-section-content"
                     dangerouslySetInnerHTML={{ __html: formatDescription(course.fullDescription) }}
                   />
                 </section>
@@ -266,32 +266,36 @@ export const CourseDetail: React.FC = () => {
             <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300">
               <h2 className="text-xl md:text-2xl font-heading font-bold text-secondary mb-6">Course Specifications & Details</h2>
               <div className="space-y-4">
-                {[
-                  { id: 'courseBenefits', title: 'Course Benefits', content: course?.courseBenefits },
-                  { id: 'isThisCourseForMe', title: 'Is this course for me?', content: course?.isThisCourseForMe },
-                  { id: 'careerOpportunities', title: 'Career Opportunities', content: course?.careerOpportunities },
-                  { id: 'durationOfTraining', title: 'What is the duration of training?', content: course?.durationOfTraining },
-                  { id: 'whereDelivered', title: 'Where is the training delivered?', content: course?.whereDelivered },
-                  { id: 'entryRequirementsRich', title: 'What are the entry requirements?', content: course?.entryRequirementsRich },
-                  { id: 'gwoModulesRich', title: 'GWO Standard Training Modules', content: course?.gwoModulesRich },
-                  { id: 'languageRequirements', title: 'Language & Prerequisites', content: course?.languageRequirements },
-                  { id: 'assessment', title: 'Assessment', content: course?.assessment },
-                  { id: 'certificationRecord', title: 'Certification/Training Record', content: course?.certificationRecord },
-                  { id: 'validityPeriod', title: 'Validity Period', content: course?.validityPeriod },
-                  { id: 'whatToBringRich', title: 'What to bring?', content: course?.whatToBringRich },
-                  { id: 'costOfTraining', title: 'What is the cost of training?', content: course?.costOfTraining },
-                  { id: 'paymentOptions', title: 'What are the payment options?', content: course?.paymentOptions },
-                ].map((section) => {
-                  if (!section.content) return null;
-                  const isOpen = expandedSection === section.id;
+                {((course?.accordionSections && course.accordionSections.length > 0)
+                  ? course.accordionSections
+                  : [
+                      { id: 'courseBenefits', title: 'Course Benefits', content: course?.courseBenefits },
+                      { id: 'isThisCourseForMe', title: 'Is this course for me?', content: course?.isThisCourseForMe },
+                      { id: 'careerOpportunities', title: 'Career Opportunities', content: course?.careerOpportunities },
+                      { id: 'durationOfTraining', title: 'What is the duration of training?', content: course?.durationOfTraining },
+                      { id: 'whereDelivered', title: 'Where is the training delivered?', content: course?.whereDelivered },
+                      { id: 'entryRequirementsRich', title: 'What are the entry requirements?', content: course?.entryRequirementsRich },
+                      { id: 'gwoModulesRich', title: 'GWO Standard Training Modules', content: course?.gwoModulesRich },
+                      { id: 'languageRequirements', title: 'Language & Prerequisites', content: course?.languageRequirements },
+                      { id: 'assessment', title: 'Assessment', content: course?.assessment },
+                      { id: 'certificationRecord', title: 'Certification/Training Record', content: course?.certificationRecord },
+                      { id: 'validityPeriod', title: 'Validity Period', content: course?.validityPeriod },
+                      { id: 'whatToBringRich', title: 'What to bring?', content: course?.whatToBringRich },
+                      { id: 'costOfTraining', title: 'What is the cost of training?', content: course?.costOfTraining },
+                      { id: 'paymentOptions', title: 'What are the payment options?', content: course?.paymentOptions },
+                    ]
+                ).map((section, idx) => {
+                  if (!section.content || !section.content.trim() || section.content.trim() === '<p><br></p>') return null;
+                  const secId = section.id || `sec_${idx}`;
+                  const isOpen = expandedSection === secId;
                   return (
                     <div 
-                      key={section.id} 
+                      key={secId} 
                       className={`rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'shadow-xl ring-1 ring-black/5 bg-[#041024]' : 'bg-[#041024] hover:shadow-lg'}`}
                     >
                       <button
                         type="button"
-                        onClick={() => setExpandedSection(isOpen ? null : section.id)}
+                        onClick={() => setExpandedSection(isOpen ? null : secId)}
                         className="w-full flex items-center gap-4 px-6 py-5 text-left font-bold text-white hover:bg-[#081a36] transition-colors cursor-pointer"
                       >
                         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white text-[#041024] font-bold text-sm shrink-0 transition-transform duration-300">
@@ -299,7 +303,7 @@ export const CourseDetail: React.FC = () => {
                         </span>
                         <span className="text-sm md:text-base font-semibold select-none flex-1">{section.title}</span>
                       </button>
-                      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[800px] bg-white text-gray-800 p-6 border-t border-gray-100 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.15)]' : 'max-h-0'}`}>
+                      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[1200px] bg-white text-gray-800 p-6 border-t border-gray-100 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.15)]' : 'max-h-0'}`}>
                         <div 
                           className="prose max-w-none text-gray-700 text-sm leading-relaxed html-description"
                           dangerouslySetInnerHTML={{ __html: section.content }}
@@ -412,19 +416,76 @@ export const CourseDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 sticky top-[104px] self-start z-30 transition-all duration-500 ease-in-out">
-            <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-2xl">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-4" style={{ marginBottom: '24px' }}>
-                 <Calendar className="text-primary w-6 h-6"/>
-                 <h3 className="text-xl font-bold text-secondary">Upcoming Intakes</h3>
+            <div className="bg-white dark:bg-[#071328] border border-gray-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-4 mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 dark:text-accent">
+                    <Calendar className="w-5 h-5"/>
+                  </div>
+                  <h3 className="text-xl font-bold text-secondary dark:text-white font-heading">Upcoming Intakes</h3>
+                </div>
+                {course.upcomingDates && course.upcomingDates.length > 0 && (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {course.upcomingDates.length} {course.upcomingDates.length === 1 ? 'Slot' : 'Slots'}
+                  </span>
+                )}
               </div>
               
-              <div className="flex flex-wrap gap-2.5" style={{ marginBottom: '24px' }}>
-                {course.upcomingDates.map((date, idx) => (
-                  <div key={idx} className="flex-1 min-w-[120px] flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-accent hover:bg-white hover:shadow-md transition-all group cursor-pointer">
-                    <span className="font-bold text-xs text-gray-700 group-hover:text-primary whitespace-nowrap">{date}</span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 ml-1.5"></div>
+              {/* Modern High-Contrast Schedule List */}
+              <div className="space-y-3 mb-6">
+                {course.upcomingDates && course.upcomingDates.length > 0 ? (
+                  course.upcomingDates.map((dateStr, idx) => {
+                    // Smart parsing of date and optional time string
+                    const parts = dateStr.split(',');
+                    const dateRange = parts[0]?.trim() || dateStr;
+                    const timeSchedule = parts[1]?.trim() || (course.duration ? `Standard Schedule (${course.duration})` : 'Full Day Session');
+
+                    return (
+                      <div 
+                        key={idx}
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('openInquireModal', { 
+                            detail: { 
+                              courseId: course.id, 
+                              courseTitle: course.title,
+                              initialDate: dateRange
+                            } 
+                          }));
+                        }}
+                        className="relative overflow-hidden p-4 bg-slate-50/90 dark:bg-[#0c1c38] hover:bg-white dark:hover:bg-[#102447] rounded-2xl border border-slate-200/90 dark:border-slate-700/80 hover:border-amber-400/80 dark:hover:border-amber-400/70 hover:shadow-lg dark:hover:shadow-amber-500/5 transition-all duration-200 group cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-accent group-hover:bg-amber-400 group-hover:text-secondary transition-all shrink-0">
+                              <Calendar size={16} />
+                            </div>
+                            <span className="font-extrabold text-sm sm:text-[15px] text-slate-900 dark:text-slate-50 leading-snug tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                              {dateRange}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-700/60 shrink-0 shadow-xs">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Open
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between pl-9 pt-1 text-xs">
+                          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
+                            <Clock size={13} className="text-amber-500/90 shrink-0" />
+                            <span className="font-semibold">{timeSchedule}</span>
+                          </div>
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                            Select <span className="text-sm leading-none">→</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Custom schedule on request
                   </div>
-                ))}
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
@@ -434,21 +495,24 @@ export const CourseDetail: React.FC = () => {
                       detail: { courseId: course.id, courseTitle: course.title } 
                     }));
                   }}
-                  className="flex-1 text-sm py-3.5 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-accent text-secondary hover:bg-amber-400 border-none uppercase tracking-wider whitespace-nowrap"
+                  className="flex-1 text-sm py-4 font-bold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all bg-accent text-secondary hover:bg-amber-400 border-none uppercase tracking-wider whitespace-nowrap"
                 >
                   INQUIRE NOW
                 </Button>
               </div>
 
               {course.depositAmount && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl text-center text-xs text-gray-500 font-medium leading-relaxed" style={{ marginTop: '20px', padding: '12px' }}>
+                <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/80 rounded-xl text-center text-xs text-gray-500 dark:text-slate-400 font-medium leading-relaxed" style={{ marginTop: '20px', padding: '12px' }}>
                   Inquire now to get course details, custom schedules, and corporate group pricing.
                 </div>
               )}
 
-              <div className="border-t border-gray-100 text-center" style={{ marginTop: '28px', paddingTop: '28px' }}>
-                <p className="text-gray-500 text-sm mb-2 font-medium uppercase tracking-wide">Have questions?</p>
-                <a href="tel:1300333883" className="text-primary font-bold hover:text-accent text-2xl transition-colors font-heading">1300 333 883</a>
+              <div className="border-t border-gray-100 dark:border-slate-800 text-center" style={{ marginTop: '28px', paddingTop: '28px' }}>
+                <p className="text-gray-500 dark:text-slate-400 text-xs mb-2 font-bold uppercase tracking-wider">HAVE QUESTIONS?</p>
+                <div className="flex flex-col gap-1">
+                  <a href="tel:+639683824294" className="text-primary dark:text-accent font-bold hover:text-accent dark:hover:text-amber-300 text-xl transition-colors font-heading">+63 968 382 4294</a>
+                  <a href="tel:+639159029406" className="text-primary dark:text-accent font-bold hover:text-accent dark:hover:text-amber-300 text-xl transition-colors font-heading">+63 915 902 9406</a>
+                </div>
               </div>
             </div>
           </div>
@@ -460,9 +524,11 @@ export const CourseDetail: React.FC = () => {
       <div className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] py-3 md:py-4 z-40 transform transition-transform duration-500 ${showStickyNav ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
           <div className="hidden md:flex items-center gap-4">
-            <img src={course.image} alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-200 shadow-sm" />
+            <div className="w-24 aspect-[16/9] rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-sm bg-gray-100">
+              <img src={course.image} alt="" className="w-full h-full object-cover" />
+            </div>
             <div>
-              <h3 className="font-bold text-secondary text-lg truncate max-w-xs lg:max-w-md leading-tight">{course.title}</h3>
+              <h3 className="font-bold text-secondary text-base lg:text-lg truncate max-w-xs lg:max-w-md leading-tight">{course.title}</h3>
               <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Seats filling fast</span>
             </div>
           </div>

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, BrainCircuit, Paperclip, Image as ImageIcon, ChevronRight, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { chatWithGemini } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
@@ -48,16 +49,27 @@ const parseInlineMarkdown = (text: string) => {
       if (endLabel !== -1 && startUrl === endLabel + 1 && endUrl !== -1) {
         const label = remaining.substring(linkIndex + 1, endLabel);
         const url = remaining.substring(startUrl + 1, endUrl);
+        const isInternal = url.startsWith('/');
         parts.push(
-          <a 
-            key={`a-${keyIdx++}`} 
-            href={url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-primary hover:text-accent font-semibold underline transition-colors"
-          >
-            {label}
-          </a>
+          isInternal ? (
+            <Link
+              key={`a-${keyIdx++}`}
+              to={url}
+              className="text-primary hover:text-accent font-semibold underline transition-colors"
+            >
+              {label}
+            </Link>
+          ) : (
+            <a 
+              key={`a-${keyIdx++}`} 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary hover:text-accent font-semibold underline transition-colors"
+            >
+              {label}
+            </a>
+          )
         );
         remaining = remaining.substring(endUrl + 1);
       } else {

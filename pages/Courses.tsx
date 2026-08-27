@@ -152,7 +152,14 @@ export const Courses: React.FC = () => {
     setIsLoading(false);
 
     const categoryParam = searchParams.get('category');
-    if (categoryParam) setSelectedCategory(categoryParam);
+    if (categoryParam) {
+      if (categoryParam.toUpperCase() === 'GWO') {
+        const gwoCat = parentCategoryList.find(c => c.name.toLowerCase().includes('wind') || c.name.toLowerCase().includes('gwo'));
+        setSelectedCategory(gwoCat ? gwoCat.name : categoryParam);
+      } else {
+        setSelectedCategory(categoryParam);
+      }
+    }
 
     const pageContent = getPageContent('courses');
     if (pageContent) {
@@ -233,7 +240,10 @@ export const Courses: React.FC = () => {
                             course.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             course.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (course.prerequisites && course.prerequisites.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())));
-      const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || 
+        course.category === selectedCategory ||
+        (selectedCategory.toUpperCase() === 'GWO' && (course.category.toLowerCase().includes('wind') || course.isGwo || course.category.toUpperCase().includes('GWO'))) ||
+        course.category.toLowerCase() === selectedCategory.toLowerCase();
       const matchesSubCategory = selectedSubCategory === 'All' || course.subCategory === selectedSubCategory;
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
       let matchesDuration = true;
@@ -493,12 +503,12 @@ export const Courses: React.FC = () => {
 
         {/* ─── Results Section ────────────────────────────────────── */}
         {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filteredCourses.length > 0 ? (
           viewMode === 'grid' ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredCourses.map(course => (
                 <CourseCard key={course.id} course={course} />
               ))}
@@ -507,40 +517,47 @@ export const Courses: React.FC = () => {
             <div className="flex flex-col gap-5">
               {filteredCourses.map(course => (
                 <div key={course.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 group">
-                  <div className="relative w-full md:w-64 h-48 md:h-auto flex-shrink-0 overflow-hidden rounded-xl">
+                  <div className="relative w-full md:w-72 aspect-video flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     <img src={course.image} alt={course.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   </div>
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-[4px] inline-block">{course.category}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-0.5 rounded-[4px] inline-block">{course.level}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#232323] bg-[#FFC107] px-2 py-0.5 rounded-[4px] inline-block">{course.category}</span>
+                        {course.level && course.level.toLowerCase() !== 'available' && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-0.5 rounded-[4px] inline-block">{course.level}</span>
+                        )}
                       </div>
-                      <h3 className="text-xl font-bold text-secondary mb-2 group-hover:text-primary transition-colors">
-                        <Link to={`/courses/${course.id}`}>{course.title}</Link>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                        <Link to={`/courses/${course.id}`} className="hover:underline decoration-amber-400/60 underline-offset-4">{course.title}</Link>
                       </h3>
-                      <p className="text-gray-500 text-sm line-clamp-2 mb-4">{course.shortDescription}</p>
+                      <p className="text-gray-500 dark:text-gray-300 text-sm line-clamp-2 mb-4 leading-relaxed">{course.shortDescription}</p>
                     </div>
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-50">
-                      <div className="flex gap-5 text-sm font-semibold text-gray-600">
-                        <span className="flex items-center gap-1.5"><Clock size={15} className="text-gray-400" />{course.duration}</span>
-                        <span className="flex items-center gap-1.5 text-primary text-base font-bold"><DollarSign size={15} className="text-gray-400" />{course.price}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex gap-5 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                        <span className="flex items-center gap-1.5"><Clock size={15} className="text-amber-500" />{course.duration}</span>
+                        <span className="flex items-center gap-1.5 text-slate-900 dark:text-white text-base font-bold"><DollarSign size={15} className="text-emerald-500" />{course.price}</span>
                       </div>
                       <div className="flex gap-3">
                         <Link to={`/courses/${course.id}`}>
-                          <Button variant="outline" size="sm" className="px-5 rounded-lg text-xs font-bold">View Details</Button>
+                          <button 
+                            type="button"
+                            className="px-5 py-2.5 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 hover:border-amber-400 dark:hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-700 transition-all shadow-xs cursor-pointer"
+                          >
+                            View Details
+                          </button>
                         </Link>
                         <Button 
                           size="sm" 
-                          className="px-5 rounded-lg text-xs font-bold bg-accent text-secondary hover:bg-amber-400" 
+                          className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#FFC107] text-[#041024] hover:bg-[#e5ac06] uppercase tracking-wider shadow-md hover:shadow-lg cursor-pointer font-sans" 
                           onClick={() => {
                             window.dispatchEvent(new CustomEvent('openInquireModal', { 
                               detail: { courseId: course.id, courseTitle: course.title } 
                             }));
                           }}
                         >
-                          Inquire Now
+                          INQUIRE NOW
                         </Button>
                       </div>
                     </div>

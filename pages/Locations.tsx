@@ -82,8 +82,13 @@ export const Locations: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    const content = getPageContent('locations');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('locations');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const handleFindPlaces = async () => {
@@ -119,13 +124,10 @@ export const Locations: React.FC = () => {
               {/* Accent badges */}
               <div className="flex flex-wrap gap-2.5 mb-6">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider border border-accent/30 backdrop-blur-sm">
-                  📍 1 Permanent Centre + Nationwide Onsite
+                  📍 Training Centre
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
                   Angeles City, Pampanga
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider border border-white/20 backdrop-blur-sm">
-                  Client Site Delivery Available
                 </span>
               </div>
               <h1 className="font-heading font-bold text-white mb-4 drop-shadow-lg animate-fade-in" style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}>
@@ -149,7 +151,7 @@ export const Locations: React.FC = () => {
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
-                {hero?.description || 'SKYLAR EDUCATION ASIA operates one permanent, purpose-built training centre in Angeles City, Pampanga, supplemented by flexible nationwide onsite training delivery at client facilities.'}
+                {hero?.description || 'SKYLAR EDUCATION ASIA operates our permanent, purpose-built GWO training centre in Angeles City, Pampanga.'}
               </p>
             </div>
           </div>
@@ -158,7 +160,7 @@ export const Locations: React.FC = () => {
       {/* ─────────────────────────────────────────────────────────── */}
 
       <div className="container mx-auto px-4 md:px-8 relative z-10 py-16">
-        <div className="grid md:grid-cols-2 gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-12 max-w-5xl">
           {LOCATIONS.map(location => (
             <div key={location.id} id={location.id} className="scroll-mt-32">
                 <LocationCard location={location} />
@@ -186,7 +188,7 @@ export const Locations: React.FC = () => {
               type="text" 
               value={placeQuery}
               onChange={(e) => setPlaceQuery(e.target.value)}
-              placeholder="e.g., 'Cheap cafes near Lonsdale St campus'"
+              placeholder="e.g., 'Hotels and restaurants near Angeles City Training Centre'"
               className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <Button onClick={handleFindPlaces} disabled={isLoading}>

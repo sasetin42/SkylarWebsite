@@ -189,11 +189,11 @@ export const Checkout: React.FC = () => {
                     <h2 className="text-xl font-bold text-secondary mb-6 border-b border-gray-100 pb-4">Student Details</h2>
                     <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
                        <div className="grid md:grid-cols-2 gap-6">
-                           <div>
-                              <label className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
-                              <input 
-                                 required
-                                 id="checkout-firstname"
+                            <div>
+                               <label htmlFor="checkout-firstname" className="block text-sm font-bold text-gray-700 mb-2">First Name</label>
+                               <input 
+                                  required
+                                  id="checkout-firstname"
                                  name="firstName"
                                  autoComplete="given-name"
                                  type="text" 
@@ -203,10 +203,10 @@ export const Checkout: React.FC = () => {
                               />
                           </div>
                            <div>
-                              <label className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
-                              <input 
-                                 required
-                                 id="checkout-lastname"
+                               <label htmlFor="checkout-lastname" className="block text-sm font-bold text-gray-700 mb-2">Last Name</label>
+                               <input 
+                                  required
+                                  id="checkout-lastname"
                                  name="lastName"
                                  autoComplete="family-name"
                                  type="text" 
@@ -218,10 +218,10 @@ export const Checkout: React.FC = () => {
                        </div>
                        <div className="grid md:grid-cols-2 gap-6">
                            <div>
-                              <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                              <input 
-                                 required
-                                 id="checkout-email"
+                               <label htmlFor="checkout-email" className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                               <input 
+                                  required
+                                  id="checkout-email"
                                  name="email"
                                  autoComplete="email"
                                  type="email" 
@@ -231,10 +231,10 @@ export const Checkout: React.FC = () => {
                               />
                           </div>
                            <div>
-                              <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
-                              <input 
-                                 required
-                                 id="checkout-phone"
+                               <label htmlFor="checkout-phone" className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                               <input 
+                                  required
+                                  id="checkout-phone"
                                  name="phone"
                                  autoComplete="tel"
                                  type="tel" 
@@ -245,9 +245,9 @@ export const Checkout: React.FC = () => {
                           </div>
                        </div>
                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2">WINDA ID <span className="font-normal text-gray-400">(Optional for GWO delegates)</span></label>
-                           <input 
-                              id="checkout-winda"
+                           <label htmlFor="checkout-winda" className="block text-sm font-bold text-gray-700 mb-2">WINDA ID <span className="font-normal text-gray-400">(Optional for GWO delegates)</span></label>
+                            <input 
+                               id="checkout-winda"
                               name="windaId"
                               autoComplete="off"
                               type="text" 
@@ -314,7 +314,7 @@ export const Checkout: React.FC = () => {
                        form="checkout-form"
                        className="w-full py-4 text-lg font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
                     >
-                       Complete Enrollment <ArrowRight size={20} className="ml-2" />
+                       Inquire Now <ArrowRight size={20} className="ml-2" />
                     </Button>
                  </div>
               </div>

@@ -53,33 +53,42 @@ button, input, select, textarea {
 .pb-24, .pb-20, .pb-16 { padding-bottom: 50px !important; }
 
 
-.html-description h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #041024;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
+.html-description {
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
-.dark .html-description h3 {
-  color: #f1f5f9;
+
+.dark .html-description {
+  color: #cbd5e1;
 }
+
 .html-description p {
   margin-bottom: 1rem;
-  line-height: 1.625;
+  line-height: 1.7;
+  color: inherit;
 }
+
 .html-description ul {
-  list-style-type: disc;
-  padding-left: 1.25rem;
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
   margin-bottom: 1rem;
 }
+
 .html-description ol {
-  list-style-type: decimal;
-  padding-left: 1.25rem;
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
   margin-bottom: 1rem;
 }
+
 .html-description li {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.375rem;
+  color: inherit;
+  line-height: 1.6;
 }
+
 .html-description strong {
   font-weight: 700;
   color: #0f172a;
@@ -102,19 +111,51 @@ button, input, select, textarea {
 
 /* Links inside HTML Descriptions */
 .html-description a {
-  color: #3b82f6; /* Blue-500 */
+  color: #2563eb;
   text-decoration: underline;
   font-weight: 600;
   transition: color 0.15s ease;
 }
 .dark .html-description a {
-  color: #60a5fa; /* Blue-400 */
+  color: #60a5fa;
 }
 .html-description a:hover {
-  color: #1d4ed8; /* Blue-700 */
+  color: #1d4ed8;
 }
 .dark .html-description a:hover {
-  color: #93c5fd; /* Blue-300 */
+  color: #93c5fd;
+}
+
+/* Typography & Headings in Descriptions */
+.html-description h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.dark .html-description h2 {
+  color: #f8fafc;
+}
+.html-description h3 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.dark .html-description h3 {
+  color: #f1f5f9;
+}
+.html-description h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 1rem;
+  margin-bottom: 0.375rem;
+}
+.dark .html-description h4 {
+  color: #e2e8f0;
 }
 
 /* Alert Boxes / Info Panels */
@@ -127,22 +168,99 @@ button, input, select, textarea {
   line-height: 1.5;
 }
 .html-description .html-alert.alert-info {
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: rgba(59, 130, 246, 0.06);
   border-color: #3b82f6;
   color: #1e3a8a;
 }
 .dark .html-description .html-alert.alert-info {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(59, 130, 246, 0.12);
   color: #bfdbfe;
 }
 .html-description .html-alert.alert-warning {
-  background-color: rgba(245, 158, 11, 0.05);
+  background-color: rgba(245, 158, 11, 0.06);
   border-color: #f59e0b;
   color: #78350f;
 }
 .dark .html-description .html-alert.alert-warning {
-  background-color: rgba(245, 158, 11, 0.1);
+  background-color: rgba(245, 158, 11, 0.12);
   color: #fde68a;
+}
+.html-description .html-alert.alert-success {
+  background-color: rgba(16, 185, 129, 0.06);
+  border-color: #10b981;
+  color: #064e3b;
+}
+.dark .html-description .html-alert.alert-success {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #a7f3d0;
+}
+.html-description .html-alert.alert-accent {
+  background-color: rgba(234, 179, 8, 0.07);
+  border-color: #eab308;
+  color: #713f12;
+}
+.dark .html-description .html-alert.alert-accent {
+  background-color: rgba(234, 179, 8, 0.12);
+  color: #fef08a;
+}
+
+/* Blockquotes */
+.html-description blockquote {
+  margin: 1.25rem 0;
+  padding: 0.875rem 1.25rem;
+  border-left: 4px solid #f59e0b;
+  background-color: #f8fafc;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #475569;
+}
+.dark .html-description blockquote {
+  background-color: #1e293b;
+  color: #cbd5e1;
+  border-left-color: #fbbf24;
+}
+
+/* Checklist */
+.html-description .html-checklist {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 1rem 0;
+}
+.html-description .html-checklist li {
+  position: relative;
+  padding-left: 1.75rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+.html-description .html-checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #10b981;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Badges / Pills */
+.html-description .html-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 9999px;
+  margin-right: 0.375rem;
+  margin-bottom: 0.375rem;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.dark .html-description .html-badge {
+  background-color: rgba(14, 165, 233, 0.15);
+  color: #7dd3fc;
+  border-color: rgba(14, 165, 233, 0.3);
 }
 
 /* Dividers */
@@ -208,10 +326,9 @@ button, input, select, textarea {
   width: 100%;
 }
 
-/* Enforce Maven Pro and exactly 16px size on Course Overview */
-.overview-section-content, .overview-section-content * {
+/* Enforce Maven Pro on Course Overview */
+.overview-section-content {
   font-family: 'Maven Pro', sans-serif !important;
-  font-size: 16px !important;
 }
 
 /* Custom Scrollbar - Modern, thin design */

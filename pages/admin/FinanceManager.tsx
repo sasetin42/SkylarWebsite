@@ -109,7 +109,7 @@ export const FinanceManager: React.FC = () => {
                   <h3 className="text-xl font-bold mb-6 text-gray-800 dark:text-white">Record New Payment</h3>
                   <form onSubmit={handleRecordPayment} className="space-y-4">
                       <div>
-                          <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Student</label>
+                          <label htmlFor="finance-student" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Student</label>
                           <select 
                             id="finance-student"
                             name="financeStudent"
@@ -123,7 +123,7 @@ export const FinanceManager: React.FC = () => {
                           </select>
                       </div>
                       <div>
-                          <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Amount ($)</label>
+                          <label htmlFor="finance-amount" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Amount ($)</label>
                           <input 
                             type="number" 
                             id="finance-amount"
@@ -135,7 +135,7 @@ export const FinanceManager: React.FC = () => {
                           />
                       </div>
                       <div>
-                          <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Type</label>
+                          <label htmlFor="finance-type" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Type</label>
                           <select 
                             id="finance-type"
                             name="financeType"

@@ -80,93 +80,97 @@ export const GWOBenefits: React.FC = () => {
   const trainingModules = [
     { 
       id: 'basic-safety',
-      title: 'Basic Safety Training',
+      title: 'Basic Safety Training (BST)',
       icon: Shield,
       color: 'bg-primary',
       courses: ['Working at Heights', 'Manual Handling', 'Fire Awareness', 'First Aid', 'Sea Survival'],
       duration: '3-5 Days',
-      description: 'Foundation safety skills for all wind energy personnel.'
+      description: 'Foundational safety qualifications mandatory for all personnel working on onshore and offshore wind turbines.',
+      courseLink: '/courses/gwo-bst-initial'
     },
     {
       id: 'advanced-rescue',
-      title: 'Advanced Rescue Training',
+      title: 'Advanced Rescue Training (ART)',
       icon: HardHat,
       color: 'bg-blue-600',
-      courses: ['Hub Rescue', 'Nacelle Rescue', 'Blade Rescue', 'Vertical Rescue'],
+      courses: ['Hub & Spinner Rescue', 'Nacelle & Tower Rescue', 'Blade & Over-the-Side Rescue', 'Single Rescuer Evacuation'],
       duration: '2-4 Days',
-      description: 'Specialised rescue techniques for high-risk scenarios.'
+      description: 'Specialised high-angle rescue techniques for complex wind turbine emergencies and confined spaces.',
+      courseLink: '/courses/gwo-art-initial'
     },
     {
       id: 'technical',
-      title: 'Technical Skills',
+      title: 'Basic Technical Training (BTT)',
       icon: Zap,
       color: 'bg-accent',
-      courses: ['Hydraulic Systems', 'Electrical Safety', 'Mechanical Assembly', 'Composite Repair'],
+      courses: ['Hydraulic Systems', 'Electrical Safety & Lockout/Tagout', 'Mechanical Assembly', 'Installation & Bolt Torquing'],
       duration: '3-7 Days',
-      description: 'Technical competencies for turbine maintenance.'
+      description: 'Technical competencies for turbine erection, commissioning, and scheduled maintenance.',
+      courseLink: '/courses/gwo-btt'
     },
     {
       id: 'supervisor',
-      title: 'Supervisor Training',
+      title: 'Control of Hazardous Energy (COHE)',
       icon: Users,
       color: 'bg-green-600',
-      courses: ['Safety Management', 'Risk Assessment', 'Team Leadership', 'Incident Investigation'],
+      courses: ['Safety Management (DOLE OSH)', 'Risk Assessment & JSA', 'Lockout/Tagout Protocols', 'Emergency Action Planning'],
       duration: '2-3 Days',
-      description: 'Leadership skills for team supervisors and managers.'
+      description: 'Supervisory protocols ensuring full compliance with international safety and Philippine OSH standards.',
+      courseLink: '/courses?category=Workplace%20Safety%20%26%20Emergency%20Response'
     }
   ];
 
   const testimonials = [
     {
-      name: 'James Mitchell',
-      role: 'Wind Turbine Technician',
-      company: 'Vestas',
+      name: 'Arnel Bautista',
+      role: 'Lead Wind Turbine Technician',
+      company: 'North Luzon Wind Power Project',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100',
-      content: 'GWO certification completely transformed my career. Within 6 months of completing my training, I landed a role with one of the biggest wind energy companies in the Asia-Pacific region.',
+      content: 'GWO Basic Safety Training at SKYLAR EDUCATION ASIA gave me the verified WINDA credentials required for turbine blade and nacelle maintenance in Ilocos Norte. The practical working-at-heights and rescue drills were world-class.',
       rating: 5
     },
     {
-      name: 'Sarah Chen',
-      role: 'Safety Manager',
-      company: 'Siemens Gamesa',
+      name: 'Engr. Maria Santos-Cruz',
+      role: 'HSE & Compliance Manager',
+      company: 'Philippine Renewable Energy Dev Corp',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100',
-      content: 'The GWO-trained technicians we hire from SKYLAR EDUCATION ASIA consistently demonstrate superior safety awareness and technical competence. It\'s a benchmark we trust.',
+      content: 'Having our field engineers GWO-certified ensures full compliance with DOLE OSH standards (RA 11058) and developer safety criteria. The technicians demonstrate superior risk awareness on site.',
       rating: 5
     },
     {
-      name: 'Michael Torres',
-      role: 'Operations Director',
-      company: 'Goldwind',
+      name: 'Danilo Reyes',
+      role: 'Senior Rigger & Heights Specialist',
+      company: 'Luzon Energy Infrastructure Services',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100',
-      content: 'Investing in GWO certification for our team reduced workplace incidents by 40% and improved overall operational efficiency significantly.',
+      content: 'The hands-on nacelle rescue and manual handling training directly prepared our crew for high-risk onshore and offshore wind assignments across Southeast Asia.',
       rating: 5
     }
   ];
 
   const faqs = [
     {
-      q: 'What is GWO certification and why is it important?',
-      a: 'GWO (Global Wind Organisation) certification is an internationally recognised standard for safety training in the wind energy industry. It ensures that technicians have the necessary skills to work safely in hazardous environments, reducing risks and improving operational efficiency across the sector.'
+      q: 'What is GWO certification and why is it required in the Philippines?',
+      a: 'GWO (Global Wind Organisation) certification is the international gold standard for wind energy safety training. In the Philippines, as the Department of Energy accelerates onshore and offshore wind farms, developers and contractors require GWO-certified personnel to ensure compliance with international safety standards and DOLE OSH (RA 11058) requirements.'
     },
     {
-      q: 'How long does GWO certification take to complete?',
-      a: 'The duration depends on the specific modules you choose. Basic Safety Training typically takes 3-5 days, while advanced modules like Rescue Training can take 2-4 days. Full certification across all modules may take 2-3 weeks of intensive training.'
+      q: 'Are certificates uploaded to the GWO WINDA Database?',
+      a: 'Yes, upon successful completion of your training modules at SKYLAR EDUCATION ASIA, your certification is directly uploaded to the Global Wind Organisation WINDA database. This provides an instantly verifiable digital record accessible to wind farm operators worldwide.'
+    },
+    {
+      q: 'How long does GWO Basic Safety Training (BST) take to complete?',
+      a: 'The full GWO Basic Safety Training (BST) package typically takes 4 to 5 days, covering Working at Heights, Manual Handling, Fire Awareness, First Aid, and Sea Survival (for offshore deployments). Individual standalone modules can also be completed in 1 to 2 days.'
     },
     {
       q: 'How long is GWO certification valid?',
-      a: 'GWO certification is valid for 2 years. After that, you\'ll need to complete refresher training to maintain your certification. We recommend starting your refresher course at least 3 months before expiry.'
+      a: 'GWO certification is valid globally for 2 years (24 months). To maintain your active status in the WINDA registry, you must complete a GWO BST Refresher (BSTR) course before your current certificate expires.'
     },
     {
-      q: 'Do I need prior experience to enroll in GWO training?',
-      a: 'While prior experience in the wind energy sector is beneficial, it\'s not mandatory for most GWO modules. Our Basic Safety Training is designed for newcomers, while advanced modules may require completion of prerequisite courses.'
+      q: 'What career opportunities are available for GWO graduates in the Philippines and abroad?',
+      a: 'GWO graduates qualify for high-demand roles including Wind Turbine Technician, HSE Safety Officer, Blade Repair Specialist, Rigging Supervisor, and Offshore Wind Specialist in Philippine wind projects (Ilocos Norte, Rizal, Western Visayas) and international APAC markets (Taiwan, Japan, Australia, Europe).'
     },
     {
-      q: 'What career opportunities does GWO certification open up?',
-      a: 'GWO certification is required by most wind energy companies worldwide. It qualifies you for roles such as Wind Turbine Technician, Safety Supervisor, Operations & Maintenance Specialist, and various offshore wind positions.'
-    },
-    {
-      q: 'Does SKYLAR EDUCATION ASIA offer corporate GWO training?',
-      a: 'Yes, we offer tailored corporate training packages for organisations in the wind energy sector. We can conduct training at our facility or on-site at your location. Contact us for customised group pricing and scheduling.'
+      q: 'Does SKYLAR EDUCATION ASIA provide corporate training at client wind farm sites?',
+      a: 'Yes. In addition to training at our dedicated Angeles City, Pampanga facility, SKYLAR EDUCATION ASIA provides mobile on-site safety training for corporate clients and wind farm operators across Luzon, Visayas, and Mindanao.'
     }
   ];
 
@@ -205,7 +209,7 @@ export const GWOBenefits: React.FC = () => {
               </h1>
               <div className="w-24 h-1.5 bg-accent mx-auto mb-6 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl mx-auto leading-relaxed text-base md:text-lg">
-                Unlocking new career paths and enhancing safety in the expanding renewable energy sector.
+                Unlocking global career pathways and empowering safety excellence for the Philippines and Asia-Pacific renewable energy sector.
               </p>
             </div>
           </div>
@@ -217,10 +221,10 @@ export const GWOBenefits: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
             {[
-              { value: 500, suffix: '+', label: 'Certified Technicians' },
-              { value: 98, suffix: '%', label: 'Employment Rate' },
-              { value: 15, suffix: '+', label: 'Training Modules' },
-              { value: 40, suffix: '%', label: 'Fewer Incidents' }
+              { value: 100, suffix: '%', label: 'WINDA Registry Verified' },
+              { value: 35, suffix: '%', label: 'PH 2030 RE Target (DOE)' },
+              { value: 60, suffix: '+ GW', label: 'PH Wind Potential Pipeline' },
+              { value: 40, suffix: '%', label: 'Fewer Workplace Incidents' }
             ].map((stat, idx) => (
               <div key={idx} className="py-8 md:py-10 text-center">
                 <div className="text-3xl md:text-4xl font-heading font-bold text-primary mb-1">
@@ -239,15 +243,15 @@ export const GWOBenefits: React.FC = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
             {/* Left Content */}
             <div>
-              <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">About GWO</span>
+              <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">Philippine Wind Energy Standards</span>
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6 leading-tight">
-                Introduction to GWO Certification
+                Empowering the Philippines' Wind Energy Transition
               </h2>
               <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6">
-                The Global Wind Organisation (GWO) was established to enhance the safety and training of individuals working in the wind energy sector. As the renewable energy field expands, having a skilled and informed workforce is very important.
+                Under the Philippine Department of Energy's (DOE) National Renewable Energy Program (NREP) and Executive Order No. 21 for Offshore Wind, the Philippines is rapidly expanding its wind energy capacity across Luzon, Visayas, and Mindanao.
               </p>
               <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-8">
-                GWO Certification offers a structured way to attain the necessary skills, promoting safety and efficiency across the industry. It is the gold standard for wind energy safety training worldwide.
+                Operating on active wind farms in Ilocos Norte, Rizal, Aklan, and emerging offshore projects requires rigorous safety protocols. GWO Certification provides technicians with verified WINDA credentials, aligned with international standards and Philippine DOLE OSH (RA 11058) regulations.
               </p>
 
               {/* Overview Card */}
@@ -256,19 +260,19 @@ export const GWOBenefits: React.FC = () => {
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                     <Globe size={20} className="text-primary" />
                   </div>
-                  <h3 className="font-heading font-bold text-secondary text-lg">Overview of GWO</h3>
+                  <h3 className="font-heading font-bold text-secondary text-lg">GWO & Philippine Industry Alignment</h3>
                 </div>
                 <p className="text-gray-500 text-sm leading-relaxed">
-                  GWO is an industry-driven initiative that focuses on standardising safety training for wind turbine technicians. The organisation produces guidelines and protocols for training programmes, ensuring that they meet international standards. With a commitment to professional training and technical proficiency, GWO plays a fundamental role in shaping a capable workforce for the renewable energy sector.
+                  GWO is an industry-led non-profit founded by leading wind turbine manufacturers and operators. Standardised training ensures technicians possess verified competencies in working at heights, electrical lockouts, first aid, and complex nacelle rescues—critical for zero-harm operations across Southeast Asia.
                 </p>
               </div>
 
               {/* Key Points */}
               <div className="space-y-3">
                 {[
-                  'Recognised by 500+ wind energy companies worldwide',
-                  'Standardised safety protocols across the industry',
-                  'Continuous improvement through data-driven insights'
+                  'Direct WINDA Registry upload recognized by 500+ global and regional wind operators',
+                  'Full alignment with DOLE OSH (RA 11058) high-risk workplace safety mandates',
+                  'Hands-on practical rescue, heights, and sea survival simulation at our Angeles City Centre'
                 ].map((point, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center shrink-0">
@@ -297,10 +301,10 @@ export const GWOBenefits: React.FC = () => {
                   <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
                     <TrendingUp size={16} className="text-accent" />
                   </div>
-                  <h4 className="font-heading font-bold text-secondary text-sm">Build a Stable Future</h4>
+                  <h4 className="font-heading font-bold text-secondary text-sm">Empowering Local Talent</h4>
                 </div>
                 <p className="text-gray-500 text-xs leading-relaxed">
-                  At SKYLAR EDUCATION ASIA, we empower individuals to thrive in the wind energy industry, building careers while contributing to a greener, more sustainable world.
+                  SKYLAR EDUCATION ASIA empowers Filipino engineers and technicians with world-class safety skills, opening doors to local and overseas renewable energy careers.
                 </p>
               </div>
             </div>
@@ -350,52 +354,60 @@ export const GWOBenefits: React.FC = () => {
             {trainingModules.map((mod, idx) => (
               <button
                 key={mod.id}
+                type="button"
                 onClick={() => setActiveModule(idx)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 cursor-pointer ${
                   activeModule === idx
-                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-[#041024] text-white shadow-xl ring-2 ring-amber-400 scale-[1.02]'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-950 dark:hover:text-white border border-slate-200/80 dark:border-slate-700/80'
                 }`}
               >
-                <mod.icon size={18} />
+                <mod.icon size={18} className={activeModule === idx ? 'text-amber-400' : 'text-slate-500 dark:text-slate-400'} />
                 {mod.title}
               </button>
             ))}
           </div>
 
           {/* Module Content */}
-          <div className="bg-gray-50 rounded-3xl p-8 md:p-12 border border-gray-100">
+          <div className="bg-slate-50 dark:bg-[#071328] rounded-3xl p-8 md:p-12 border border-slate-200/80 dark:border-slate-800 shadow-xl transition-colors">
             <div className="grid lg:grid-cols-2 gap-10 items-center">
               <div>
-                <div className={`w-14 h-14 ${trainingModules[activeModule].color} rounded-2xl flex items-center justify-center mb-6`}>
+                <div className={`w-14 h-14 ${trainingModules[activeModule].color} rounded-2xl flex items-center justify-center mb-6 shadow-md`}>
                   {React.createElement(trainingModules[activeModule].icon, { size: 28, className: 'text-white' })}
                 </div>
-                <h3 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-4">
+                <h3 className="text-2xl md:text-3xl font-heading font-extrabold text-slate-900 dark:text-white mb-4">
                   {trainingModules[activeModule].title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed mb-6">
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6 text-sm md:text-base">
                   {trainingModules[activeModule].description}
                 </p>
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Clock size={16} className="text-primary" />
-                    Duration: <span className="font-bold text-secondary">{trainingModules[activeModule].duration}</span>
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                    <Clock size={16} className="text-amber-500" />
+                    Duration: <span className="font-bold text-slate-900 dark:text-white">{trainingModules[activeModule].duration}</span>
                   </div>
                 </div>
-                <Link to="/courses?category=GWO" className="inline-flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider hover:text-accent transition-colors">
-                  View Available Courses <ArrowRight size={16} />
+                <Link 
+                  to={trainingModules[activeModule].courseLink || '/courses?category=GWO'} 
+                  className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl bg-[#FFC107] text-[#041024] hover:bg-[#e5ac06] shadow-md hover:shadow-lg transition-all group font-sans"
+                >
+                  CHECK THE COURSE DETAILS <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {trainingModules[activeModule].courses.map((course, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+                  <Link 
+                    key={idx} 
+                    to={trainingModules[activeModule].courseLink || '/courses?category=GWO'}
+                    className="bg-white dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all duration-300 hover:-translate-y-0.5 group block"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                        <CheckCircle size={14} className="text-primary" />
+                      <div className="w-8 h-8 bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500 rounded-lg flex items-center justify-center shrink-0 transition-colors">
+                        <CheckCircle size={15} className="text-amber-500 group-hover:text-slate-950 transition-colors" />
                       </div>
-                      <span className="text-sm font-bold text-secondary">{course}</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{course}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -547,26 +559,26 @@ export const GWOBenefits: React.FC = () => {
       <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-4 md:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">Sustainability</span>
+            <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">National Energy Roadmap</span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6 leading-tight">
-              Aligning with Renewable Energy Goals
+              Aligning with Philippine Clean Energy Goals
             </h2>
             <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-10">
-              As energy markets worldwide strive towards greater sustainability, GWO Certification supports these goals by developing a highly skilled safety workforce. This accelerates the wind energy sector and contributes to global sustainability targets.
+              The Philippine Department of Energy (DOE) is driving an ambitious energy transition under the National Renewable Energy Program (NREP). GWO Certification equips the technical workforce needed to safely construct, commission, and maintain onshore and offshore wind energy infrastructure.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: Wind, title: 'Wind Energy Growth', value: '45%', desc: 'Industry expansion by 2030' },
-                { icon: Target, title: 'Carbon Reduction', value: '60%', desc: 'Target by 2050' },
-                { icon: Heart, title: 'Green Jobs', value: '12K+', desc: 'New positions created' }
+                { icon: Wind, title: '2030 RE Target', value: '35%', desc: 'Philippine national grid clean energy goal' },
+                { icon: Target, title: '2040 RE Goal', value: '50%', desc: 'DOE long-term renewable generation share' },
+                { icon: Heart, title: 'Wind Pipeline', value: '60+ GW', desc: 'Offshore & onshore wind contracts awarded' }
               ].map((item, idx) => (
-                <div key={idx} className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                <div key={idx} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                     <item.icon size={24} className="text-primary" />
                   </div>
                   <div className="text-2xl font-heading font-bold text-primary mb-1">{item.value}</div>
                   <h4 className="font-bold text-secondary text-sm mb-1">{item.title}</h4>
-                  <p className="text-gray-400 text-xs">{item.desc}</p>
+                  <p className="text-gray-500 text-xs">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -612,11 +624,12 @@ export const GWOBenefits: React.FC = () => {
               Discover how GWO Certification can unlock new career opportunities, boost your technical proficiency, and make you an asset in the growing wind energy industry.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/contact">
-                <button className="bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase tracking-wider hover:-translate-y-0.5">
-                  Find Out More Today
-                </button>
-              </Link>
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('openInquireModal'))}
+                className="bg-secondary text-white hover:bg-white hover:text-secondary font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase tracking-wider hover:-translate-y-0.5"
+              >
+                Inquire Now
+              </button>
               <Link to="/courses?category=GWO">
                 <button className="bg-transparent text-secondary border-2 border-secondary hover:bg-secondary hover:text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm uppercase tracking-wider hover:-translate-y-0.5">
                   Browse GWO Courses

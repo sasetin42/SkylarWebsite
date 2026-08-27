@@ -54,23 +54,23 @@ export const CorporateManager: React.FC = () => {
            
            <form onSubmit={handleSave} className="grid md:grid-cols-2 gap-6">
               <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Company Name</label>
+                  <label htmlFor="corp-company-name" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Company Name</label>
                   <input id="corp-company-name" name="companyName" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.companyName || ''} onChange={e => setFormData({...formData, companyName: e.target.value})} required />
               </div>
                <div>
-                   <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Tax ID / Business Reg No.</label>
+                   <label htmlFor="corp-tax-id" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Tax ID / Business Reg No.</label>
                    <input id="corp-tax-id" name="taxId" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.taxId || ''} onChange={e => setFormData({...formData, taxId: e.target.value})} required />
                </div>
               <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Contact Person</label>
+                  <label htmlFor="corp-contact-person" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Contact Person</label>
                   <input id="corp-contact-person" name="contactPerson" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.contactPerson || ''} onChange={e => setFormData({...formData, contactPerson: e.target.value})} required />
               </div>
               <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Email</label>
+                  <label htmlFor="corp-email" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Email</label>
                   <input id="corp-email" name="email" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} required />
               </div>
               <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Status</label>
+                  <label htmlFor="corp-contract-status" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Status</label>
                   <select id="corp-contract-status" name="contractStatus" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.contractStatus || 'Active'} onChange={e => setFormData({...formData, contractStatus: e.target.value as any})}>
                       <option>Active</option>
                       <option>Pending</option>

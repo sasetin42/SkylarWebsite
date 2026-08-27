@@ -53,18 +53,18 @@ export const SectionManager: React.FC = () => {
                 <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-white">Configure Section</h3>
                 <form onSubmit={handleSave} className="grid md:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Section Name</label>
+                        <label htmlFor="section-name" className="block text-xs font-bold text-gray-500 uppercase mb-1">Section Name</label>
                         <input id="section-name" name="sectionName" autoComplete="off" className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. GWO-A1" required/>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Course/Grade</label>
+                        <label htmlFor="section-course" className="block text-xs font-bold text-gray-500 uppercase mb-1">Course/Grade</label>
                         <select id="section-course" name="sectionCourse" autoComplete="off" className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={formData.courseId || ''} onChange={e => setFormData({...formData, courseId: e.target.value})} required>
                             <option value="">Select Course...</option>
                             {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Capacity</label>
+                        <label htmlFor="section-capacity" className="block text-xs font-bold text-gray-500 uppercase mb-1">Capacity</label>
                         <input type="number" id="section-capacity" name="sectionCapacity" autoComplete="off" className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={formData.capacity || ''} onChange={e => setFormData({...formData, capacity: parseInt(e.target.value)})} required/>
                     </div>
                     <div className="flex items-end gap-2">

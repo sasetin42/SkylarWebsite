@@ -116,7 +116,7 @@ export const OnlineEnrolments: React.FC = () => {
                                 As a student enrolled in our courses, you will gain instant access to our learner portal. This convenient online platform allows you to easily track your progress, view upcoming workshop details, and access online assessments.
                             </p>
                             <p>
-                                You will also have access to personalised support and feedback from our experienced trainers, ensuring you have the resources and guidance you need to succeed. Best of all, our learner portal can be accessed via your iOS device, providing you with flexibility and convenience for your studies.
+                                You will also have access to personalised support and feedback from our certified instructors, ensuring you have the resources and guidance you need to succeed. Best of all, our learner portal can be seamlessly accessed via your desktop, tablet, or mobile smartphone, providing you with flexibility and convenience for your studies.
                             </p>
                         </div>
                     </div>
@@ -135,14 +135,18 @@ export const OnlineEnrolments: React.FC = () => {
                         Documents
                     </h3>
                     
-                    <a href="#" className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-primary/30 hover:bg-blue-50/50 hover:shadow-md transition-all duration-300 group/link">
+                    <button 
+                        type="button"
+                        onClick={() => window.print()} 
+                        className="w-full text-left flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 hover:border-primary/30 hover:bg-blue-50/50 hover:shadow-md transition-all duration-300 group/link cursor-pointer"
+                    >
                         <div className="p-3 bg-white rounded-xl text-primary shadow-sm group-hover/link:scale-110 group-hover/link:text-accent transition-all">
                             <FileText size={24} />
                         </div>
                         <span className="font-bold text-gray-700 group-hover/link:text-primary text-sm transition-colors leading-tight">
-                            Download Online Enrolments Guide (PDF)
+                            Download / Print Online Enrolments Guide (PDF)
                         </span>
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -169,7 +173,7 @@ export const OnlineEnrolments: React.FC = () => {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="group/field">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Email</label>
+                                <label htmlFor="enrol-email" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Email</label>
                                 <input 
                                     id="enrol-email"
                                     name="email"
@@ -181,7 +185,7 @@ export const OnlineEnrolments: React.FC = () => {
                                 />
                             </div>
                             <div className="group/field">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Message</label>
+                                <label htmlFor="enrol-message" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within/field:text-primary transition-colors">Message</label>
                                 <textarea 
                                     id="enrol-message"
                                     name="message"
@@ -199,7 +203,7 @@ export const OnlineEnrolments: React.FC = () => {
                                 {formState === 'submitting' ? (
                                     <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Sending...</span>
                                 ) : (
-                                    <span className="flex items-center gap-2">Send Enquiry <Send size={16}/></span>
+                                    <span className="flex items-center gap-2">Inquire Now <Send size={16}/></span>
                                 )}
                             </Button>
                         </form>

@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, Search, Filter, Download, Plus, MoreHorizontal, 
-  CheckCircle, XCircle, AlertCircle, Edit2, Trash2, X, Loader
+  CheckCircle, XCircle, AlertCircle, Edit2, Trash2, X, Loader, Camera
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { getStudents, saveStudent, deleteStudent, getCourses } from '../../services/storageService';
 import { Student, Course } from '../../types';
+import { firebaseClient } from '../../services/firebaseClient';
 
 export const StudentManager: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -18,32 +19,54 @@ export const StudentManager: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Student>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   useEffect(() => {
     setStudents(getStudents());
     setCourses(getCourses());
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Photo size exceeds 10MB limit.");
+        e.target.value = '';
+        return;
+      }
+      setIsUploadingPhoto(true);
+      try {
+        const mediaData = await firebaseClient.uploadMedia(file, 'student-profiles', `student_${Date.now()}.jpg`);
+        setFormData(prev => ({ ...prev, photoUrl: mediaData }));
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setFormData(prev => ({ ...prev, photoUrl: event.target?.result as string }));
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsUploadingPhoto(false);
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.firstName && formData.lastName) {
       setIsSaving(true);
+      await saveStudent({
+          ...formData,
+          id: formData.id || `s_${Date.now()}`,
+          status: formData.status || 'Active',
+          progress: formData.progress || 0,
+          enrollmentDate: formData.enrollmentDate || new Date().toISOString().split('T')[0]
+      } as Student);
       
-      // Simulate API call
-      setTimeout(() => {
-        saveStudent({
-            ...formData,
-            id: formData.id || `s_${Date.now()}`,
-            status: formData.status || 'Active',
-            progress: formData.progress || 0,
-            enrollmentDate: formData.enrollmentDate || new Date().toISOString().split('T')[0]
-        } as Student);
-        
-        setStudents(getStudents());
-        setIsEditing(false);
-        setFormData({});
-        setIsSaving(false);
-      }, 800);
+      setStudents(getStudents());
+      setIsEditing(false);
+      setFormData({});
+      setIsSaving(false);
     }
   };
 
@@ -92,20 +115,46 @@ export const StudentManager: React.FC = () => {
            <form onSubmit={handleSave} className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
                   <h4 className="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">Personal Info</h4>
+                  
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">First Name</label>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Delegate Profile Photo</label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 shrink-0">
+                          {formData.photoUrl ? (
+                            <img src={formData.photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 bg-gray-100 dark:bg-gray-700">
+                              {formData.firstName?.[0] || 'S'}
+                            </div>
+                          )}
+                          {isUploadingPhoto && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <Loader className="animate-spin text-white" size={16} />
+                            </div>
+                          )}
+                        </div>
+                        <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition-all shadow-sm ${isUploadingPhoto ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={isUploadingPhoto} />
+                          <Camera size={14} />
+                          {isUploadingPhoto ? 'Uploading to Firebase...' : 'Upload Photo'}
+                        </label>
+                      </div>
+                  </div>
+
+                  <div>
+                      <label htmlFor="student-first-name" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">First Name</label>
                       <input id="student-first-name" name="firstName" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.firstName || ''} onChange={e => setFormData({...formData, firstName: e.target.value})} required />
                   </div>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                      <label htmlFor="student-last-name" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
                       <input id="student-last-name" name="lastName" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.lastName || ''} onChange={e => setFormData({...formData, lastName: e.target.value})} required />
                   </div>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                      <label htmlFor="student-email" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email</label>
                       <input id="student-email" name="email" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} required />
                   </div>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Phone</label>
+                      <label htmlFor="student-phone" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Phone</label>
                       <input id="student-phone" name="phone" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} required />
                   </div>
               </div>
@@ -113,18 +162,18 @@ export const StudentManager: React.FC = () => {
               <div className="space-y-4">
                   <h4 className="font-bold text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">Enrollment Data</h4>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">WINDA ID (Optional)</label>
+                      <label htmlFor="student-winda-id" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">WINDA ID (Optional)</label>
                       <input id="student-winda-id" name="windaId" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.windaId || ''} onChange={e => setFormData({...formData, windaId: e.target.value})} />
                   </div>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Enrolled Course</label>
+                      <label htmlFor="student-enrolled-course" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Enrolled Course</label>
                       <select id="student-enrolled-course" name="enrolledCourseId" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.enrolledCourseId || ''} onChange={e => setFormData({...formData, enrolledCourseId: e.target.value})} required>
                           <option value="">Select Course...</option>
                           {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                       </select>
                   </div>
                   <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                      <label htmlFor="student-status" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Status</label>
                       <select id="student-status" name="status" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary text-gray-900 dark:text-white transition-all" value={formData.status || 'Active'} onChange={e => setFormData({...formData, status: e.target.value as any})}>
                           <option>Active</option>
                           <option>Pending</option>
@@ -196,9 +245,13 @@ export const StudentManager: React.FC = () => {
                   <tr key={student.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors group">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 text-white flex items-center justify-center font-bold shadow-md">
-                            {student.firstName[0]}
-                         </div>
+                         {student.photoUrl ? (
+                           <img src={student.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover shadow-md border border-gray-200 dark:border-gray-600" />
+                         ) : (
+                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 text-white flex items-center justify-center font-bold shadow-md">
+                              {student.firstName[0]}
+                           </div>
+                         )}
                          <div>
                             <div className="font-bold text-gray-900 dark:text-white text-base">{student.firstName} {student.lastName}</div>
                             <div className="text-gray-500 dark:text-gray-400 text-xs">{student.email}</div>

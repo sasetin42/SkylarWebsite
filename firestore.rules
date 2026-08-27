@@ -88,9 +88,13 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
-    match /sections/{sectionId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+    match /data/{docId} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
+

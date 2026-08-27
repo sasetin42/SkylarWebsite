@@ -319,7 +319,7 @@ export const LocationDetail: React.FC = () => {
                                 : 'bg-primary hover:bg-accent text-white hover:text-secondary hover:shadow-lg'
                             }`}
                           >
-                            {isFull ? 'Sold Out' : 'REGISTER NOW!'}
+                            {isFull ? 'Sold Out' : 'INQUIRE NOW'}
                           </button>
                         </div>
                       </div>
@@ -432,7 +432,7 @@ export const LocationDetail: React.FC = () => {
                       type="submit" 
                       className="w-full sm:w-auto py-3 px-6 bg-accent hover:bg-amber-400 text-secondary hover:text-secondary font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
                     >
-                      <span>Send Message</span>
+                      <span>Inquire Now</span>
                       <Send size={12} />
                     </button>
                   </form>
