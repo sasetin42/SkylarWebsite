@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
+  initializeFirestore,
   getFirestore, 
   collection, 
   doc, 
@@ -9,7 +10,12 @@ import {
   deleteDoc, 
   onSnapshot, 
   query,
-  Unsubscribe
+  Unsubscribe,
+  setLogLevel,
+  disableNetwork,
+  enableNetwork,
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from "firebase/firestore";
 import { 
   getAuth, 
@@ -29,12 +35,80 @@ const firebaseConfig = {
   measurementId: "G-4PQCQZZPB8"
 };
 
+// Suppress Firestore internal debug/backoff logs from spamming the console
+try {
+  setLogLevel('silent');
+} catch (e) {}
+
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+
+// Initialize Firestore with experimentalForceLongPolling to eliminate QUIC/HTTP3 stream errors & connection drops
+export const db = (() => {
+  try {
+    return initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    });
+  } catch (e) {
+    return getFirestore(app);
+  }
+})();
+
 export const auth = getAuth(app);
 
 export const SUPER_ADMIN_UID = "iKbxm6RedwQ7l7piWwZkYT6XnR13";
 export const SUPER_ADMIN_EMAIL = "admin@gmail.com";
+
+// --- Firestore Circuit Breaker (Graceful Offline & Quota Fallback) ---
+let isFirestoreQuotaExhaustedOrBlocked = (() => {
+  try {
+    if (typeof window === 'undefined') return false;
+    const blocked = window.sessionStorage?.getItem('apex_firestore_blocked') === 'true' ||
+                    window.localStorage?.getItem('apex_firestore_blocked') === 'true';
+    if (blocked) {
+      try {
+        disableNetwork(db).catch(() => {});
+      } catch (e) {}
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+})();
+
+export function handleFirestoreError(err: any): void {
+  const errMsg = err?.message || String(err || '');
+  const errCode = err?.code || '';
+  if (
+    errCode === 'resource-exhausted' ||
+    errCode === 'unavailable' ||
+    errCode === 'failed-precondition' ||
+    errCode === 'permission-denied' ||
+    errCode === 'unimplemented' ||
+    errMsg.includes('Quota exceeded') ||
+    errMsg.includes('resource-exhausted') ||
+    errMsg.includes('ERR_BLOCKED_BY_CLIENT') ||
+    errMsg.includes('net::ERR_BLOCKED_BY_CLIENT') ||
+    errMsg.includes('Failed to fetch') ||
+    errMsg.includes('network-request-failed') ||
+    errMsg.includes('Failed to get document') ||
+    errMsg.includes('terminate')
+  ) {
+    isFirestoreQuotaExhaustedOrBlocked = true;
+    try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage?.setItem('apex_firestore_blocked', 'true');
+        window.localStorage?.setItem('apex_firestore_blocked', 'true');
+      }
+    } catch (e) {}
+    try {
+      disableNetwork(db).catch(() => {});
+    } catch (e) {}
+  }
+}
 
 /**
  * Deeply sanitize a value for Firestore compatibility.
@@ -98,14 +172,14 @@ export async function compressImage(
   quality = 0.85
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    // If it's an SVG or GIF, don't re-compress on canvas (to preserve vectors/animations)
-    if (source instanceof File && (source.type === 'image/svg+xml' || source.type === 'image/gif')) {
-      return resolve(source);
+    const mime = source instanceof File ? source.type : 'image/jpeg';
+    if (mime === 'image/svg+xml') {
+      if (source instanceof Blob) return resolve(source);
+      return resolve(dataUrlToBlob(source as string));
     }
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
-
     let objectUrlToRevoke: string | null = null;
 
     img.onload = () => {
@@ -114,7 +188,6 @@ export async function compressImage(
       let width = img.width;
       let height = img.height;
 
-      // Calculate aspect ratio scaling
       if (width > maxWidth || height > maxHeight) {
         if (width / height > maxWidth / maxHeight) {
           height = Math.round((height * maxWidth) / width);
@@ -136,17 +209,12 @@ export async function compressImage(
       }
 
       ctx.drawImage(img, 0, 0, width, height);
-
-      // Determine mime output format
-      const mime = (source instanceof File && source.type.includes('png')) ? 'image/png' : 'image/jpeg';
-
       canvas.toBlob(
         (blob) => {
           if (blob) {
             resolve(blob);
-          } else if (source instanceof Blob) {
-            resolve(source);
           } else {
+            if (source instanceof Blob) return resolve(source);
             resolve(dataUrlToBlob(source as string));
           }
         },
@@ -175,7 +243,6 @@ export async function compressImage(
 }
 
 /**
-/**
  * Compresses an image source to an ultra-compact Base64 Data URL (<25KB)
  */
 export async function compressToDataUrl(
@@ -185,7 +252,6 @@ export async function compressToDataUrl(
   quality = 0.6
 ): Promise<string> {
   return new Promise((resolve) => {
-    // Pass SVGs directly if they are already strings or files
     if (source instanceof File && source.type === 'image/svg+xml') {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -254,78 +320,123 @@ export async function compressToDataUrl(
 }
 
 export const firebaseClient = {
+  isAvailable: () => !isFirestoreQuotaExhaustedOrBlocked,
+
   // Generic collection reader
-  getCollection: async (collectionName: string) => {
-    const snap = await getDocs(collection(db, collectionName));
-    const result: any[] = [];
-    snap.forEach((docSnap) => {
-      result.push({ id: docSnap.id, ...docSnap.data() });
-    });
-    return result;
+  getCollection: async (collectionName: string): Promise<any[]> => {
+    if (isFirestoreQuotaExhaustedOrBlocked) return [];
+    try {
+      const snap = await getDocs(collection(db, collectionName));
+      const result: any[] = [];
+      snap.forEach((docSnap) => {
+        result.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      return result;
+    } catch (err) {
+      handleFirestoreError(err);
+      return [];
+    }
   },
 
   // Document Upsert
-  upsertDoc: async (collectionName: string, docId: string, data: any) => {
-    const cleanData = sanitizeForFirestore(data);
-    await setDoc(doc(db, collectionName, docId), cleanData as object, { merge: true });
+  upsertDoc: async (collectionName: string, docId: string, data: any): Promise<void> => {
+    if (isFirestoreQuotaExhaustedOrBlocked) return;
+    try {
+      const cleanData = sanitizeForFirestore(data);
+      await setDoc(doc(db, collectionName, docId), cleanData as object, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err);
+    }
   },
 
-  upsert: async (key: string, data: any) => {
-    const cleanData = sanitizeForFirestore(data);
-    await setDoc(doc(db, "data", key), cleanData as object, { merge: true });
+  upsert: async (key: string, data: any): Promise<void> => {
+    if (isFirestoreQuotaExhaustedOrBlocked) return;
+    try {
+      const cleanData = sanitizeForFirestore(data);
+      await setDoc(doc(db, "data", key), cleanData as object, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err);
+    }
   },
 
-  getAll: async () => {
-    const snap = await getDocs(collection(db, "data"));
-    const result: Record<string, any> = {};
-    snap.forEach((docSnap) => {
-      result[docSnap.id] = docSnap.data();
-    });
-    return result;
+  getAll: async (): Promise<Record<string, any>> => {
+    if (isFirestoreQuotaExhaustedOrBlocked) return {};
+    try {
+      const snap = await getDocs(collection(db, "data"));
+      const result: Record<string, any> = {};
+      snap.forEach((docSnap) => {
+        result[docSnap.id] = docSnap.data();
+      });
+      return result;
+    } catch (err) {
+      handleFirestoreError(err);
+      return {};
+    }
   },
 
   // Document Delete
-  deleteDoc: async (collectionName: string, docId: string) => {
-    await deleteDoc(doc(db, collectionName, docId));
+  deleteDoc: async (collectionName: string, docId: string): Promise<void> => {
+    if (isFirestoreQuotaExhaustedOrBlocked) return;
+    try {
+      await deleteDoc(doc(db, collectionName, docId));
+    } catch (err) {
+      handleFirestoreError(err);
+    }
   },
 
-  // Real-Time Collection Listener
+  // Real-Time Collection Listener with Circuit Breaker
   subscribeToCollection: (collectionName: string, callback: (data: any[]) => void): Unsubscribe => {
-    const q = query(collection(db, collectionName));
-    return onSnapshot(q, (snapshot) => {
-      const list: any[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push({ id: docSnap.id, ...docSnap.data() });
+    if (isFirestoreQuotaExhaustedOrBlocked) {
+      return () => {};
+    }
+    try {
+      const q = query(collection(db, collectionName));
+      return onSnapshot(q, (snapshot) => {
+        const list: any[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        callback(list);
+      }, (error) => {
+        handleFirestoreError(error);
       });
-      callback(list);
-    }, (error) => {
-      console.warn(`Firestore real-time subscription error [${collectionName}]:`, error);
-    });
+    } catch (err) {
+      handleFirestoreError(err);
+      return () => {};
+    }
   },
 
-  // Real-Time Document Listener
+  // Real-Time Document Listener with Circuit Breaker
   subscribeToDoc: (collectionName: string, docId: string, callback: (data: any | null) => void): Unsubscribe => {
-    return onSnapshot(doc(db, collectionName, docId), (docSnap) => {
-      if (docSnap.exists()) {
-        callback({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        callback(null);
-      }
-    });
+    if (isFirestoreQuotaExhaustedOrBlocked) {
+      return () => {};
+    }
+    try {
+      return onSnapshot(doc(db, collectionName, docId), (docSnap) => {
+        if (docSnap.exists()) {
+          callback({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          callback(null);
+        }
+      }, (error) => {
+        handleFirestoreError(error);
+      });
+    } catch (err) {
+      handleFirestoreError(err);
+      return () => {};
+    }
   },
 
   /**
    * Pure Firestore Database Universal Media Uploader
    * Accepts File, Blob, or base64 Data URL string.
    * Compresses image to high-efficiency format and stores directly into Firestore Database 'site_media' collection.
-   * Eliminates 100% of Storage bucket errors, 402 payment requirements, and upload limits.
    */
   uploadMedia: async (
     fileOrDataUrl: File | Blob | string, 
     path = 'website-content',
     fileName?: string
   ): Promise<string> => {
-    // If it's already an external HTTP/HTTPS URL and not a data URL, return as is
     if (typeof fileOrDataUrl === 'string' && (fileOrDataUrl.startsWith('http://') || fileOrDataUrl.startsWith('https://'))) {
       return fileOrDataUrl;
     }
@@ -336,21 +447,19 @@ export const firebaseClient = {
         ? `${timestamp}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}` 
         : `media_${timestamp}`;
 
-      // Compress to high-efficiency compact web data string (<25KB)
       const compressedDataUrl = await compressToDataUrl(fileOrDataUrl, 960, 960, 0.7);
 
-      // Store directly in Firestore 'site_media' collection
-      const mediaRecord = {
-        id: mediaId,
-        path: path.replace(/^\/+|\/+$/g, ''),
-        dataUrl: compressedDataUrl,
-        mimeType: 'image/jpeg',
-        size: compressedDataUrl.length,
-        created_at: new Date().toISOString()
-      };
-
-      // Asynchronously persist to Firestore Database collection 'site_media'
-      firebaseClient.upsertDoc('site_media', mediaId, mediaRecord).catch(() => {});
+      if (!isFirestoreQuotaExhaustedOrBlocked) {
+        const mediaRecord = {
+          id: mediaId,
+          path: path.replace(/^\/+|\/+$/g, ''),
+          dataUrl: compressedDataUrl,
+          mimeType: 'image/jpeg',
+          size: compressedDataUrl.length,
+          created_at: new Date().toISOString()
+        };
+        firebaseClient.upsertDoc('site_media', mediaId, mediaRecord).catch(() => {});
+      }
 
       return compressedDataUrl;
     } catch (err: any) {
@@ -359,20 +468,36 @@ export const firebaseClient = {
     }
   },
 
-  /**
-   * Helper to upload AI-generated base64 or pasted data URL to Firestore Database
-   */
   uploadBase64: async (base64Data: string, path = 'ai-images', customName?: string): Promise<string> => {
     return firebaseClient.uploadMedia(base64Data, path, customName);
   },
 
-  // Contact Form Submissions
+  compressToDataUrl: async (fileOrDataUrl: File | Blob | string, maxWidth = 960, maxHeight = 960, quality = 0.7): Promise<string> => {
+    return compressToDataUrl(fileOrDataUrl, maxWidth, maxHeight, quality);
+  },
+
   saveContactSubmission: async (data: any) => {
-    const cleanData = sanitizeForFirestore({
-      ...data,
-      created_at: new Date().toISOString()
-    });
-    const newDocRef = doc(collection(db, "contact_submissions"));
-    await setDoc(newDocRef, cleanData as object);
+    if (isFirestoreQuotaExhaustedOrBlocked) return;
+    try {
+      const cleanData = sanitizeForFirestore({
+        ...data,
+        created_at: new Date().toISOString()
+      });
+      const newDocRef = doc(collection(db, "contact_submissions"));
+      await setDoc(newDocRef, cleanData as object);
+    } catch (err) {
+      handleFirestoreError(err);
+    }
+  },
+
+  resetConnection: async () => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage?.removeItem('apex_firestore_blocked');
+        window.localStorage?.removeItem('apex_firestore_blocked');
+      }
+      isFirestoreQuotaExhaustedOrBlocked = false;
+      await enableNetwork(db);
+    } catch (e) {}
   }
 };

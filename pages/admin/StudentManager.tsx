@@ -82,11 +82,13 @@ export const StudentManager: React.FC = () => {
     }
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesText = 
-      student.firstName.toLowerCase().includes(filterText.toLowerCase()) || 
-      student.lastName.toLowerCase().includes(filterText.toLowerCase()) ||
-      student.email.toLowerCase().includes(filterText.toLowerCase());
+  const filteredStudents = (students || []).filter(student => {
+    if (!student) return false;
+    const term = (filterText || '').toLowerCase().trim();
+    const matchesText = !term ||
+      (student.firstName || '').toLowerCase().includes(term) || 
+      (student.lastName || '').toLowerCase().includes(term) ||
+      (student.email || '').toLowerCase().includes(term);
     
     const matchesStatus = statusFilter === 'All' || student.status === statusFilter;
 

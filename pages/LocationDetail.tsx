@@ -4,15 +4,14 @@ import {
   MapPin, Phone, Mail, Clock, ArrowRight, ArrowLeft, Wifi, Car, Coffee, 
   Layout, Calendar, Users, CheckCircle2, ShieldAlert, Sparkles, Send, HelpCircle, Check, ChevronDown, BookOpen
 } from 'lucide-react';
-import { LOCATIONS } from '../constants';
 import { Button } from '../components/Button';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { getCourses, getSessions, addToCart, saveTicket } from '../services/storageService';
-import { Course, Session } from '../types';
+import { getCourses, getSessions, addToCart, saveTicket, getLocationById, getLocations } from '../services/storageService';
+import { Course, Session, Location } from '../types';
 
 export const LocationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const location = LOCATIONS.find(l => l.id === id);
+  const [location, setLocation] = useState<Location | undefined>(() => getLocationById(id || ''));
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -25,51 +24,70 @@ export const LocationDetail: React.FC = () => {
   const [bookingSuccessCourse, setBookingSuccessCourse] = useState<string | null>(null);
 
   useEffect(() => {
-    const allCourses = getCourses();
-    setCourses(allCourses);
+    const loadLoc = () => {
+      setLocation(getLocationById(id || ''));
+    };
+    loadLoc();
+    window.addEventListener('locationsUpdated', loadLoc);
+    return () => window.removeEventListener('locationsUpdated', loadLoc);
+  }, [id]);
 
-    // Get sessions for this location
-    let localSessions = getSessions().filter(s => s.locationId === id);
+  useEffect(() => {
+    const loadCoursesAndSessions = () => {
+      const allCourses = getCourses();
+      setCourses(allCourses);
 
-    // Default upcoming sessions for location
-    if (localSessions.length === 0 && allCourses.length > 0) {
-      localSessions = [
-        {
-          id: 'initial-s1',
-          courseId: allCourses[0].id,
-          locationId: id || '',
-          trainerId: 't1',
-          startDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days from now
-          endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          capacity: 12,
-          enrolledStudentIds: ['s1', 's2', 's3'],
-          status: 'Scheduled'
-        },
-        {
-          id: 'initial-s2',
-          courseId: allCourses[1] ? allCourses[1].id : allCourses[0].id,
-          locationId: id || '',
-          trainerId: 't2',
-          startDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 12 days from now
-          endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          capacity: 10,
-          enrolledStudentIds: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'],
-          status: 'Scheduled'
-        },
-        {
-          id: 'initial-s3',
-          courseId: allCourses[2] ? allCourses[2].id : allCourses[0].id,
-          locationId: id || '',
-          trainerId: 't1',
-          startDate: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 19 days from now
-          endDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          capacity: 15,
-          enrolledStudentIds: [],
-          status: 'Scheduled'
-        }
-      ];
-    }
-    setSessions(localSessions);
+      // Get sessions for this location
+      let localSessions = getSessions().filter(s => s.locationId === id);
+
+      // Default upcoming sessions for location
+      if (localSessions.length === 0 && allCourses.length > 0) {
+        localSessions = [
+          {
+            id: 'initial-s1',
+            courseId: allCourses[0].id,
+            locationId: id || '',
+            trainerId: 't1',
+            startDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days from now
+            endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            capacity: 12,
+            enrolledStudentIds: ['s1', 's2', 's3'],
+            status: 'Scheduled'
+          },
+          {
+            id: 'initial-s2',
+            courseId: allCourses[1] ? allCourses[1].id : allCourses[0].id,
+            locationId: id || '',
+            trainerId: 't2',
+            startDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 12 days from now
+            endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            capacity: 10,
+            enrolledStudentIds: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'],
+            status: 'Scheduled'
+          },
+          {
+            id: 'initial-s3',
+            courseId: allCourses[2] ? allCourses[2].id : allCourses[0].id,
+            locationId: id || '',
+            trainerId: 't1',
+            startDate: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 19 days from now
+            endDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            capacity: 15,
+            enrolledStudentIds: [],
+            status: 'Scheduled'
+          }
+        ];
+      }
+      setSessions(localSessions);
+    };
+
+    loadCoursesAndSessions();
+    window.addEventListener('coursesUpdated', loadCoursesAndSessions);
+    window.addEventListener('sessionsUpdated', loadCoursesAndSessions);
+    return () => {
+      window.removeEventListener('coursesUpdated', loadCoursesAndSessions);
+      window.removeEventListener('sessionsUpdated', loadCoursesAndSessions);
+    };
   }, [id]);
 
   if (!location) {
@@ -226,12 +244,20 @@ export const LocationDetail: React.FC = () => {
               <h2 className="text-2xl font-bold text-secondary mb-4 font-heading flex items-center gap-2">
                 <BookOpen className="text-accent" size={24} /> About the Campus
               </h2>
-              <p className="text-gray-600 leading-relaxed text-base md:text-lg mb-6 font-medium">
-                Welcome to our {location.name} facility. Designed to provide a realistic and immersive training environment, this campus features state-of-the-art equipment and learning spaces. Whether you are undertaking GWO modules or High Risk Work licensing, our facility ensures you are job-ready.
-              </p>
-              <p className="text-gray-600 leading-relaxed text-base md:text-lg font-medium">
-                Our trainers at this location bring decades of local industry experience, ensuring that the skills you learn are directly applicable to sites across Angeles City, Pampanga, and beyond.
-              </p>
+              {location.aboutDescription ? (
+                <div className="text-gray-600 leading-relaxed text-base md:text-lg whitespace-pre-line font-medium">
+                  {location.aboutDescription}
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-600 leading-relaxed text-base md:text-lg mb-6 font-medium">
+                    Welcome to our {location.name} facility. Designed to provide a realistic and immersive training environment, this campus features state-of-the-art equipment and learning spaces. Whether you are undertaking GWO modules or High Risk Work licensing, our facility ensures you are job-ready.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed text-base md:text-lg font-medium">
+                    Our trainers at this location bring decades of local industry experience, ensuring that the skills you learn are directly applicable to sites across Angeles City, Pampanga, and beyond.
+                  </p>
+                </>
+              )}
             </section>
 
             {/* Campus Facilities */}

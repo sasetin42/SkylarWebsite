@@ -418,3 +418,73 @@ button, input, select, textarea {
   animation: heroBarExpand 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Course Specifications & Details Accordion Dropdown Content Typography */
+.course-spec-accordion-content,
+.course-spec-accordion-content p,
+.course-spec-accordion-content span,
+.course-spec-accordion-content li,
+.course-spec-accordion-content div,
+.course-spec-accordion-content td,
+.course-spec-accordion-content th,
+.course-spec-accordion-content blockquote {
+  color: #232323 !important;
+}
+
+.course-spec-accordion-content strong,
+.course-spec-accordion-content b,
+.course-spec-accordion-content h1,
+.course-spec-accordion-content h2,
+.course-spec-accordion-content h3,
+.course-spec-accordion-content h4,
+.course-spec-accordion-content h5,
+.course-spec-accordion-content h6 {
+  color: #232323 !important;
+  font-weight: 700;
+}
+
+.course-spec-accordion-content a {
+  color: #1C64B4 !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.course-spec-accordion-content a:hover {
+  color: #041024 !important;
+}
+
+/* Course Overview Section Content Typography */
+.overview-section-content,
+.overview-section-content p,
+.overview-section-content span,
+.overview-section-content li,
+.overview-section-content div,
+.overview-section-content td,
+.overview-section-content th,
+.overview-section-content blockquote {
+  color: #232323 !important;
+}
+
+.overview-section-content strong,
+.overview-section-content b,
+.overview-section-content h1,
+.overview-section-content h2,
+.overview-section-content h3,
+.overview-section-content h4,
+.overview-section-content h5,
+.overview-section-content h6 {
+  color: #232323 !important;
+  font-weight: 700;
+}
+
+.overview-section-content a {
+  color: #1C64B4 !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.overview-section-content a:hover {
+  color: #041024 !important;
+}
+
+
+

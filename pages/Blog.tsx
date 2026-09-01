@@ -1,18 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { BLOG_POSTS } from '../constants';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { getPageContent } from '../services/storageService';
-import { SitePage } from '../types';
+import { Calendar, ArrowRight, Clock } from 'lucide-react';
+import { getPageContent, getBlogPosts } from '../services/storageService';
+import { SitePage, BlogPost } from '../types';
 import { Button } from '../components/Button';
 
 export const Blog: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
-    const content = getPageContent('news');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('news');
+      if (content) setPageContent(content);
+      setBlogPosts(getBlogPosts());
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const hero = pageContent?.sections.find(s => s.id === 'hero')?.data;
@@ -54,7 +61,35 @@ export const Blog: React.FC = () => {
                 className="font-heading font-bold text-white mb-4 drop-shadow-lg"
                 style={{ fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: '55px' }}
               >
-                {hero?.heading || 'News'} <span className="text-accent">&amp; Articles</span>
+                {(() => {
+                  const headingText = hero?.heading || 'News & Articles';
+                  if (headingText.includes('& Articles')) {
+                    const prefix = headingText.replace('& Articles', '').trim();
+                    return (
+                      <>
+                        {prefix} <span className="text-accent">&amp; Articles</span>
+                      </>
+                    );
+                  }
+                  if (headingText.includes('&')) {
+                    const parts = headingText.split('&');
+                    return (
+                      <>
+                        {parts[0].trim()} <span className="text-accent">&amp; {parts.slice(1).join('&').trim()}</span>
+                      </>
+                    );
+                  }
+                  const words = headingText.split(' ');
+                  if (words.length > 1) {
+                    const lastWord = words.pop();
+                    return (
+                      <>
+                        {words.join(' ')} <span className="text-accent">{lastWord}</span>
+                      </>
+                    );
+                  }
+                  return headingText;
+                })()}
               </h1>
               <div className="w-24 h-1.5 bg-accent mb-5 rounded-full shadow-sm" />
               <p className="text-gray-200 font-medium max-w-2xl leading-relaxed text-base md:text-lg">
@@ -66,7 +101,7 @@ export const Blog: React.FC = () => {
       </div>
       {/* ─────────────────────────────────────────────────────────── */}
 
-      <div className="container mx-auto px-4 md:px-8 relative z-10 -mt-10">
+      <div className="container mx-auto px-4 md:px-8 pt-10 md:pt-14 relative z-10">
         
         {/* Featured Content Header if configured */}
         {featured?.heading && (
@@ -77,39 +112,51 @@ export const Blog: React.FC = () => {
         )}
 
         {/* Featured / Latest Post (First item) */}
-        {BLOG_POSTS.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-12 border border-gray-100 group">
+        {blogPosts.length > 0 && (
+          <Link 
+            to={`/news/${blogPosts[0].slug || blogPosts[0].id}`}
+            className="block bg-white rounded-2xl shadow-xl overflow-hidden mb-12 border border-gray-100 group hover:shadow-2xl transition-all duration-300"
+          >
             <div className="grid md:grid-cols-2">
               <div className="h-64 md:h-auto overflow-hidden">
                 <img 
-                  src={BLOG_POSTS[0].image} 
-                  alt={BLOG_POSTS[0].title} 
+                  src={blogPosts[0].image} 
+                  alt={blogPosts[0].title} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                 />
               </div>
               <div className="p-8 md:p-12 flex flex-col justify-center">
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <span className="flex items-center gap-1"><Calendar size={14} /> {BLOG_POSTS[0].date}</span>
-                  <span className="px-2 py-1 bg-accent/20 text-secondary rounded font-bold text-xs uppercase">{BLOG_POSTS[0].category}</span>
+                  <span className="flex items-center gap-1"><Calendar size={14} /> {blogPosts[0].date}</span>
+                  <span className="px-2 py-1 bg-accent/20 text-secondary rounded font-bold text-xs uppercase">{blogPosts[0].category}</span>
+                  {blogPosts[0].readTime && (
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-gray-400">
+                      <Clock size={12} /> {blogPosts[0].readTime}
+                    </span>
+                  )}
                 </div>
-                <h2 className="text-3xl font-heading font-bold text-secondary mb-4 hover:text-primary transition-colors cursor-pointer">
-                  {BLOG_POSTS[0].title}
+                <h2 className="text-3xl font-heading font-bold text-secondary mb-4 group-hover:text-primary transition-colors cursor-pointer leading-snug">
+                  {blogPosts[0].title}
                 </h2>
-                <p className="text-gray-600 mb-6 text-lg">
-                  {BLOG_POSTS[0].excerpt}
+                <p className="text-gray-600 mb-6 text-lg line-clamp-3">
+                  {blogPosts[0].excerpt}
                 </p>
-                <button className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all">
                   Read Full Article <ArrowRight size={18} />
-                </button>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* Post Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {BLOG_POSTS.slice(1).map(post => (
-            <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300 hover:shadow-lg group">
+          {blogPosts.slice(1).map(post => (
+            <Link 
+              key={post.id} 
+              to={`/news/${post.slug || post.id}`}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300 hover:shadow-lg group"
+            >
               <div className="h-48 overflow-hidden relative">
                 <img 
                   src={post.image} 
@@ -123,24 +170,27 @@ export const Blog: React.FC = () => {
                 </div>
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                  <Calendar size={12} />
-                  <span>{post.date}</span>
+                <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar size={12} />
+                    {post.date}
+                  </span>
+                  {post.readTime && <span>{post.readTime}</span>}
                 </div>
-                <h3 className="text-xl font-bold text-secondary mb-3 group-hover:text-primary transition-colors">
+                <h3 className="text-xl font-bold text-secondary mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                   {post.title}
                 </h3>
                 <p className="text-gray-600 text-sm mb-4 flex-1 line-clamp-3">
                   {post.excerpt}
                 </p>
-                <button className="mt-auto flex items-center gap-1 text-sm font-bold text-primary hover:text-secondary transition-colors">
+                <div className="mt-auto flex items-center gap-1 text-sm font-bold text-primary group-hover:text-secondary transition-colors">
                   Read More <ArrowRight size={14} />
-                </button>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
           
-          {BLOG_POSTS.length < 2 && (
+          {blogPosts.length < 2 && (
              <div className="col-span-full text-center py-12 text-gray-500">
                 More articles coming soon.
              </div>

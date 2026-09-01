@@ -11,7 +11,7 @@ import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
 import { InteractiveMap } from '../components/InteractiveMap';
 import { TESTIMONIALS, BLOG_POSTS, LOCATIONS } from '../constants';
-import { getCourses, getPageContent, saveTicket, getCategories, saveInquiry, getTestimonials } from '../services/storageService';
+import { getCourses, getPageContent, saveTicket, getCategories, saveInquiry, getTestimonials, getLocations } from '../services/storageService';
 import { Course, SitePage, CourseInquiry, Testimonial } from '../types';
 
 interface FormErrors {
@@ -53,6 +53,11 @@ const getIconComponent = (iconName: string) => {
     case 'FileText': return FileText;
     case 'CheckCircle': return CheckCircle;
     case 'Zap': return Zap;
+    case 'HardHat': return HardHat;
+    case 'GraduationCap': return GraduationCap;
+    case 'BookOpen': return BookOpen;
+    case 'Briefcase': return Briefcase;
+    case 'Target': return Target;
     default: return ShieldCheck;
   }
 };
@@ -75,6 +80,54 @@ const Home: React.FC = () => {
   const [selectedCategoryModal, setSelectedCategoryModal] = useState<any>(null);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [contactSlide, setContactSlide] = useState(0);
+  const [isContactHovered, setIsContactHovered] = useState(false);
+
+  const contactSection = pageContent?.sections.find(s => s.id === 'contact_section' || s.id === 'contact' || s.type === 'contact-form')?.data;
+
+  const contactSlides = (contactSection?.slides && contactSection.slides.length > 0)
+    ? contactSection.slides
+    : (contactSection?.items && contactSection.items.length > 0)
+    ? contactSection.items
+    : [
+        {
+          image: '/contact-climbing-training.jpg',
+          badge: 'PRACTICAL TRAINING',
+          tag: 'REAL-WORLD PRACTICE',
+          title: 'Hands-On Wind & Height Safety Simulation',
+          location: 'Certified Training Towers & Height Systems',
+          fallback: '/contact-climbing-training.jpg'
+        },
+        {
+          image: '/contact-facility-gear.jpg',
+          badge: 'GWO CERTIFIED EQUIPMENT',
+          tag: 'STANDARDS COMPLIANT',
+          title: 'Modern Safety Equipment & Gear Training Facility',
+          location: 'Skylar Education Asia Accredited Campus',
+          fallback: '/contact-facility-gear.jpg'
+        }
+      ];
+
+  const safeContactSlide = contactSlides.length > 0 ? ((contactSlide % contactSlides.length) + contactSlides.length) % contactSlides.length : 0;
+  const activeContactSlide = contactSlides[safeContactSlide] || contactSlides[0];
+
+  useEffect(() => {
+    if (isContactHovered || contactSlides.length === 0) return;
+    const interval = setInterval(() => {
+      setContactSlide((prev) => (prev + 1) % contactSlides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isContactHovered, contactSlides.length]);
+
+  const nextContactSlide = () => {
+    if (contactSlides.length === 0) return;
+    setContactSlide((prev) => (prev + 1) % contactSlides.length);
+  };
+
+  const prevContactSlide = () => {
+    if (contactSlides.length === 0) return;
+    setContactSlide((prev) => ((prev - 1) % contactSlides.length + contactSlides.length) % contactSlides.length);
+  };
 
   const reviewItems = testimonials.length > 0 ? testimonials : TESTIMONIALS;
   const visibleCardsCount = 4;
@@ -160,10 +213,18 @@ const Home: React.FC = () => {
 
     loadContent();
     window.addEventListener('sitePagesUpdated', loadContent);
+    window.addEventListener('storage', loadContent);
     window.addEventListener('coursesUpdated', loadContent);
+    window.addEventListener('locationsUpdated', loadContent);
+    window.addEventListener('testimonialsUpdated', loadContent);
+    window.addEventListener('categoriesUpdated', loadContent);
     return () => {
       window.removeEventListener('sitePagesUpdated', loadContent);
+      window.removeEventListener('storage', loadContent);
       window.removeEventListener('coursesUpdated', loadContent);
+      window.removeEventListener('locationsUpdated', loadContent);
+      window.removeEventListener('testimonialsUpdated', loadContent);
+      window.removeEventListener('categoriesUpdated', loadContent);
     };
   }, []);
 
@@ -348,39 +409,51 @@ const Home: React.FC = () => {
     if (!query) return null;
 
     const allCourses = getCourses();
-    const matchedCourses = allCourses.filter(c => 
-      c.title.toLowerCase().includes(query) || 
-      c.shortDescription.toLowerCase().includes(query) || 
-      c.fullDescription.toLowerCase().includes(query) || 
-      c.category.toLowerCase().includes(query)
-    );
+    const matchedCourses = (allCourses || []).filter(c => {
+      if (!c) return false;
+      return (
+        (c.title || '').toLowerCase().includes(query) || 
+        (c.shortDescription || '').toLowerCase().includes(query) || 
+        (c.fullDescription || '').toLowerCase().includes(query) || 
+        (c.category || '').toLowerCase().includes(query)
+      );
+    });
 
     // Extract categories
-    const categories = Array.from(new Set(allCourses.map(c => c.category)));
+    const categories = Array.from(new Set((allCourses || []).map(c => c?.category).filter(Boolean)));
     const matchedCategories = categories.filter(cat => 
-      cat.toLowerCase().includes(query)
+      (cat || '').toLowerCase().includes(query)
     );
 
     // Filter BLOG_POSTS (Insights)
-    const matchedInsights = BLOG_POSTS.filter(post => 
-      post.title.toLowerCase().includes(query) || 
-      post.excerpt.toLowerCase().includes(query) ||
-      post.category.toLowerCase().includes(query)
-    );
+    const matchedInsights = (BLOG_POSTS || []).filter(post => {
+      if (!post) return false;
+      return (
+        (post.title || '').toLowerCase().includes(query) || 
+        (post.excerpt || '').toLowerCase().includes(query) ||
+        (post.category || '').toLowerCase().includes(query)
+      );
+    });
 
     // Filter LOCATIONS
-    const matchedLocations = LOCATIONS.filter(loc =>
-      loc.name.toLowerCase().includes(query) ||
-      loc.address.toLowerCase().includes(query) ||
-      loc.state.toLowerCase().includes(query)
-    );
+    const matchedLocations = (getLocations() || []).filter(loc => {
+      if (!loc) return false;
+      return (
+        (loc.name || '').toLowerCase().includes(query) ||
+        (loc.address || '').toLowerCase().includes(query) ||
+        (loc.state || '').toLowerCase().includes(query)
+      );
+    });
 
     // Filter SITE_PAGES
-    const matchedPages = SITE_PAGES.filter(p =>
-      p.title.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query) ||
-      p.tags.toLowerCase().includes(query)
-    );
+    const matchedPages = (SITE_PAGES || []).filter(p => {
+      if (!p) return false;
+      return (
+        (p.title || '').toLowerCase().includes(query) ||
+        (p.description || '').toLowerCase().includes(query) ||
+        (p.tags || '').toLowerCase().includes(query)
+      );
+    });
 
     return {
       courses: matchedCourses,
@@ -787,7 +860,7 @@ const Home: React.FC = () => {
                             {searchResults.insights.slice(0, activeSearchTab === 'all' ? 3 : 8).map((post) => (
                               <Link
                                 key={post.id}
-                                to="/news"
+                                to={`/news/${post.slug || post.id}`}
                                 onClick={() => setShowSearchResults(false)}
                                 className="group p-2 -mx-2 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-all duration-200 border border-transparent hover:border-gray-100/70"
                               >
@@ -951,74 +1024,132 @@ const Home: React.FC = () => {
       {/* Spacer for Search Bar offset */}
       <div className="h-28 md:h-24 bg-white"></div>
 
-      {/* Explore Our Training Programs */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 md:px-8 text-center">
-          <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">
-            {trainingProgramsSection?.subheading || "SPECIALIZED PATHWAYS"}
-          </span>
-          <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-12">
-            {trainingProgramsSection?.heading || "Explore Our Training Programs"}
-          </h2>
+      {/* Explore Our Training Programs - Global Wind Organisation Pathway */}
+      <section className="py-16 md:py-20 bg-white">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">
+              {trainingProgramsSection?.subheading || "SPECIALIZED PATHWAY"}
+            </span>
+            <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mb-4">
+              {trainingProgramsSection?.heading || "Global Wind Organisation Training"}
+            </h2>
+            <div className="w-16 h-1 bg-[#FDC70E] mx-auto rounded-full"></div>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-            {(trainingProgramsSection?.items && trainingProgramsSection.items.length > 0) ? (
-              trainingProgramsSection.items.map((item: any, index: number) => (
-                <button 
-                  key={index} 
-                  onClick={() => {
-                    if (item.buttonLink) {
-                      navigate(item.buttonLink);
-                    } else {
-                      const matchedCat = mainCategories.find(c => c.name.toLowerCase() === item.title.toLowerCase());
-                      if (matchedCat) handleCategoryClick(matchedCat);
-                      else navigate('/courses');
-                    }
-                  }}
-                  className="relative group block w-full text-left overflow-hidden rounded-3xl aspect-[4/3] md:aspect-[16/10] shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-transparent hover:border-primary/30"
-                >
-                  <img 
-                    src={item.image || "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800"} 
-                    alt={item.title} 
-                    className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent group-hover:from-[#041024]/80 transition-colors duration-500"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="w-8 h-1 bg-[#FDC70E] mb-4 rounded-full opacity-0 group-hover:opacity-100 group-hover:w-16 transition-all duration-500"></div>
-                    <h3 className="text-white font-heading font-bold text-2xl md:text-3xl leading-tight mb-2 drop-shadow-md">
-                      {item.title}
-                    </h3>
-                    <p className="text-gray-300 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2">
-                      {item.description || "Explore Pathway"} <ArrowRight size={16} />
-                    </p>
-                  </div>
-                </button>
-              ))
-            ) : (
-              mainCategories.map((cat, index) => (
-                <button 
-                  key={index} 
-                  onClick={() => handleCategoryClick(cat)}
-                  className="relative group block w-full text-left overflow-hidden rounded-3xl aspect-[4/3] md:aspect-[16/10] shadow-md hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-transparent hover:border-primary/30"
-                >
-                  <img 
-                    src={cat.image} 
-                    alt={cat.name} 
-                    className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent group-hover:from-[#041024]/80 transition-colors duration-500"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="w-8 h-1 bg-[#FDC70E] mb-4 rounded-full opacity-0 group-hover:opacity-100 group-hover:w-16 transition-all duration-500"></div>
-                    <h3 className="text-white font-heading font-bold text-2xl md:text-3xl leading-tight mb-2 drop-shadow-md">
-                      {cat.name}
-                    </h3>
-                    <p className="text-gray-300 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2">
-                      Explore Pathway <ArrowRight size={16} />
-                    </p>
-                  </div>
-                </button>
-              ))
-            )}
+          {/* Featured Full-Width Global Wind Organisation Showcase Banner */}
+          <div className="bg-[#041125] rounded-3xl overflow-hidden shadow-[0_12px_40px_-5px_rgba(4,16,36,0.18)] border border-slate-800/80 flex flex-col lg:flex-row transition-all duration-500 hover:shadow-2xl">
+            {/* Left Column: Visual Image with Badge */}
+            <div className="lg:w-1/2 relative min-h-[360px] lg:min-h-[480px] overflow-hidden group">
+              <img 
+                src={trainingProgramsSection?.image || (trainingProgramsSection?.items && trainingProgramsSection.items[0]?.image) || "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200"} 
+                alt={trainingProgramsSection?.programTitle || "Global Wind Organisation Training"} 
+                className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/30 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-[#041024]/30 lg:to-[#041125]"></div>
+              
+              {/* Floating Badges */}
+              <div className="absolute top-6 left-6 flex flex-wrap gap-2 z-10">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-accent/90 text-secondary text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-lg">
+                  {trainingProgramsSection?.badge1 || "★ Certified Standard"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#041024]/80 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-white/20">
+                  {trainingProgramsSection?.badge2 || "Global Wind Organisation"}
+                </span>
+              </div>
+
+              <div className="absolute bottom-6 left-6 right-6 lg:hidden z-10">
+                <h3 className="text-white font-heading font-extrabold text-2xl leading-tight drop-shadow-md">
+                  {trainingProgramsSection?.programTitle || "Global Wind Organisation"}
+                </h3>
+              </div>
+            </div>
+
+            {/* Right Column: Blueprint Grid & Comprehensive Details */}
+            <div className="lg:w-1/2 bg-[#041125] p-8 md:p-12 lg:p-14 flex flex-col justify-between text-white relative overflow-hidden">
+              {/* Blueprint Grid Lines Pattern */}
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+              <div className="relative z-10 space-y-5">
+                <div>
+                  <span className="text-[#FBBF24] font-bold tracking-widest text-xs md:text-sm uppercase mb-2 block">
+                    {trainingProgramsSection?.programTag || "INTERNATIONALLY ACCREDITED PROGRAM"}
+                  </span>
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-heading font-extrabold text-white leading-tight">
+                    {trainingProgramsSection?.programTitle || "Global Wind Organisation (GWO)"}
+                  </h3>
+                  <div className="w-12 h-1 bg-accent mt-3 rounded-full"></div>
+                </div>
+
+                <p className="text-gray-200 text-sm md:text-base leading-relaxed font-normal">
+                  {trainingProgramsSection?.description || "SKYLAR EDUCATION ASIA delivers comprehensive, internationally certified GWO safety and technical training programs designed for wind energy technicians, engineers, and site personnel. All modules meet strict Global Wind Organisation standards and are recorded in the WINDA global registry."}
+                </p>
+
+                {/* Core GWO Training Modules Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {(trainingProgramsSection?.modules || (trainingProgramsSection?.items && trainingProgramsSection.items.length > 1 ? trainingProgramsSection.items : [
+                    { title: "BASIC SAFETY TRAINING (BST)", description: "Working at Heights, First Aid, Manual Handling, Fire Awareness", icon: "ShieldCheck", color: "accent" },
+                    { title: "ADVANCED RESCUE (ART)", description: "Hub, Spinner, Nacelle, and Inside Blade Rescue Operations", icon: "HardHat", color: "blue" },
+                    { title: "BASIC TECHNICAL TRAINING (BTT)", description: "Mechanical, Electrical, Hydraulic, Installation and Bolt Tightening", icon: "Zap", color: "emerald" },
+                    { title: "WINDA GLOBAL VERIFICATION", description: "Instant digital record verification for onshore & offshore sites", icon: "Award", color: "purple" }
+                  ])).map((mod: any, mIdx: number) => {
+                    const IconComp = getIconComponent(mod.icon || 'ShieldCheck');
+                    const colorStyles: Record<string, { bg: string, text: string }> = {
+                      accent: { bg: 'bg-accent/20', text: 'text-accent' },
+                      blue: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
+                      emerald: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+                      purple: { bg: 'bg-purple-500/20', text: 'text-purple-400' },
+                      amber: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
+                      red: { bg: 'bg-red-500/20', text: 'text-red-400' },
+                      cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400' }
+                    };
+                    const colorKey = mod.color || (mIdx === 0 ? 'accent' : mIdx === 1 ? 'blue' : mIdx === 2 ? 'emerald' : 'purple');
+                    const chosenColor = colorStyles[colorKey] || colorStyles.accent;
+
+                    return (
+                      <div key={mIdx} className="bg-white/5 border border-white/10 rounded-xl p-3.5 flex items-start gap-3 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                        <div className={`p-2 rounded-lg ${chosenColor.bg} ${chosenColor.text} shrink-0`}>
+                          <IconComp size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">{mod.title}</h4>
+                          <p className="text-[11px] text-gray-300 mt-0.5 leading-snug">{mod.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Bottom Actions & CTAs */}
+              <div className="relative z-10 border-t border-white/15 pt-6 mt-8 flex flex-wrap gap-4 justify-between items-center">
+                <div>
+                  <span className="text-white/70 font-bold tracking-wider text-[11px] uppercase mb-1 block">
+                    {trainingProgramsSection?.validityLabel || "CERTIFICATION VALIDITY"}
+                  </span>
+                  <span className="text-sm md:text-base font-bold text-accent tracking-wide flex items-center gap-1.5">
+                    <CheckCircle size={16} className="text-accent" /> {trainingProgramsSection?.validityText || "24-Month International Accreditation"}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-3 items-center">
+                  <Link to={trainingProgramsSection?.secondaryButtonLink || "/about/gwo-benefits"}>
+                    <button className="px-5 py-3 rounded-xl text-xs md:text-sm font-bold bg-white/10 text-white hover:bg-white/20 border border-white/20 backdrop-blur-sm transition-all duration-300 cursor-pointer">
+                      {trainingProgramsSection?.secondaryButtonText || "GWO Benefits"}
+                    </button>
+                  </Link>
+                  <Link to={trainingProgramsSection?.buttonLink || "/courses?category=Global%20Wind%20Organisation"}>
+                    <button className="px-7 py-3 rounded-xl text-xs md:text-sm font-bold bg-[#FBBF24] text-[#041024] hover:bg-white hover:text-[#041024] shadow-lg transform hover:scale-105 transition-all duration-300 border-none uppercase tracking-wider flex items-center gap-2 cursor-pointer">
+                      <span>{trainingProgramsSection?.buttonText || "View GWO Courses"}</span>
+                      <ArrowRight size={16} />
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1039,7 +1170,7 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-6xl mx-auto items-stretch">
             {(accreditation?.items || [
               { title: "International GWO Standards", description: "Training aligned with Internationally Recognised Global Wind Organisation (GWO) standards.", icon: "Fan" },
-              { title: "Wind Industry Specialists", description: "Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.", icon: "Users" },
+              { title: "Qualified Industry Trainers", description: "Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.", icon: "Users" },
               { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
             ]).map((card: any, idx: number) => {
               const IconComponent = getIconComponent(card.icon);
@@ -1057,7 +1188,7 @@ const Home: React.FC = () => {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg md:text-xl font-bold font-heading text-[#041024] mb-3 leading-snug tracking-tight whitespace-nowrap">
+                  <h3 className="text-lg md:text-xl font-bold font-heading text-[#041024] mb-3 leading-snug tracking-tight">
                     {card.title}
                   </h3>
 
@@ -1090,9 +1221,9 @@ const Home: React.FC = () => {
             </div>
             
             {/* Right side: Content with grid background pattern */}
-            <div className="md:w-1/2 bg-gradient-to-br from-[#1C64B4] to-[#2E8CD6] p-8 md:p-12 lg:p-16 flex flex-col justify-between text-white relative overflow-hidden">
+            <div className="md:w-1/2 bg-[#041125] p-8 md:p-12 lg:p-16 flex flex-col justify-between text-white relative overflow-hidden">
               {/* Blueprint Grid Lines Pattern */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
               
               <div className="relative z-10">
                 <span className="text-[#FBBF24] font-bold tracking-widest text-xs md:text-sm uppercase mb-3 block">
@@ -1163,7 +1294,7 @@ const Home: React.FC = () => {
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-[#EFF6FF] text-[#1C64B4] group-hover:bg-[#041024] group-hover:text-white transition-all duration-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:shadow-xl group-hover:scale-110 shrink-0">
                     <IconComponent className="w-7 h-7 md:w-8 md:h-8 stroke-[2]" />
                   </div>
-                  <h3 className="font-heading font-extrabold text-base md:text-lg text-[#041024] mb-3 group-hover:text-[#1C64B4] transition-colors duration-300 whitespace-nowrap tracking-tight">
+                  <h3 className="font-heading font-extrabold text-base md:text-lg text-[#041024] mb-3 group-hover:text-[#1C64B4] transition-colors duration-300 tracking-tight">
                     {item.title}
                   </h3>
                   <p className="text-gray-600 text-sm leading-relaxed max-w-xs">{item.description || item.desc}</p>
@@ -1254,12 +1385,12 @@ const Home: React.FC = () => {
         <div className="container mx-auto px-4 md:px-8 max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Side: Featured Image */}
-            <div className="relative">
-              <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_12px_40px_-5px_rgba(4,16,36,0.12)] border-[8px] border-white">
+            <div className="relative h-full flex items-center">
+              <div className="w-full relative rounded-[2.5rem] overflow-hidden shadow-[0_16px_50px_-8px_rgba(4,16,36,0.14)] border-[8px] border-white">
                 <img
                   src={whyChooseUs?.image || "/why-train-skylar.png"}
                   alt={whyChooseUs?.heading || "Why Train With SKYLAR EDUCATION ASIA?"}
-                  className="w-full h-[480px] object-cover transition-transform duration-700 hover:scale-105"
+                  className="w-full h-[540px] md:h-[620px] lg:h-[680px] object-cover object-center transition-transform duration-700 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-[#041024]/10 pointer-events-none" />
               </div>
@@ -1280,7 +1411,7 @@ const Home: React.FC = () => {
               )}
               <div className="space-y-8">
                 {(whyChooseUs?.items || [
-                  { title: "Industry Specialist Trainers", description: "Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.", icon: "HardHat" },
+                  { title: "Qualified Industry Trainers", description: "Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.", icon: "HardHat" },
                   { title: "Industry-Specific Training Facilities", description: "Purpose-built training environments replicating real-world wind industry work conditions.", icon: "Target" },
                   { title: "Internationally Recognised Qualifications", description: "Gain GWO qualifications and safety certifications that are globally recognised and accepted across wind energy projects worldwide.", icon: "Award" }
                 ]).map((item: any, idx: number) => {
@@ -1291,7 +1422,7 @@ const Home: React.FC = () => {
                         <IconComponent size={26} className="stroke-[2]" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-[#041024] text-base md:text-lg mb-1.5 group-hover:text-[#1C64B4] transition-colors duration-300 whitespace-nowrap">
+                        <h3 className="font-bold text-[#041024] text-base md:text-lg mb-1.5 group-hover:text-[#1C64B4] transition-colors duration-300">
                           {item.title}
                         </h3>
                         <p className="text-gray-600 text-sm leading-relaxed">
@@ -1430,7 +1561,7 @@ const Home: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {BLOG_POSTS.map((post) => (
-              <Link key={post.id} to="/news" className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-gray-100/60">
+              <Link key={post.id} to={`/news/${post.slug || post.id}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-gray-100/60">
                 <div className="h-48 overflow-hidden relative bg-gray-100">
                   {!imageLoads[`blog-${post.id}`] && <div className="w-full h-full bg-gray-200 animate-pulse" />}
                   <img
@@ -1523,42 +1654,104 @@ const Home: React.FC = () => {
       <section className="py-20 md:py-24 bg-gray-50 text-secondary">
         <div className="container mx-auto px-4 md:px-8 max-w-5xl">
           <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 flex flex-col md:flex-row min-h-[580px]">
-            {/* Left Side: Image */}
-            <div className="md:w-1/2 relative min-h-[340px] md:min-h-full bg-[#041024] overflow-hidden group">
-              <img
-                src="/angeles-training-centre.jpg"
-                alt="SKYLAR EDUCATION ASIA Angeles Training Facility"
-                className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#041024] via-[#041024]/40 to-transparent pointer-events-none" />
-              <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-[#FDC70E] text-secondary text-[11px] font-extrabold uppercase tracking-wider shadow-md">
-                  GWO Certified Facility
+            {/* Left Side: Image Slider */}
+            <div
+              className="md:w-1/2 relative min-h-[380px] md:min-h-full bg-[#041024] overflow-hidden group select-none"
+              onMouseEnter={() => setIsContactHovered(true)}
+              onMouseLeave={() => setIsContactHovered(false)}
+            >
+              {/* Slides Container */}
+              {contactSlides.map((slide, idx) => {
+                const isActive = idx === contactSlide;
+                return (
+                  <div
+                    key={idx}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                      isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+                    }`}
+                  >
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className={`w-full h-full object-cover transition-transform duration-1000 ease-out ${
+                        isActive ? 'scale-105' : 'scale-100'
+                      }`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = slide.fallback;
+                      }}
+                    />
+                    {/* Multi-layer gradient overlays for high legibility */}
+                    <div className="absolute inset-0 bg-[#041024]/30 mix-blend-multiply pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/95 via-[#041024]/40 to-transparent pointer-events-none" />
+                  </div>
+                );
+              })}
+
+              {/* Top Badge (Dynamic with current slide) */}
+              <div className="absolute top-6 left-6 z-20 flex items-center gap-2">
+                <span className="px-3.5 py-1.5 rounded-full bg-[#FDC70E] text-secondary text-[11px] font-extrabold uppercase tracking-wider shadow-lg shadow-black/20 backdrop-blur-sm transition-all duration-500">
+                  {activeContactSlide?.badge}
                 </span>
               </div>
-              <div className="absolute bottom-8 left-8 right-8 z-10 text-white">
-                <span className="inline-block py-1 px-3 rounded bg-accent/20 text-accent text-xs font-extrabold uppercase tracking-wider mb-2 backdrop-blur-md border border-accent/30">
-                  GET IN TOUCH
-                </span>
-                <h3 className="text-xl md:text-2xl font-extrabold font-heading text-white drop-shadow-lg leading-snug">
-                  We Are Ready to Help Advance Your Safety Career
-                </h3>
-                <p className="text-xs text-gray-300 mt-2 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  Pampanga Angeles City Training Centre & Nationwide
-                </p>
+
+              {/* Navigation Arrows (Visible on Hover) */}
+              <button
+                type="button"
+                onClick={prevContactSlide}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-[#FDC70E] hover:text-secondary opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg border border-white/10"
+                aria-label="Previous contact slide"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={nextContactSlide}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-[#FDC70E] hover:text-secondary opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg border border-white/10"
+                aria-label="Next contact slide"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              {/* Bottom Content & Indicators */}
+              <div className="absolute bottom-6 left-6 right-6 z-20 text-white">
+                <div key={`content-${safeContactSlide}`} className="animate-fade-in space-y-2">
+                  <span className="inline-block py-1 px-3 rounded bg-accent/25 text-accent text-[11px] font-extrabold uppercase tracking-wider backdrop-blur-md border border-accent/40 shadow-sm">
+                    {activeContactSlide?.tag}
+                  </span>
+                  <h3 className="text-xl md:text-2xl font-extrabold font-heading text-white drop-shadow-lg leading-snug">
+                    {activeContactSlide?.title}
+                  </h3>
+                  <p className="text-xs text-gray-200 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                    {activeContactSlide?.location}
+                  </p>
+                </div>
+
+                {/* Dot Indicators */}
+                <div className="flex items-center gap-2 pt-4">
+                  {contactSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setContactSlide(idx)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        idx === safeContactSlide
+                          ? 'w-8 bg-[#FDC70E] shadow-md shadow-[#FDC70E]/30'
+                          : 'w-2 bg-white/40 hover:bg-white/70'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             {/* Right Side: Form */}
             <div className="md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center text-left">
               <h2 className="text-3xl md:text-4xl font-heading font-bold mb-2 tracking-tight text-secondary">
-                Contact Us
+                {contactSection?.heading || "Contact Us"}
               </h2>
               <p className="text-gray-500 text-sm md:text-base mb-8">
-                Ready to get started? Fill out the form below.
+                {contactSection?.subheading || "Ready to get started? Fill out the form below."}
               </p>
               
               {contactStatus === 'success' ? (
@@ -1572,11 +1765,13 @@ const Home: React.FC = () => {
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-5">
                   <div>
+                    <label htmlFor="home-name" className="sr-only">Full Name</label>
                     <input
                       id="home-name"
                       type="text"
                       name="name"
                       autoComplete="name"
+                      aria-label="Full Name"
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="Full Name"
@@ -1590,11 +1785,13 @@ const Home: React.FC = () => {
                   </div>
 
                   <div>
+                    <label htmlFor="home-email" className="sr-only">Email Address</label>
                     <input
                       id="home-email"
                       type="email"
                       name="email"
                       autoComplete="email"
+                      aria-label="Email Address"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Email Address"
@@ -1608,10 +1805,12 @@ const Home: React.FC = () => {
                   </div>
 
                   <div>
+                    <label htmlFor="home-message" className="sr-only">Your Message</label>
                     <textarea
                       id="home-message"
                       name="message"
                       autoComplete="off"
+                      aria-label="Your Message"
                       rows={4}
                       value={formData.message}
                       onChange={handleInputChange}
@@ -1668,7 +1867,7 @@ const Home: React.FC = () => {
                         SENDING...
                       </>
                     ) : (
-                      'SEND MESSAGE'
+                      contactSection?.buttonText || 'SEND MESSAGE'
                     )}
                   </button>
                 </form>
@@ -1757,7 +1956,7 @@ const Home: React.FC = () => {
                       <div>
                         <h4 className="font-bold text-white text-sm md:text-base">Nationwide & On-Site Delivery</h4>
                         <p className="text-gray-300 text-xs md:text-sm mt-0.5 leading-normal">
-                          Mobile training rigs and certified trainer deployment directly to client facility sites.
+                          Certified trainer deployment directly to client facility sites.
                         </p>
                       </div>
                     </div>

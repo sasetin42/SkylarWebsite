@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Menu, X, ShoppingCart, ChevronDown,
   Info, Users, Award, Shield,
-  FileText, HelpCircle, Laptop, CreditCard, Lock, AlertCircle,
+  FileText, HelpCircle, CreditCard, Lock, AlertCircle,
   Sun, Moon
 } from 'lucide-react';
 import { getCart, getSettings } from '../services/storageService';
@@ -54,7 +54,11 @@ export const Navbar: React.FC = () => {
       setSettings(getSettings());
     };
     window.addEventListener('themeUpdated', handleThemeUpdate);
-    return () => window.removeEventListener('themeUpdated', handleThemeUpdate);
+    window.addEventListener('settingsUpdated', handleThemeUpdate);
+    return () => {
+      window.removeEventListener('themeUpdated', handleThemeUpdate);
+      window.removeEventListener('settingsUpdated', handleThemeUpdate);
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -101,18 +105,7 @@ export const Navbar: React.FC = () => {
       ]
     },
     { name: 'Locations', path: '/locations' },
-    {
-      name: 'Student Info',
-      path: '/student-info',
-      subItems: [
-        { name: 'Student Hub', path: '/student-info', icon: Laptop },
-        // { name: 'Online Enrolments', path: '/student-info/online-enrolments', icon: FileText }, // Hidden for now; re-enable once phase 2 is ready
-        { name: 'Policies & Refund', path: '/student-info/refund-policy', icon: CreditCard },
-        { name: 'Privacy Notice', path: '/student-info/privacy-notice', icon: Lock },
-        { name: 'Complaints', path: '/student-info/complaints', icon: AlertCircle },
-        { name: 'FAQ', path: '/student-info/faq', icon: HelpCircle }
-      ]
-    },
+    { name: 'FAQ', path: '/faq' },
     { name: 'Contact', path: '/contact' },
   ];
 

@@ -19,7 +19,11 @@ export const Footer: React.FC = () => {
       setSettings(getSettings());
     };
     window.addEventListener('themeUpdated', handleThemeUpdate);
-    return () => window.removeEventListener('themeUpdated', handleThemeUpdate);
+    window.addEventListener('settingsUpdated', handleThemeUpdate);
+    return () => {
+      window.removeEventListener('themeUpdated', handleThemeUpdate);
+      window.removeEventListener('settingsUpdated', handleThemeUpdate);
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -100,19 +104,19 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/student-info" className="text-gray-300 hover:text-accent transition-colors flex items-center justify-between group py-0.5">
+                <Link to="/about" className="text-gray-300 hover:text-accent transition-colors flex items-center justify-between group py-0.5">
                   <div className="flex items-center gap-2.5">
-                    <GraduationCap size={16} className="text-accent/90 group-hover:scale-110 transition-transform shrink-0" />
-                    <span>Student Info Hub</span>
+                    <Info size={16} className="text-accent/90 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>About Us</span>
                   </div>
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent">&rarr;</span>
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-300 hover:text-accent transition-colors flex items-center justify-between group py-0.5">
+                <Link to="/faq" className="text-gray-300 hover:text-accent transition-colors flex items-center justify-between group py-0.5">
                   <div className="flex items-center gap-2.5">
-                    <Info size={16} className="text-accent/90 group-hover:scale-110 transition-transform shrink-0" />
-                    <span>About Our Academy</span>
+                    <HelpCircle size={16} className="text-accent/90 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>Frequently Asked Questions</span>
                   </div>
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-accent">&rarr;</span>
                 </Link>
@@ -178,10 +182,12 @@ export const Footer: React.FC = () => {
             ) : (
               <form className="space-y-2.5 w-full" onSubmit={handleSubscribe}>
                 <div className="relative w-full">
+                  <label htmlFor="subscribe-email" className="sr-only">Your email address</label>
                   <input 
                     id="subscribe-email"
                     name="subscribeEmail"
                     autoComplete="email"
+                    aria-label="Your email address"
                     type="email" 
                     required
                     placeholder="Your email address" 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { getLocations } from '../services/storageService';
 
 interface InteractiveMapProps {
   center?: [number, number];
@@ -15,16 +16,15 @@ interface InteractiveMapProps {
 const InteractiveMap: React.FC<InteractiveMapProps> = ({
   center = [15.14, 120.59],
   zoom = 6,
-  locations = [
-    {
-      id: 'ph-facility',
-      name: 'SKYLAR EDUCATION ASIA - Pampanga Facility',
-      address: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut, Angeles City, Pampanga',
-      lat: 15.14,
-      lng: 120.59
-    }
-  ]
+  locations
 }) => {
+  const dynamicLocations = locations || getLocations().map(l => ({
+    id: l.id,
+    name: l.name,
+    address: l.address,
+    lat: l.coordinates?.lat ?? 15.14,
+    lng: l.coordinates?.lng ?? 120.59
+  }));
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
@@ -111,7 +111,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
 
     // Add Markers
-    locations.forEach(loc => {
+    dynamicLocations.forEach(loc => {
       const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
       marker.bindPopup(`
         <div style="font-family: 'Maven Pro', sans-serif; padding: 2px;">
@@ -132,7 +132,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [leafletLoaded, center, zoom, locations]);
+  }, [leafletLoaded, center, zoom, dynamicLocations]);
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-gray-100/80 shadow-md">

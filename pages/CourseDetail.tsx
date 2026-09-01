@@ -32,7 +32,8 @@ export const CourseDetail: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (!id) return;
+    const loadCourse = () => {
       const foundCourse = getCourseById(id);
       setCourse(foundCourse);
       if (foundCourse) {
@@ -40,7 +41,16 @@ export const CourseDetail: React.FC = () => {
         setReviews(getCourseReviews(foundCourse.id));
         setAddedToCart(isInCart(foundCourse.id));
       }
-    }
+    };
+    loadCourse();
+    window.addEventListener('coursesUpdated', loadCourse);
+    window.addEventListener('cartUpdated', loadCourse);
+    window.addEventListener('courseReviewsUpdated', loadCourse);
+    return () => {
+      window.removeEventListener('coursesUpdated', loadCourse);
+      window.removeEventListener('cartUpdated', loadCourse);
+      window.removeEventListener('courseReviewsUpdated', loadCourse);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -163,13 +173,13 @@ export const CourseDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Level Card */}
+                {/* Level / Availability / Schedule Card */}
                 <div className="flex items-center bg-white/5 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/10 hover:border-white/30 hover:bg-white/10 transition-all duration-300 shadow-lg flex-1 min-w-[160px]">
                     <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400 mr-4 shrink-0 shadow-inner">
                         <Shield className="w-5 h-5" />
                     </div>
                     <div>
-                        <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Level</span>
+                        <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Level / Availability / Schedule</span>
                         <span className="font-bold text-lg text-white font-heading">{course.level}</span>
                     </div>
                 </div>
@@ -255,7 +265,7 @@ export const CourseDetail: React.FC = () => {
                       ]).map((item, i) => (
                       <div key={i} className="flex items-start gap-4 p-5 bg-surface rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
                           <CheckCircle className="text-green-500 w-5 h-5 md:w-6 md:h-6 mt-0.5 shrink-0" />
-                          <span className="text-gray-700 font-medium text-sm md:text-base">{item}</span>
+                          <span className="text-[#232323] font-semibold text-sm md:text-base">{item}</span>
                       </div>
                       ))}
                   </div>
@@ -303,9 +313,10 @@ export const CourseDetail: React.FC = () => {
                         </span>
                         <span className="text-sm md:text-base font-semibold select-none flex-1">{section.title}</span>
                       </button>
-                      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[1200px] bg-white text-gray-800 p-6 border-t border-gray-100 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.15)]' : 'max-h-0'}`}>
+                      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[3500px] bg-white p-6 border-t border-gray-100 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.15)]' : 'max-h-0'}`}>
                         <div 
-                          className="prose max-w-none text-gray-700 text-sm leading-relaxed html-description"
+                          className="prose max-w-none text-[#232323] text-sm md:text-base leading-relaxed html-description course-spec-accordion-content"
+                          style={{ color: '#232323' }}
                           dangerouslySetInnerHTML={{ __html: section.content }}
                         />
                       </div>
@@ -439,6 +450,7 @@ export const CourseDetail: React.FC = () => {
                     const parts = dateStr.split(',');
                     const dateRange = parts[0]?.trim() || dateStr;
                     const timeSchedule = parts[1]?.trim() || (course.duration ? `Standard Schedule (${course.duration})` : 'Full Day Session');
+                    const isTba = dateRange.toLowerCase().includes('tba') || dateRange.toLowerCase().includes('upon request');
 
                     return (
                       <div 
@@ -456,17 +468,24 @@ export const CourseDetail: React.FC = () => {
                       >
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-accent group-hover:bg-amber-400 group-hover:text-secondary transition-all shrink-0">
+                            <div className={`p-2 rounded-xl transition-all shrink-0 ${isTba ? 'bg-amber-500/15 text-amber-600 dark:text-accent group-hover:bg-amber-500 group-hover:text-slate-950' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white'}`}>
                               <Calendar size={16} />
                             </div>
                             <span className="font-extrabold text-sm sm:text-[15px] text-slate-900 dark:text-slate-50 leading-snug tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
                               {dateRange}
                             </span>
                           </div>
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-700/60 shrink-0 shadow-xs">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Open
-                          </span>
+                          {isTba ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-accent border border-amber-300 dark:border-amber-700/60 shrink-0 shadow-xs">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                              TBA / Inquire
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/90 dark:border-emerald-700/60 shrink-0 shadow-xs">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                              Open
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between pl-9 pt-1 text-xs">

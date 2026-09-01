@@ -40,15 +40,18 @@ export const InquiriesManager: React.FC = () => {
     let result = inquiries;
 
     if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(i => 
-        i.studentName.toLowerCase().includes(q) ||
-        i.email.toLowerCase().includes(q) ||
-        i.phone.toLowerCase().includes(q) ||
-        i.referenceCode.toLowerCase().includes(q) ||
-        i.courseTitle.toLowerCase().includes(q) ||
-        (i.company && i.company.toLowerCase().includes(q))
-      );
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(i => {
+        if (!i) return false;
+        return (
+          (i.studentName || '').toLowerCase().includes(q) ||
+          (i.email || '').toLowerCase().includes(q) ||
+          (i.phone || '').toLowerCase().includes(q) ||
+          (i.referenceCode || '').toLowerCase().includes(q) ||
+          (i.courseTitle || '').toLowerCase().includes(q) ||
+          (i.company && i.company.toLowerCase().includes(q))
+        );
+      });
     }
 
     if (selectedStatus !== 'All') {

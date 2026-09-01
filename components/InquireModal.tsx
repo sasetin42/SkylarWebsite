@@ -377,6 +377,7 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                           const dateRange = parts[0]?.trim() || dateStr;
                           const timeSchedule = parts[1]?.trim() || (selectedCourse.duration ? `${selectedCourse.duration} Schedule` : '9:00 AM - 5:00 PM');
                           const isSelected = preferredDate === dateRange;
+                          const isTba = dateRange.toLowerCase().includes('tba') || dateRange.toLowerCase().includes('upon request');
 
                           return (
                             <div
@@ -393,9 +394,13 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                                   {dateRange}
                                 </span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                  isSelected ? 'bg-accent text-secondary' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                                  isSelected 
+                                    ? 'bg-accent text-secondary' 
+                                    : isTba
+                                      ? 'bg-amber-950/60 text-amber-400 border border-amber-800/60'
+                                      : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
                                 }`}>
-                                  {isSelected ? '✓ Selected' : 'Open'}
+                                  {isSelected ? '✓ Selected' : isTba ? 'TBA / Flexible' : 'Open'}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1 text-[11px] text-slate-400">
@@ -520,6 +525,8 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                         <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                           id="inquire-name"
+                          name="name"
+                          autoComplete="name"
                           type="text"
                           required
                           placeholder="e.g. Juan Dela Cruz"
@@ -538,6 +545,8 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                         <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                           id="inquire-email"
+                          name="email"
+                          autoComplete="email"
                           type="email"
                           required
                           placeholder="name@company.com"
@@ -559,6 +568,8 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                         <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                           id="inquire-phone"
+                          name="phone"
+                          autoComplete="tel"
                           type="tel"
                           required
                           placeholder="+63 9XX XXX XXXX"
@@ -577,6 +588,8 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                         <Building size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                           id="inquire-company"
+                          name="company"
+                          autoComplete="organization"
                           type="text"
                           placeholder="e.g. Acme Offshore Energy"
                           value={company}
@@ -595,6 +608,7 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                       </label>
                       <select
                         id="inquire-location"
+                        name="location"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         className="w-full h-11 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none focus:border-accent text-xs sm:text-sm cursor-pointer"
@@ -610,6 +624,7 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                       </label>
                       <select
                         id="inquire-participants"
+                        name="participants"
                         value={participantsCount}
                         onChange={(e) => setParticipantsCount(e.target.value)}
                         className="w-full h-11 px-3 bg-slate-950/70 border border-slate-700/80 rounded-xl text-white outline-none focus:border-accent text-xs sm:text-sm cursor-pointer"
@@ -629,6 +644,8 @@ export const InquireModal: React.FC<InquireModalProps> = ({
                     </label>
                     <textarea
                       id="inquire-message"
+                      name="message"
+                      autoComplete="off"
                       rows={2}
                       placeholder="Specify any questions, preferred schedule timing, or group customization requirements..."
                       value={message}

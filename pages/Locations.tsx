@@ -1,15 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Navigation, ArrowRight } from 'lucide-react';
-import { LOCATIONS } from '../constants';
 import { Button } from '../components/Button';
 import { findNearbyPlaces } from '../services/geminiService';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { getPageContent } from '../services/storageService';
+import { getPageContent, getLocations } from '../services/storageService';
 import { SitePage, Location } from '../types';
 import { Link } from 'react-router-dom';
 
 const LocationCard: React.FC<{ location: Location }> = ({ location }) => {
+  const mapUrl = location.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`;
+
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
       <Link to={`/locations/${location.id}`} className="block h-64 overflow-hidden relative shrink-0">
@@ -22,6 +23,11 @@ const LocationCard: React.FC<{ location: Location }> = ({ location }) => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#041024]/90 via-[#041024]/40 to-transparent"></div>
+        {location.badge && (
+          <span className="absolute top-4 left-6 px-3 py-1 rounded-full bg-accent/90 text-secondary text-xs font-black uppercase tracking-wider backdrop-blur-sm shadow-md">
+            {location.badge}
+          </span>
+        )}
         <h3 className="absolute bottom-4 left-6 text-xl md:text-2xl font-bold font-heading text-white pr-4 leading-tight drop-shadow-md">{location.name}</h3>
       </Link>
       
@@ -33,7 +39,7 @@ const LocationCard: React.FC<{ location: Location }> = ({ location }) => {
               <div>
                 <p className="text-gray-400 font-bold text-xs uppercase tracking-wider mb-1">Address</p>
                 <p className="text-gray-800 font-medium leading-relaxed">{location.address}</p>
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-yellow-600 text-sm font-bold mt-1 inline-flex items-center gap-1 transition-colors">
+                <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-yellow-600 text-sm font-bold mt-1 inline-flex items-center gap-1 transition-colors">
                     View on Google Maps <ArrowRight size={14}/>
                 </a>
               </div>
@@ -80,15 +86,21 @@ export const Locations: React.FC = () => {
   const [places, setPlaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
+  const [locationsList, setLocationsList] = useState<Location[]>(getLocations());
 
   useEffect(() => {
     const loadContent = () => {
       const content = getPageContent('locations');
       if (content) setPageContent(content);
+      setLocationsList(getLocations());
     };
     loadContent();
     window.addEventListener('sitePagesUpdated', loadContent);
-    return () => window.removeEventListener('sitePagesUpdated', loadContent);
+    window.addEventListener('locationsUpdated', loadContent);
+    return () => {
+      window.removeEventListener('sitePagesUpdated', loadContent);
+      window.removeEventListener('locationsUpdated', loadContent);
+    };
   }, []);
 
   const handleFindPlaces = async () => {
@@ -161,7 +173,7 @@ export const Locations: React.FC = () => {
 
       <div className="container mx-auto px-4 md:px-8 relative z-10 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-12 max-w-5xl">
-          {LOCATIONS.map(location => (
+          {locationsList.map(location => (
             <div key={location.id} id={location.id} className="scroll-mt-32">
                 <LocationCard location={location} />
             </div>

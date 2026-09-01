@@ -101,7 +101,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
 
           {/* Short Description */}
           {course.shortDescription && (
-            <p className="text-xs text-gray-500 dark:text-gray-300 mt-1 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-slate-700 dark:text-slate-200 mt-1 line-clamp-2 leading-relaxed font-normal">
               {course.shortDescription}
             </p>
           )}

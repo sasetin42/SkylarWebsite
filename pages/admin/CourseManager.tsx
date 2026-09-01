@@ -486,12 +486,16 @@ export const CourseManager: React.FC = () => {
 
   // Intake Date Picker State
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateMode, setDateMode] = useState<'single' | 'range'>('range');
+  const [dateMode, setDateMode] = useState<'single' | 'range' | 'tba'>('range');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [timePreset, setTimePreset] = useState('full-day'); // 'full-day', 'morning', 'afternoon', 'custom'
+  const [timePreset, setTimePreset] = useState('full-day'); // 'full-day', 'morning', 'afternoon', 'flexible', 'custom'
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
+  const [tbaOption, setTbaOption] = useState<string>('Schedule Upon Request');
+  const [tbaCustomDetail, setTbaCustomDetail] = useState<string>('');
+  const [tbaTentativeDate, setTbaTentativeDate] = useState<string>('');
+  const [tbaDuration, setTbaDuration] = useState<string>('');
   const [editingIntakeIdx, setEditingIntakeIdx] = useState<number | null>(null);
   const [rawIntakeText, setRawIntakeText] = useState('');
   const [isRawMode, setIsRawMode] = useState(false);
@@ -840,19 +844,32 @@ export const CourseManager: React.FC = () => {
   };
 
   // Filter Logic
-  const filteredCourses = courses.filter(c => {
-    const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'All' || c.category === filterCategory || c.subCategory === filterCategory;
+  const filteredCourses = (courses || []).filter(c => {
+    if (!c) return false;
+    const title = c.title || '';
+    const code = c.code || '';
+    const category = c.category || '';
+    const subCategory = c.subCategory || '';
+    const duration = c.duration || '';
+    const price = typeof c.price === 'number' ? c.price : 0;
+
+    const term = (searchTerm || '').toLowerCase().trim();
+    const matchesSearch = !term || 
+                          title.toLowerCase().includes(term) || 
+                          code.toLowerCase().includes(term) || 
+                          category.toLowerCase().includes(term) ||
+                          subCategory.toLowerCase().includes(term);
+    const matchesCategory = filterCategory === 'All' || category === filterCategory || subCategory === filterCategory;
     
     let matchesPrice = true;
-    if (filterPrice === 'Low') matchesPrice = c.price < 500;
-    if (filterPrice === 'Medium') matchesPrice = c.price >= 500 && c.price <= 1500;
-    if (filterPrice === 'High') matchesPrice = c.price > 1500;
+    if (filterPrice === 'Low') matchesPrice = price < 500;
+    if (filterPrice === 'Medium') matchesPrice = price >= 500 && price <= 1500;
+    if (filterPrice === 'High') matchesPrice = price > 1500;
 
     let matchesDuration = true;
-    if (filterDuration === 'Short') matchesDuration = /Day|Hour/i.test(c.duration);
-    if (filterDuration === 'Medium') matchesDuration = /Week/i.test(c.duration);
-    if (filterDuration === 'Long') matchesDuration = /Month/i.test(c.duration);
+    if (filterDuration === 'Short') matchesDuration = /Day|Hour/i.test(duration);
+    if (filterDuration === 'Medium') matchesDuration = /Week/i.test(duration);
+    if (filterDuration === 'Long') matchesDuration = /Month/i.test(duration);
 
     return matchesSearch && matchesCategory && matchesPrice && matchesDuration;
   });
@@ -924,13 +941,62 @@ export const CourseManager: React.FC = () => {
   };
 
   const formatIntakeDate = (
-    mode: 'single' | 'range',
+    mode: 'single' | 'range' | 'tba',
     startStr: string,
     endStr: string,
     preset: string,
     startT: string,
-    endT: string
+    endT: string,
+    tbaOpt?: string,
+    tbaCustom?: string,
+    tbaTentative?: string,
+    tbaDur?: string
   ): string => {
+    if (mode === 'tba') {
+      const detail = (tbaCustom && tbaCustom.trim()) ? tbaCustom.trim() : (tbaOpt || 'Schedule Upon Request');
+      const durPart = (tbaDur && tbaDur.trim()) ? ` (${tbaDur.trim()})` : '';
+      let datePart = '';
+      if (tbaTentative) {
+        const d = new Date(tbaTentative);
+        if (!isNaN(d.getTime())) {
+          const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ];
+          datePart = `TBA (${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} - ${detail}${durPart})`;
+        } else {
+          datePart = `TBA (${detail}${durPart})`;
+        }
+      } else {
+        datePart = `TBA – ${detail}${durPart}`;
+      }
+
+      let timePart = '';
+      if (preset === 'full-day') {
+        timePart = '09:00 AM - 05:00 PM';
+      } else if (preset === 'morning') {
+        timePart = '08:00 AM - 12:00 PM';
+      } else if (preset === 'afternoon') {
+        timePart = '01:00 PM - 05:00 PM';
+      } else if (preset === 'flexible') {
+        timePart = 'Flexible Schedule / On-Demand';
+      } else if (preset === 'custom') {
+        const formatTimeStr = (timeStr: string) => {
+          const [hStr, mStr] = timeStr.split(':');
+          const h = parseInt(hStr, 10);
+          const m = parseInt(mStr, 10);
+          if (isNaN(h) || isNaN(m)) return timeStr;
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          const displayH = h % 12 === 0 ? 12 : h % 12;
+          const displayM = m.toString().padStart(2, '0');
+          return `${displayH}:${displayM} ${ampm}`;
+        };
+        timePart = `${formatTimeStr(startT)} - ${formatTimeStr(endT)}`;
+      }
+
+      return timePart ? `${datePart}, ${timePart}` : datePart;
+    }
+
     if (!startStr) return '';
     
     const months = [
@@ -988,6 +1054,8 @@ export const CourseManager: React.FC = () => {
       timePart = '08:00 AM - 12:00 PM';
     } else if (preset === 'afternoon') {
       timePart = '01:00 PM - 05:00 PM';
+    } else if (preset === 'flexible') {
+      timePart = 'Flexible Schedule / On-Demand';
     } else {
       timePart = `${formatTimeStr(startT)} - ${formatTimeStr(endT)}`;
     }
@@ -1003,10 +1071,54 @@ export const CourseManager: React.FC = () => {
     setTimePreset('full-day');
     setStartTime('09:00');
     setEndTime('17:00');
+    setTbaOption('Schedule Upon Request');
+    setTbaCustomDetail('');
+    setTbaTentativeDate('');
+    setTbaDuration('');
     setIsRawMode(false);
     setRawIntakeText(str);
 
     try {
+      const lower = str.toLowerCase();
+      if (lower.startsWith('tba') || lower.includes('to be announced') || lower.includes('upon request')) {
+        setDateMode('tba');
+        const parts = str.split(',');
+        const datePart = parts[0]?.trim() || '';
+        const timePart = parts[1]?.trim() || '';
+
+        // Extract duration if present: e.g. (4 Days) or (5 Days Duration)
+        const durMatch = datePart.match(/\(([^)]*(?:day|days|week|weeks|month|months|hrs|hours)[^)]*)\)/i);
+        if (durMatch) {
+          setTbaDuration(durMatch[1].trim());
+        } else {
+          setTbaDuration('');
+        }
+
+        let cleanDetail = datePart
+          .replace(/^TBA\s*[–-]\s*/i, '')
+          .replace(/^TBA\s*\(/i, '')
+          .replace(/\(([^)]*(?:day|days|week|weeks|month|months|hrs|hours)[^)]*)\)/i, '')
+          .replace(/\)$/, '')
+          .trim();
+        setTbaCustomDetail(cleanDetail);
+        setTbaOption(cleanDetail || 'Schedule Upon Request');
+
+        if (timePart) {
+          if (timePart.includes('09:00 AM - 05:00 PM')) {
+            setTimePreset('full-day');
+          } else if (timePart.includes('08:00 AM - 12:00 PM')) {
+            setTimePreset('morning');
+          } else if (timePart.includes('01:00 PM - 05:00 PM')) {
+            setTimePreset('afternoon');
+          } else if (timePart.toLowerCase().includes('flexible') || timePart.toLowerCase().includes('on-demand')) {
+            setTimePreset('flexible');
+          } else {
+            setTimePreset('custom');
+          }
+        }
+        return;
+      }
+
       const parts = str.split(',');
       const datePart = parts[0]?.trim() || '';
       const timePart = parts[1]?.trim() || '';
@@ -1030,13 +1142,13 @@ export const CourseManager: React.FC = () => {
       const year = yearMatch ? parseInt(yearMatch[0], 10) : new Date().getFullYear();
 
       const findMonthInText = (text: string): number => {
-        const lower = text.toLowerCase();
+        const lowerText = text.toLowerCase();
         for (const [name, idx] of Object.entries(monthMap)) {
           const re = new RegExp(`\\b${name}\\b`, 'i');
-          if (re.test(lower)) return idx;
+          if (re.test(lowerText)) return idx;
         }
         for (const [name, idx] of Object.entries(monthMap)) {
-          if (lower.includes(name)) return idx;
+          if (lowerText.includes(name)) return idx;
         }
         return -1;
       };
@@ -1099,6 +1211,8 @@ export const CourseManager: React.FC = () => {
           setTimePreset('morning');
         } else if (timePart.includes('01:00 PM - 05:00 PM')) {
           setTimePreset('afternoon');
+        } else if (timePart.toLowerCase().includes('flexible')) {
+          setTimePreset('flexible');
         } else {
           setTimePreset('custom');
           const parseTimeStr = (tStr: string) => {
@@ -1156,6 +1270,7 @@ export const CourseManager: React.FC = () => {
     };
 
     const getSelectedDurationDays = (): number => {
+      if (dateMode === 'tba') return 0;
       if (!startDate) return 0;
       if (dateMode === 'single' || !endDate) return 1;
       const [y1, m1, d1] = startDate.split('-').map(Number);
@@ -1181,7 +1296,7 @@ export const CourseManager: React.FC = () => {
       if (isRawMode) {
         finalStr = rawIntakeText.trim();
       } else {
-        finalStr = formatIntakeDate(dateMode, startDate, endDate, timePreset, startTime, endTime);
+        finalStr = formatIntakeDate(dateMode, startDate, endDate, timePreset, startTime, endTime, tbaOption, tbaCustomDetail, tbaTentativeDate, tbaDuration);
       }
 
       if (!finalStr) return;
@@ -1201,6 +1316,10 @@ export const CourseManager: React.FC = () => {
       setTimePreset('full-day');
       setStartTime('09:00');
       setEndTime('17:00');
+      setTbaOption('Schedule Upon Request');
+      setTbaCustomDetail('');
+      setTbaTentativeDate('');
+      setTbaDuration('');
       setIsRawMode(false);
       setRawIntakeText('');
     };
@@ -1213,6 +1332,10 @@ export const CourseManager: React.FC = () => {
       setTimePreset('full-day');
       setStartTime('09:00');
       setEndTime('17:00');
+      setTbaOption('Schedule Upon Request');
+      setTbaCustomDetail('');
+      setTbaTentativeDate('');
+      setTbaDuration('');
       setIsRawMode(false);
       setRawIntakeText('');
     };
@@ -1238,6 +1361,10 @@ export const CourseManager: React.FC = () => {
       setTimePreset('full-day');
       setStartTime('09:00');
       setEndTime('17:00');
+      setTbaOption('Schedule Upon Request');
+      setTbaCustomDetail('');
+      setTbaTentativeDate('');
+      setTbaDuration(formData.duration || '');
       setIsRawMode(false);
       setRawIntakeText('');
       setShowDatePicker(true);
@@ -1245,16 +1372,26 @@ export const CourseManager: React.FC = () => {
 
     const previewString = isRawMode 
       ? rawIntakeText 
-      : formatIntakeDate(dateMode, startDate, endDate, timePreset, startTime, endTime);
+      : formatIntakeDate(dateMode, startDate, endDate, timePreset, startTime, endTime, tbaOption, tbaCustomDetail, tbaTentativeDate, tbaDuration);
 
     const calculatedDays = getSelectedDurationDays();
+
+    const tbaPresets = [
+      'Schedule Upon Request',
+      'To Be Announced',
+      'Flexible Dates / On-Demand',
+      'Group / Corporate Booking',
+      'Upcoming Q4 2026',
+      'Pampanga Campus Intake',
+      'Client Site Delivery'
+    ];
 
     return (
       <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Upcoming Intake Dates & Times</label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Schedule dates, shifts, and calculate multi-day course duration ranges.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Schedule dates, shifts, and calculate multi-day course duration ranges, or configure TBA schedules.</p>
           </div>
           {!showDatePicker && (
             <button
@@ -1280,13 +1417,19 @@ export const CourseManager: React.FC = () => {
               const parts = item.split(',');
               const dateP = parts[0]?.trim();
               const timeP = parts[1]?.trim();
+              const isTba = dateP?.toLowerCase().includes('tba') || dateP?.toLowerCase().includes('upon request');
 
               return (
                 <div key={idx} className="flex items-center justify-between p-3.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xs hover:border-gray-300 dark:hover:border-gray-600 transition-all group">
                   <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <Calendar size={13} className="text-primary dark:text-accent shrink-0" />
                       <span className="font-bold text-gray-900 dark:text-white truncate">{dateP}</span>
+                      {isTba && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-600 dark:text-accent border border-amber-500/30 shrink-0">
+                          TBA
+                        </span>
+                      )}
                     </div>
                     {timeP && (
                       <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -1350,16 +1493,16 @@ export const CourseManager: React.FC = () => {
                   id="course-custom-intake"
                   name="customIntake"
                   autoComplete="off"
-                  placeholder="e.g. 22 - 25 June 2026, 09:00 AM - 05:00 PM"
+                  placeholder="e.g. 22 - 25 June 2026, 09:00 AM - 05:00 PM or TBA – Schedule Upon Request"
                   value={rawIntakeText}
                   onChange={(e) => setRawIntakeText(e.target.value)}
-                  className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-inner animate-fade-in"
+                  className="w-full p-3 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:ring-2 focus:ring-accent shadow-inner animate-fade-in"
                 />
               </div>
             ) : (
               <div className="space-y-4 animate-fade-in">
-                {/* Top Controls: Mode Switcher & Quick Duration Presets */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-gray-100 dark:border-gray-700/50">
+                {/* Top Controls: Mode Switcher */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-gray-100 dark:border-gray-700/50">
                   <div className="flex rounded-lg bg-gray-100 dark:bg-gray-900 p-0.5 w-fit border border-gray-200 dark:border-gray-700">
                     <button
                       type="button"
@@ -1369,7 +1512,7 @@ export const CourseManager: React.FC = () => {
                           setEndDate(calculateEndDate(startDate, getNumericDaysFromDuration(formData.duration)));
                         }
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${dateMode === 'range' ? 'bg-white dark:bg-gray-800 text-primary dark:text-accent shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'}`}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${dateMode === 'range' ? 'bg-white dark:bg-gray-800 text-primary dark:text-accent shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'}`}
                     >
                       Date Duration Range
                     </button>
@@ -1379,173 +1522,352 @@ export const CourseManager: React.FC = () => {
                         setDateMode('single');
                         setEndDate('');
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${dateMode === 'single' ? 'bg-white dark:bg-gray-800 text-primary dark:text-accent shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'}`}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${dateMode === 'single' ? 'bg-white dark:bg-gray-800 text-primary dark:text-accent shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'}`}
                     >
                       Single Date
                     </button>
-                  </div>
-
-                  {/* Quick Pick Duration Presets + Duration Badge */}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mr-0.5">Quick Duration:</span>
-                    {formData.duration && (
-                      <button
-                        type="button"
-                        onClick={() => handleApplyDuration(getNumericDaysFromDuration(formData.duration))}
-                        className="px-2 py-0.5 bg-accent/20 hover:bg-accent/30 text-secondary dark:text-accent font-bold text-xs rounded-lg border border-accent/40 transition-all cursor-pointer flex items-center gap-1 shadow-xs"
-                        title="Auto-calculate duration matching course spec"
-                      >
-                        ⚡ Auto ({formData.duration})
-                      </button>
-                    )}
                     <button
                       type="button"
-                      onClick={() => handleApplyDuration(1)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      1 Day
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(2)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      2 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(3)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      3 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(5)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      5 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(7)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      1 Week
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(14)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      2 Weeks
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyDuration(30)}
-                      className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
-                    >
-                      1 Month
-                    </button>
-
-                    {calculatedDays > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-accent/15 text-secondary dark:text-accent border border-accent/30 ml-1">
-                        <Clock size={11} />
-                        {calculatedDays} {calculatedDays === 1 ? 'Day' : 'Days'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Inline Fields Row: Dates, Shift, and Custom Times */}
-                <div className={`grid gap-3 pt-1 ${timePreset === 'custom' ? 'grid-cols-1 md:grid-cols-4' : (dateMode === 'range' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2')}`}>
-                  <div>
-                    <label htmlFor="course-start-date" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
-                      {dateMode === 'range' ? 'Start Date' : 'Training Date'}
-                    </label>
-                    <input
-                      type="date"
-                      id="course-start-date"
-                      name="startDate"
-                      autoComplete="off"
-                      min={new Date().toISOString().split('T')[0]}
-                      value={startDate}
-                      onChange={(e) => {
-                        const newStart = e.target.value;
-                        setStartDate(newStart);
-                        if (dateMode === 'range' && (!endDate || endDate < newStart)) {
-                          const courseDays = getNumericDaysFromDuration(formData.duration);
-                          setEndDate(calculateEndDate(newStart, courseDays));
+                      onClick={() => {
+                        setDateMode('tba');
+                        if (!tbaDuration && formData.duration) {
+                          setTbaDuration(formData.duration);
                         }
                       }}
-                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-inner"
-                    />
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-1 ${dateMode === 'tba' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'}`}
+                    >
+                      ⚡ TBA / Custom Schedule
+                    </button>
                   </div>
 
-                  {dateMode === 'range' && (
+                  {/* Quick Pick Duration Presets + Duration Badge (for range/single mode) */}
+                  {dateMode !== 'tba' && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mr-0.5">Quick Duration:</span>
+                      {formData.duration && (
+                        <button
+                          type="button"
+                          onClick={() => handleApplyDuration(getNumericDaysFromDuration(formData.duration))}
+                          className="px-2 py-0.5 bg-accent/20 hover:bg-accent/30 text-secondary dark:text-accent font-bold text-xs rounded-lg border border-accent/40 transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                          title="Auto-calculate duration matching course spec"
+                        >
+                          ⚡ Auto ({formData.duration})
+                        </button>
+                      )}
+                      {[
+                        { days: 1, label: '1 Day' },
+                        { days: 2, label: '2 Days' },
+                        { days: 3, label: '3 Days' },
+                        { days: 4, label: '4 Days' },
+                        { days: 5, label: '5 Days' },
+                        { days: 7, label: '7 Days' },
+                        { days: 7, label: '1 Week' },
+                        { days: 14, label: '2 Weeks' },
+                        { days: 30, label: '1 Month' }
+                      ].map((dObj, dIdx) => (
+                        <button
+                          key={dIdx}
+                          type="button"
+                          onClick={() => handleApplyDuration(dObj.days)}
+                          className="px-2 py-0.5 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 transition-all cursor-pointer"
+                        >
+                          {dObj.label}
+                        </button>
+                      ))}
+
+                      {calculatedDays > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-accent/15 text-secondary dark:text-accent border border-accent/30 ml-1">
+                          <Clock size={11} />
+                          {calculatedDays} {calculatedDays === 1 ? 'Day' : 'Days'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* TBA / Custom Schedule Controls */}
+                {dateMode === 'tba' ? (
+                  <div className="space-y-4 bg-amber-500/5 dark:bg-amber-500/10 p-4 rounded-xl border border-amber-500/20">
                     <div>
-                      <label htmlFor="course-end-date" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
-                        End Date
+                      <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block mb-2">
+                        Quick TBA Presets
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {tbaPresets.map((preset, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => {
+                              setTbaOption(preset);
+                              setTbaCustomDetail(preset);
+                            }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                              (tbaCustomDetail === preset || tbaOption === preset)
+                                ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm'
+                                : 'bg-slate-900 dark:bg-slate-950 text-gray-200 border-slate-700 hover:border-amber-400'
+                            }`}
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Duration / Number of Days Selection for TBA */}
+                    <div className="bg-slate-900/60 dark:bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <label htmlFor="course-tba-duration" className="block text-xs font-bold text-gray-200">
+                          Course Duration (How Many Days / Schedule Length)
+                        </label>
+                        {tbaDuration && (
+                          <span className="text-xs font-bold text-amber-400 flex items-center gap-1 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
+                            <Clock size={11} /> {tbaDuration}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Quick Duration Preset Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                        <span className="text-[11px] font-bold text-gray-400 mr-0.5">Quick Duration:</span>
+                        {formData.duration && (
+                          <button
+                            type="button"
+                            onClick={() => setTbaDuration(formData.duration || '')}
+                            className={`px-2.5 py-1 font-bold text-xs rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                              tbaDuration === formData.duration
+                                ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm'
+                                : 'bg-slate-900 dark:bg-slate-950 hover:bg-slate-800 text-amber-400 border-amber-500/40'
+                            }`}
+                          >
+                            ⚡ Auto ({formData.duration})
+                          </button>
+                        )}
+                        {['1 Day', '2 Days', '3 Days', '4 Days', '5 Days', '7 Days', '1 Week', '2 Weeks', '1 Month'].map((dur, dIdx) => (
+                          <button
+                            key={dIdx}
+                            type="button"
+                            onClick={() => setTbaDuration(dur)}
+                            className={`px-2.5 py-1 text-xs rounded-lg border transition-all cursor-pointer ${
+                              tbaDuration === dur
+                                ? 'bg-amber-500 text-slate-950 border-amber-600 font-bold shadow-sm'
+                                : 'bg-slate-900 dark:bg-slate-950 hover:bg-slate-800 text-gray-300 border-slate-700'
+                            }`}
+                          >
+                            {dur}
+                          </button>
+                        ))}
+                        {tbaDuration && (
+                          <button
+                            type="button"
+                            onClick={() => setTbaDuration('')}
+                            className="px-2 py-1 text-xs text-gray-400 hover:text-red-400 bg-slate-900 border border-slate-700 rounded-lg cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="text"
+                        id="course-tba-duration"
+                        name="tbaDuration"
+                        autoComplete="off"
+                        placeholder="e.g. 4 Days, 3 Days Intensive, or 2 Weeks"
+                        value={tbaDuration}
+                        onChange={(e) => setTbaDuration(e.target.value)}
+                        className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-inner"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="course-tba-detail" className="block text-xs font-bold text-gray-200 mb-1">
+                          Custom TBA Description / Specific Details
+                        </label>
+                        <input
+                          type="text"
+                          id="course-tba-detail"
+                          name="tbaDetail"
+                          autoComplete="off"
+                          placeholder="e.g. Schedule Upon Request or Inquire for Available Slots"
+                          value={tbaCustomDetail}
+                          onChange={(e) => {
+                            setTbaCustomDetail(e.target.value);
+                            setTbaOption(e.target.value);
+                          }}
+                          className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 font-semibold shadow-inner"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="course-tba-date" className="block text-xs font-bold text-gray-200 mb-1">
+                          Optional Tentative Target Date
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="date"
+                            id="course-tba-date"
+                            name="tbaDate"
+                            autoComplete="off"
+                            value={tbaTentativeDate}
+                            onChange={(e) => setTbaTentativeDate(e.target.value)}
+                            className="flex-1 p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-inner"
+                          />
+                          {tbaTentativeDate && (
+                            <button
+                              type="button"
+                              onClick={() => setTbaTentativeDate('')}
+                              className="px-2.5 py-2 text-xs text-gray-400 hover:text-red-400 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl transition-colors cursor-pointer"
+                              title="Clear Date"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="course-tba-time-preset" className="block text-xs font-bold text-gray-200 mb-1">
+                        Shift & Hours Specification
+                      </label>
+                      <select
+                        id="course-tba-time-preset"
+                        name="tbaTimePreset"
+                        autoComplete="off"
+                        value={timePreset}
+                        onChange={(e) => setTimePreset(e.target.value)}
+                        className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-inner"
+                      >
+                        <option value="flexible" className="bg-slate-950 text-white">Flexible Schedule / On-Demand</option>
+                        <option value="full-day" className="bg-slate-950 text-white">Full Day: 09:00 AM - 05:00 PM</option>
+                        <option value="morning" className="bg-slate-950 text-white">Morning Shift: 08:00 AM - 12:00 PM</option>
+                        <option value="afternoon" className="bg-slate-950 text-white">Afternoon Shift: 01:00 PM - 05:00 PM</option>
+                        <option value="custom" className="bg-slate-950 text-white">Custom Shift Hours...</option>
+                      </select>
+                    </div>
+
+                    {timePreset === 'custom' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label htmlFor="course-tba-start-time" className="block text-xs font-bold text-gray-400 mb-1">Start Time</label>
+                          <input
+                            type="time"
+                            id="course-tba-start-time"
+                            name="tbaStartTime"
+                            autoComplete="off"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-sm"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="course-tba-end-time" className="block text-xs font-bold text-gray-400 mb-1">End Time</label>
+                          <input
+                            type="time"
+                            id="course-tba-end-time"
+                            name="tbaEndTime"
+                            autoComplete="off"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Standard Date Fields Row: Dates, Shift, and Custom Times */
+                  <div className={`grid gap-3 pt-1 ${timePreset === 'custom' ? 'grid-cols-1 md:grid-cols-4' : (dateMode === 'range' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2')}`}>
+                    <div>
+                      <label htmlFor="course-start-date" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
+                        {dateMode === 'range' ? 'Start Date' : 'Training Date'}
                       </label>
                       <input
                         type="date"
-                        id="course-end-date"
-                        name="endDate"
+                        id="course-start-date"
+                        name="startDate"
                         autoComplete="off"
-                        value={endDate}
-                        min={startDate || new Date().toISOString().split('T')[0]}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-inner"
+                        min={new Date().toISOString().split('T')[0]}
+                        value={startDate}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          setStartDate(newStart);
+                          if (dateMode === 'range' && (!endDate || endDate < newStart)) {
+                            const courseDays = getNumericDaysFromDuration(formData.duration);
+                            setEndDate(calculateEndDate(newStart, courseDays));
+                          }
+                        }}
+                        className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:ring-2 focus:ring-accent shadow-inner"
                       />
                     </div>
-                  )}
 
-                  <div>
-                    <label htmlFor="course-time-preset" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Shift & Hours</label>
-                    <select
-                      id="course-time-preset"
-                      name="timePreset"
-                      autoComplete="off"
-                      value={timePreset}
-                      onChange={(e) => setTimePreset(e.target.value)}
-                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-sm"
-                    >
-                      <option value="full-day">Full Day: 09:00 AM - 05:00 PM</option>
-                      <option value="morning">Morning Shift: 08:00 AM - 12:00 PM</option>
-                      <option value="afternoon">Afternoon Shift: 01:00 PM - 05:00 PM</option>
-                      <option value="custom">Custom Shift Hours...</option>
-                    </select>
-                  </div>
-
-                  {timePreset === 'custom' && (
-                    <div className="grid grid-cols-2 gap-2">
+                    {dateMode === 'range' && (
                       <div>
-                        <label htmlFor="course-start-time" className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
+                        <label htmlFor="course-end-date" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">
+                          End Date
+                        </label>
                         <input
-                          type="time"
-                          id="course-start-time"
-                          name="startTime"
+                          type="date"
+                          id="course-end-date"
+                          name="endDate"
                           autoComplete="off"
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-sm"
+                          value={endDate}
+                          min={startDate || new Date().toISOString().split('T')[0]}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:ring-2 focus:ring-accent shadow-inner"
                         />
                       </div>
-                      <div>
-                        <label htmlFor="course-end-time" className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">End Time</label>
-                        <input
-                          type="time"
-                          id="course-end-time"
-                          name="endTime"
-                          autoComplete="off"
-                          value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
-                          className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-accent shadow-sm"
-                        />
-                      </div>
+                    )}
+
+                    <div>
+                      <label htmlFor="course-time-preset" className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Shift & Hours</label>
+                      <select
+                        id="course-time-preset"
+                        name="timePreset"
+                        autoComplete="off"
+                        value={timePreset}
+                        onChange={(e) => setTimePreset(e.target.value)}
+                        className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:ring-2 focus:ring-accent shadow-sm"
+                      >
+                        <option value="full-day" className="bg-slate-950 text-white">Full Day: 09:00 AM - 05:00 PM</option>
+                        <option value="morning" className="bg-slate-950 text-white">Morning Shift: 08:00 AM - 12:00 PM</option>
+                        <option value="afternoon" className="bg-slate-950 text-white">Afternoon Shift: 01:00 PM - 05:00 PM</option>
+                        <option value="flexible" className="bg-slate-950 text-white">Flexible Schedule / On-Demand</option>
+                        <option value="custom" className="bg-slate-950 text-white">Custom Shift Hours...</option>
+                      </select>
                     </div>
-                  )}
-                </div>
+
+                    {timePreset === 'custom' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label htmlFor="course-start-time" className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Start Time</label>
+                          <input
+                            type="time"
+                            id="course-start-time"
+                            name="startTime"
+                            autoComplete="off"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:ring-2 focus:ring-accent shadow-sm"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="course-end-time" className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">End Time</label>
+                          <input
+                            type="time"
+                            id="course-end-time"
+                            name="endTime"
+                            autoComplete="off"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            className="w-full p-2.5 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-xl text-xs text-white [color-scheme:dark] focus:ring-2 focus:ring-accent shadow-sm"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1556,11 +1878,15 @@ export const CourseManager: React.FC = () => {
                   <span className="text-[10px] font-bold text-primary dark:text-accent uppercase tracking-wider block">Live Intake Preview</span>
                   <p className="text-xs text-gray-800 dark:text-white font-semibold mt-0.5 truncate">{previewString}</p>
                 </div>
-                {calculatedDays > 0 && !isRawMode && (
+                {calculatedDays > 0 && !isRawMode && dateMode !== 'tba' ? (
                   <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 shadow-2xs">
                     {calculatedDays}d
                   </span>
-                )}
+                ) : dateMode === 'tba' ? (
+                  <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-black bg-amber-500 text-slate-950 shadow-2xs">
+                    {tbaDuration ? `TBA (${tbaDuration})` : 'TBA Slot'}
+                  </span>
+                ) : null}
               </div>
             )}
 
@@ -1672,7 +1998,7 @@ export const CourseManager: React.FC = () => {
                 name="courseDuration"
                 autoComplete="off"
                 required
-                placeholder="e.g. 5 Days"
+                placeholder="e.g. 5 Days or 7 Days"
                 className={`w-full p-3 bg-gray-50 dark:bg-gray-900 border rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm ${durationError ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300 dark:border-gray-600'}`}
                 value={formData.duration || ''}
                 onChange={e => {
@@ -1680,6 +2006,26 @@ export const CourseManager: React.FC = () => {
                   setDurationError('');
                 }}
               />
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className="text-[10px] font-bold text-gray-400 mr-0.5">Quick Presets:</span>
+                {['1 Day', '2 Days', '3 Days', '4 Days', '5 Days', '7 Days', '1 Week', '2 Weeks', '1 Month'].map((dur, dIdx) => (
+                  <button
+                    key={dIdx}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, duration: dur }));
+                      setDurationError('');
+                    }}
+                    className={`px-2 py-0.5 text-xs rounded-lg border transition-all cursor-pointer ${
+                      formData.duration === dur
+                        ? 'bg-amber-500 text-slate-950 border-amber-600 font-bold shadow-sm'
+                        : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                    }`}
+                  >
+                    {dur}
+                  </button>
+                ))}
+              </div>
               {durationError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertTriangle size={12}/> {durationError}</p>}
             </div>
             
@@ -2079,7 +2425,7 @@ export const CourseManager: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="course-level" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Level / Availability</label>
+                  <label htmlFor="course-level" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Level / Availability / Schedule</label>
                   <select 
                     id="course-level"
                     name="courseLevel"

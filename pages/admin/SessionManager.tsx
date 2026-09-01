@@ -4,14 +4,14 @@ import {
   Calendar, Clock, MapPin, User, Plus, Trash2, X 
 } from 'lucide-react';
 import { Button } from '../../components/Button';
-import { getSessions, saveSession, deleteSession, getCourses, getTrainers } from '../../services/storageService';
-import { Session, Course, Trainer } from '../../types';
-import { LOCATIONS } from '../../constants';
+import { getSessions, saveSession, deleteSession, getCourses, getTrainers, getLocations } from '../../services/storageService';
+import { Session, Course, Trainer, Location } from '../../types';
 
 export const SessionManager: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [locations, setLocations] = useState<Location[]>(getLocations());
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Session>>({});
 
@@ -19,6 +19,10 @@ export const SessionManager: React.FC = () => {
     setSessions(getSessions());
     setCourses(getCourses());
     setTrainers(getTrainers());
+    const loadLocs = () => setLocations(getLocations());
+    loadLocs();
+    window.addEventListener('locationsUpdated', loadLocs);
+    return () => window.removeEventListener('locationsUpdated', loadLocs);
   }, []);
 
   const handleSave = (e: React.FormEvent) => {
@@ -80,7 +84,7 @@ export const SessionManager: React.FC = () => {
                     <label htmlFor="session-location" className="block text-sm font-bold mb-1 text-gray-700 dark:text-gray-300">Location</label>
                     <select id="session-location" name="sessionLocation" autoComplete="off" className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-900 dark:text-white shadow-sm" value={formData.locationId || ''} onChange={e => setFormData({...formData, locationId: e.target.value})} required>
                         <option value="">Select Location...</option>
-                        {LOCATIONS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                        {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
                 </div>
                 <div>
@@ -127,7 +131,7 @@ export const SessionManager: React.FC = () => {
                     {sessions.map(sess => {
                         const course = courses.find(c => c.id === sess.courseId);
                         const trainer = trainers.find(t => t.id === sess.trainerId);
-                        const loc = LOCATIONS.find(l => l.id === sess.locationId);
+                        const loc = locations.find(l => l.id === sess.locationId);
                         return (
                             <tr key={sess.id} className="hover:bg-blue-50/50 dark:hover:bg-gray-700/50 transition-colors">
                                 <td className="px-6 py-4 font-bold text-gray-800 dark:text-white">{course?.title || 'Unknown Course'}</td>

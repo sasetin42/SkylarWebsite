@@ -365,10 +365,12 @@ export const GeminiChat: React.FC = () => {
             >
                 <Paperclip className="w-5 h-5" />
             </button>
+            <label htmlFor="chat-image-upload" className="sr-only">Upload image for analysis</label>
             <input 
                 id="chat-image-upload"
                 name="chatImage"
                 autoComplete="off"
+                aria-label="Upload image for analysis"
                 type="file" 
                 ref={fileInputRef} 
                 className="hidden" 
@@ -376,10 +378,12 @@ export const GeminiChat: React.FC = () => {
                 onChange={handleImageUpload}
             />
             
+            <label htmlFor="chat-input" className="sr-only">Type a message</label>
             <input
               id="chat-input"
               name="chatInput"
               autoComplete="off"
+              aria-label="Type a message"
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}

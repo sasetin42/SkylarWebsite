@@ -181,17 +181,19 @@ export const Contact: React.FC = () => {
                 </div>
                 
                 {status === 'error' && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
-                    Something went wrong. Please try again or contact us directly via phone.
+                  <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md text-sm">
+                    Something went wrong. Please try again.
                   </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
+                    <label htmlFor="contact-name" className="sr-only">Your Name</label>
                     <input 
                       id="contact-name"
                       name="name"
                       autoComplete="name"
+                      aria-label="Your Name"
                       value={formData.name}
                       onChange={handleChange}
                       type="text" 
@@ -202,10 +204,12 @@ export const Contact: React.FC = () => {
                   </div>
                   
                   <div>
+                    <label htmlFor="contact-email" className="sr-only">Email Address</label>
                     <input 
                       id="contact-email"
                       name="email"
                       autoComplete="email"
+                      aria-label="Email Address"
                       value={formData.email}
                       onChange={handleChange}
                       type="email" 
@@ -216,10 +220,12 @@ export const Contact: React.FC = () => {
                   </div>
 
                   <div>
+                    <label htmlFor="contact-mobile" className="sr-only">Mobile Phone Number</label>
                     <input 
                       id="contact-mobile"
                       name="mobile"
                       autoComplete="tel"
+                      aria-label="Mobile Phone Number"
                       value={formData.mobile}
                       onChange={handleChange}
                       type="tel" 
@@ -229,15 +235,17 @@ export const Contact: React.FC = () => {
                   </div>
 
                   <div>
+                    <label htmlFor="contact-message" className="sr-only">Message</label>
                     <textarea 
                       id="contact-message"
                       name="message"
                       autoComplete="off"
+                      aria-label="Message"
                       value={formData.message}
                       onChange={handleChange}
                       required
                       rows={5} 
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all resize-none"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#041024]/20 focus:border-[#041024] transition-all resize-none" 
                       placeholder="Message"
                     ></textarea>
                   </div>

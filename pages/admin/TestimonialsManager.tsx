@@ -132,10 +132,13 @@ export const TestimonialsManager: React.FC = () => {
   };
 
   // Filtered List
-  const filteredTestimonials = testimonials.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          t.role.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredTestimonials = (testimonials || []).filter(t => {
+    if (!t) return false;
+    const term = (searchTerm || '').toLowerCase().trim();
+    const matchesSearch = !term ||
+                          (t.name || '').toLowerCase().includes(term) || 
+                          (t.content || '').toLowerCase().includes(term) ||
+                          (t.role || '').toLowerCase().includes(term);
     const matchesSource = sourceFilter === 'All' || (t.source || 'Website') === sourceFilter;
     const matchesStatus = statusFilter === 'All' || (t.status || 'Approved') === statusFilter;
     return matchesSearch && matchesSource && matchesStatus;

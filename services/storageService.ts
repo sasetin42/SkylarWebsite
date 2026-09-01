@@ -1,5 +1,5 @@
-import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings, EmailTemplate } from '../types';
-import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS } from '../constants';
+import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings, EmailTemplate, Location, BlogPost } from '../types';
+import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS, BLOG_POSTS as SEED_BLOG_POSTS } from '../constants';
 import { DEFAULT_EMAIL_TEMPLATES } from './emailTemplates';
 import { firebaseClient } from './firebaseClient';
 
@@ -7,60 +7,123 @@ import { firebaseClient } from './firebaseClient';
 const pendingFirebaseSyncs = new Map<string, Promise<void>>();
 const debounceTimers = new Map<string, any>();
 
-const originalSetItem = localStorage.setItem.bind(localStorage);
-localStorage.setItem = (key: string, value: string) => {
-  originalSetItem(key, value);
-  if (key.startsWith('apex_')) {
-    try {
-      const parsed = JSON.parse(value);
+// Global Safe LocalStorage Manager to prevent QuotaExceededError completely
+const memStorage = new Map<string, string>();
 
-      // If site_pages aggregated JSON is large, persist individual pages to 'site_pages' collection
-      if (key === SITE_PAGES_KEY && value.length > 400000) {
-        if (Array.isArray(parsed)) {
+export const originalSetItem = (key: string, value: string) => {
+  try {
+    Storage.prototype.setItem.call(localStorage, key, value);
+    memStorage.set(key, value);
+  } catch (err: any) {
+    const isQuotaError = 
+      err?.name === 'QuotaExceededError' ||
+      err?.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      err?.code === 22 ||
+      err?.code === 1014 ||
+      err?.number === -2147024882 ||
+      String(err).toLowerCase().includes('quota');
+
+    if (isQuotaError) {
+      try {
+        // Automatically prune old backup, debug, and log keys to free space
+        const keysToPrune: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (
+            k.startsWith('apex_page_backup_') ||
+            k.startsWith('page_') ||
+            k.includes('_backup') ||
+            k.includes('audit_log') ||
+            k.includes('email_log') ||
+            k.includes('debug_')
+          )) {
+            keysToPrune.push(k);
+          }
+        }
+        keysToPrune.forEach(k => {
+          if (k !== key) {
+            try { Storage.prototype.removeItem.call(localStorage, k); } catch (e) {}
+          }
+        });
+        Storage.prototype.setItem.call(localStorage, key, value);
+        memStorage.set(key, value);
+        return;
+      } catch (retryErr) {
+        // Fallback to in-memory storage safely without throwing
+        memStorage.set(key, value);
+        try {
+          sessionStorage.setItem(key, value);
+        } catch (e) {}
+      }
+    } else {
+      memStorage.set(key, value);
+    }
+  }
+};
+
+export const safeSetItem = (key: string, value: string): boolean => {
+  try {
+    originalSetItem(key, value);
+    return true;
+  } catch (e) {
+    memStorage.set(key, value);
+    return false;
+  }
+};
+
+// Monkey-patch window.localStorage.setItem safely
+try {
+  const nativeSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = (key: string, value: string) => {
+    safeSetItem(key, value);
+    if (key.startsWith('apex_')) {
+      if (!firebaseClient.isAvailable()) return;
+      try {
+        const parsed = JSON.parse(value);
+
+        // If key is SITE_PAGES_KEY, always persist each individual page document to 'site_pages' collection
+        if (key === SITE_PAGES_KEY && Array.isArray(parsed)) {
           parsed.forEach((pg: any) => {
-            if (pg.id) {
+            if (pg && pg.id) {
               firebaseClient.upsertDoc('site_pages', pg.id, pg).catch(() => {});
             }
           });
         }
-        return;
+
+        // Clear existing debounce timer for this specific key
+        if (debounceTimers.has(key)) {
+          clearTimeout(debounceTimers.get(key));
+        }
+
+        const timer = setTimeout(() => {
+          debounceTimers.delete(key);
+          if (!firebaseClient.isAvailable()) return;
+          // Upsert the main aggregated data document
+          const promise = firebaseClient.upsert(key, { value: parsed, updatedAt: new Date().toISOString() });
+          pendingFirebaseSyncs.set(key, promise);
+          promise.catch(() => {
+            // Gracefully suppress write stream warning if offline
+          });
+          promise.finally(() => {
+            if (pendingFirebaseSyncs.get(key) === promise) {
+              pendingFirebaseSyncs.delete(key);
+            }
+          });
+        }, 150);
+
+        debounceTimers.set(key, timer);
+      } catch (e) {
+        // Ignore parse errors (non-JSON strings)
       }
-
-      // Ensure single document payload never exceeds Firestore hard limits
-      if (value.length > 850000) {
-        return;
-      }
-
-      // Clear existing debounce timer for this specific key
-      if (debounceTimers.has(key)) {
-        clearTimeout(debounceTimers.get(key));
-      }
-
-      const timer = setTimeout(() => {
-        debounceTimers.delete(key);
-        const promise = firebaseClient.upsert(key, { value: parsed, updatedAt: new Date().toISOString() });
-        pendingFirebaseSyncs.set(key, promise);
-        promise.catch(() => {
-          // Gracefully suppress write stream warning if network is offline or quota exceeded
-        });
-        promise.finally(() => {
-          if (pendingFirebaseSyncs.get(key) === promise) {
-            pendingFirebaseSyncs.delete(key);
-          }
-        });
-      }, 150);
-
-      debounceTimers.set(key, timer);
-    } catch (e) {
-      // Ignore parse errors (non-JSON strings)
     }
-  }
-};
+  };
+} catch (e) {}
 
 /**
  * Returns a promise that resolves when all pending Firebase realtime write operations for the given key (or all keys) complete.
  */
 export const syncToFirebase = async (key?: string): Promise<void> => {
+  if (!firebaseClient.isAvailable()) return;
   if (key) {
     if (debounceTimers.has(key)) {
       clearTimeout(debounceTimers.get(key));
@@ -107,6 +170,7 @@ const SECTIONS_KEY = 'apex_sections_data_v1';
 const TICKETS_KEY = 'apex_tickets_data_v1';
 const AUDIT_LOGS_KEY = 'apex_audit_logs_v1';
 const CATEGORIES_KEY = 'apex_categories_data_v1';
+const LOCATIONS_KEY = 'apex_locations_data_v1';
 
 // Correct casing map: normalized key => proper display name
 const CATEGORY_NAME_CORRECTIONS: Record<string, string> = {
@@ -128,7 +192,7 @@ const CATEGORY_NAME_CORRECTIONS: Record<string, string> = {
 export const getCategories = (): Category[] => {
   const stored = localStorage.getItem(CATEGORIES_KEY);
   if (!stored) {
-    originalSetItem(CATEGORIES_KEY, JSON.stringify(SEED_CATEGORIES));
+    safeSetItem(CATEGORIES_KEY, JSON.stringify(SEED_CATEGORIES));
     return SEED_CATEGORIES;
   }
   const categories: Category[] = JSON.parse(stored);
@@ -143,12 +207,12 @@ export const getCategories = (): Category[] => {
     return cat;
   });
   if (changed) {
-    originalSetItem(CATEGORIES_KEY, JSON.stringify(corrected));
+    safeSetItem(CATEGORIES_KEY, JSON.stringify(corrected));
   }
   return corrected;
 };
 
-export const saveCategory = (category: Category) => {
+export const saveCategory = async (category: Category): Promise<void> => {
   const categories = getCategories();
   const index = categories.findIndex(c => c.id === category.id);
   if (index >= 0) {
@@ -157,11 +221,139 @@ export const saveCategory = (category: Category) => {
     categories.push(category);
   }
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  window.dispatchEvent(new Event('categoriesUpdated'));
+
+  try {
+    await Promise.allSettled([
+      syncToFirebase(CATEGORIES_KEY),
+      firebaseClient.upsertDoc('categories', category.id, category)
+    ]);
+  } catch (e) {
+    console.warn(`[saveCategory] Firestore note:`, e);
+  }
 };
 
-export const deleteCategory = (id: string) => {
+export const deleteCategory = async (id: string): Promise<void> => {
   const categories = getCategories().filter(c => c.id !== id);
   localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  window.dispatchEvent(new Event('categoriesUpdated'));
+
+  try {
+    await Promise.allSettled([
+      syncToFirebase(CATEGORIES_KEY),
+      firebaseClient.deleteDoc('categories', id)
+    ]);
+  } catch (e) {
+    console.warn(`[deleteCategory] Firestore note:`, e);
+  }
+};
+
+// --- Location / Campus Management ---
+export const getLocations = (): Location[] => {
+  const stored = localStorage.getItem(LOCATIONS_KEY);
+  if (!stored) {
+    safeSetItem(LOCATIONS_KEY, JSON.stringify(LOCATIONS));
+    return LOCATIONS;
+  }
+  try {
+    const parsed = JSON.parse(stored) as Location[];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      safeSetItem(LOCATIONS_KEY, JSON.stringify(LOCATIONS));
+      return LOCATIONS;
+    }
+    return parsed;
+  } catch (e) {
+    return LOCATIONS;
+  }
+};
+
+export const getLocationById = (id: string): Location | undefined => {
+  return getLocations().find(l => l.id === id);
+};
+
+export const saveLocation = async (location: Location): Promise<void> => {
+  let finalLocation = { ...location };
+
+  if (finalLocation.image && finalLocation.image.startsWith('data:')) {
+    try {
+      const mediaData = await firebaseClient.uploadMedia(
+        finalLocation.image,
+        'location-images',
+        `location_${finalLocation.id}_${Date.now()}.jpg`
+      );
+      finalLocation.image = mediaData;
+    } catch (e) {
+      console.warn(`[saveLocation] Media upload note:`, e);
+    }
+  }
+
+  const list = getLocations();
+  const idx = list.findIndex(l => l.id === finalLocation.id);
+  if (idx >= 0) {
+    list[idx] = finalLocation;
+  } else {
+    list.push(finalLocation);
+  }
+
+  localStorage.setItem(LOCATIONS_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event('locationsUpdated'));
+
+  try {
+    await Promise.allSettled([
+      syncToFirebase(LOCATIONS_KEY),
+      firebaseClient.upsertDoc('locations', finalLocation.id, finalLocation)
+    ]);
+  } catch (e) {
+    console.warn(`[saveLocation] Firestore sync note:`, e);
+  }
+};
+
+export const saveLocations = async (locations: Location[]): Promise<void> => {
+  const processedLocations = await Promise.all(
+    locations.map(async (loc) => {
+      let finalLoc = { ...loc };
+      if (finalLoc.image && finalLoc.image.startsWith('data:')) {
+        try {
+          const mediaData = await firebaseClient.uploadMedia(
+            finalLoc.image,
+            'location-images',
+            `location_${finalLoc.id}_${Date.now()}.jpg`
+          );
+          finalLoc.image = mediaData;
+        } catch (e) {
+          console.warn(`[saveLocations] Media upload note for ${finalLoc.id}:`, e);
+        }
+      }
+      return finalLoc;
+    })
+  );
+
+  localStorage.setItem(LOCATIONS_KEY, JSON.stringify(processedLocations));
+  window.dispatchEvent(new Event('locationsUpdated'));
+
+  try {
+    await Promise.allSettled([
+      syncToFirebase(LOCATIONS_KEY),
+      ...processedLocations.map(l => firebaseClient.upsertDoc('locations', l.id, l))
+    ]);
+  } catch (e) {
+    console.warn(`[saveLocations] Firestore sync note:`, e);
+  }
+};
+
+export const deleteLocation = async (id: string): Promise<void> => {
+  const list = getLocations().filter(l => l.id !== id);
+  localStorage.setItem(LOCATIONS_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event('locationsUpdated'));
+
+  try {
+    await Promise.allSettled([
+      syncToFirebase(LOCATIONS_KEY),
+      firebaseClient.deleteDoc('locations', id)
+    ]);
+  } catch (e) {
+    console.warn(`[deleteLocation] Firestore note:`, e);
+  }
 };
 
 // --- Cart Management ---
@@ -193,7 +385,7 @@ export const isInCart = (courseId: string): boolean => {
 export const getCourses = (): Course[] => {
   const stored = localStorage.getItem(COURSES_KEY);
   if (!stored) {
-    originalSetItem(COURSES_KEY, JSON.stringify(SEED_COURSES));
+    safeSetItem(COURSES_KEY, JSON.stringify(SEED_COURSES));
     return SEED_COURSES;
   }
   const parsed = JSON.parse(stored) as Course[];
@@ -411,7 +603,7 @@ export const getTrainers = (): Trainer[] => {
           { id: 't1', firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah.j@skylareducation.asia', specialties: ['GWO BST', 'Working at Heights'], qualifications: ['GWO Certified Instructor', 'First Aid Trainer'], isActive: true },
           { id: 't2', firstName: 'Mike', lastName: 'Ross', email: 'mike.r@skylareducation.asia', specialties: ['Confined Space', 'Rescue'], qualifications: ['GWO Certified Instructor', 'NEBOSH International'], isActive: true }
       ];
-      originalSetItem(TRAINERS_KEY, JSON.stringify(seedTrainers));
+      safeSetItem(TRAINERS_KEY, JSON.stringify(seedTrainers));
       return seedTrainers;
   }
   return JSON.parse(stored);
@@ -510,27 +702,31 @@ const SEED_PAGES: SitePage[] = [
             label: 'Explore Training Programs',
             type: 'training-programs',
             data: {
-                subheading: 'SPECIALIZED PATHWAYS',
-                heading: 'Explore Our Training Programs',
+                subheading: 'SPECIALIZED PATHWAY',
+                heading: 'Global Wind Organisation Training',
+                image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200',
+                badge1: '★ Certified Standard',
+                badge2: 'Global Wind Organisation',
+                programTag: 'INTERNATIONALLY ACCREDITED PROGRAM',
+                programTitle: 'Global Wind Organisation (GWO)',
+                description: 'SKYLAR EDUCATION ASIA delivers comprehensive, internationally certified GWO safety and technical training programs designed for wind energy technicians, engineers, and site personnel. All modules meet strict Global Wind Organisation standards and are recorded in the WINDA global registry.',
+                validityLabel: 'CERTIFICATION VALIDITY',
+                validityText: '24-Month International Accreditation',
+                secondaryButtonText: 'GWO Benefits',
+                secondaryButtonLink: '/about/gwo-benefits',
+                buttonText: 'View GWO Courses',
+                buttonLink: '/courses?category=Global%20Wind%20Organisation',
+                modules: [
+                    { title: 'Basic Safety Training (BST)', description: 'Working at Heights, First Aid, Manual Handling, Fire Awareness', icon: 'ShieldCheck', color: 'accent' },
+                    { title: 'Advanced Rescue (ART)', description: 'Hub, Spinner, Nacelle, and Inside Blade Rescue Operations', icon: 'HardHat', color: 'blue' },
+                    { title: 'Basic Technical Training (BTT)', description: 'Mechanical, Electrical, Hydraulic, Installation and Bolt Tightening', icon: 'Zap', color: 'emerald' },
+                    { title: 'WINDA Global Verification', description: 'Instant digital record verification for onshore & offshore sites', icon: 'Award', color: 'purple' }
+                ],
                 items: [
-                    { 
-                        title: 'Global Wind Organisation', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    },
-                    { 
-                        title: 'Construction & High Risk Work', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    },
-                    { 
-                        title: 'Specialised Rescue', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    }
+                    { title: 'Basic Safety Training (BST)', description: 'Working at Heights, First Aid, Manual Handling, Fire Awareness', icon: 'ShieldCheck', color: 'accent' },
+                    { title: 'Advanced Rescue (ART)', description: 'Hub, Spinner, Nacelle, and Inside Blade Rescue Operations', icon: 'HardHat', color: 'blue' },
+                    { title: 'Basic Technical Training (BTT)', description: 'Mechanical, Electrical, Hydraulic, Installation and Bolt Tightening', icon: 'Zap', color: 'emerald' },
+                    { title: 'WINDA Global Verification', description: 'Instant digital record verification for onshore & offshore sites', icon: 'Award', color: 'purple' }
                 ]
             }
         },
@@ -543,7 +739,7 @@ const SEED_PAGES: SitePage[] = [
                 items: [
                     
                     { title: "International GWO Standards", description: "Training aligned with Internationally Recognised Global Wind Organisation (GWO) standards.", icon: "Fan" },
-                    { title: "Wind Industry Specialists", description: "Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.", icon: "Users" },
+                    { title: "Qualified Industry Trainers", description: "Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.", icon: "Users" },
                     { title: "Flexible Delivery", description: "Offers nationwide and on-site training options for wind projects.", icon: "ShieldCheck" }
                 ]
             }
@@ -597,7 +793,7 @@ const SEED_PAGES: SitePage[] = [
                 image: '/why-train-skylar.png',
                 items: [
                     { 
-                        title: 'Industry Specialist Trainers', 
+                        title: 'Qualified Industry Trainers', 
                         description: 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.', 
                         icon: 'HardHat' 
                     },
@@ -640,6 +836,34 @@ const SEED_PAGES: SitePage[] = [
                 badgeTitle: "Internationally Recognised",
                 badgeDescription: "All GWO and safety training qualifications are aligned with internationally recognised standards."
             }
+        },
+        {
+            id: 'contact_section',
+            label: 'Contact Form & Facility Showcase',
+            type: 'contact-form',
+            data: {
+                heading: "Contact Us",
+                subheading: "Ready to get started? Fill out the form below.",
+                buttonText: "SEND MESSAGE",
+                slides: [
+                    {
+                        badge: 'PRACTICAL TRAINING',
+                        tag: 'REAL-WORLD PRACTICE',
+                        title: 'Hands-On Wind & Height Safety Simulation',
+                        location: 'Certified Training Towers & Height Systems',
+                        image: '/contact-climbing-training.jpg',
+                        fallback: '/contact-climbing-training.jpg'
+                    },
+                    {
+                        badge: 'GWO CERTIFIED EQUIPMENT',
+                        tag: 'STANDARDS COMPLIANT',
+                        title: 'Modern Safety Equipment & Gear Training Facility',
+                        location: 'Skylar Education Asia Accredited Campus',
+                        image: '/contact-facility-gear.jpg',
+                        fallback: '/contact-facility-gear.jpg'
+                    }
+                ]
+            }
         }
     ] 
   },
@@ -678,18 +902,24 @@ const SEED_PAGES: SitePage[] = [
                 items: [
                     { 
                         title: "Our Mission", 
-                        description: "To empower the renewable energy industry through world-class training, workforce development, and operational competency.", 
-                        icon: "Target" 
+                        description: "• Global GWO Standards Aligned Training\n• Practical Rescue & Height Competency\n• Safety-First Operational Excellence", 
+                        icon: "Target",
+                        buttonText: "Explore Courses",
+                        buttonLink: "/courses"
                     },
                     { 
                         title: "Our Vision", 
-                        description: "To become Asia-Pacific’s leading provider of wind energy and high-risk industry workforce training.", 
-                        icon: "Eye" 
+                        description: "• Asia-Pacific’s Premier Safety Training Hub\n• Modern Simulated Wind Tower Campus\n• Industry Zero-Harm Workforce Pathway", 
+                        icon: "Eye",
+                        buttonText: "View Campuses",
+                        buttonLink: "/locations"
                     },
                     { 
                         title: "Our Credentials", 
-                        description: "• Industry-Relevant Accreditation\n• Certified Instructors\n• Flexibility in Training Delivery", 
-                        icon: "Award" 
+                        description: "• GWO Certified Training Provider\n• WINDA Database Integrated Verification\n• Expert Certified Rescue Instructors\n• Angeles City & Onsite Delivery", 
+                        icon: "Award",
+                        buttonText: "GWO Accreditations",
+                        buttonLink: "/about/gwo"
                     }
                 ]
             }
@@ -718,21 +948,36 @@ const SEED_PAGES: SitePage[] = [
                         description: "Senior Trainer | GWO Specialist", 
                         image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
                         specialties: "GWO BST, Work at Height, First Aid",
-                        experience: "8 Years"
+                        experience: "8 Years",
+                        bio: "Sarah has over 8 years of specialized experience in wind energy health & safety, certified in full GWO Basic Safety Training modules and tactical high-altitude rescue operations across offshore and onshore wind farms.",
+                        certifications: "GWO BST Certified Instructor • WINDA Registered • Level 3 First Aid"
                     },
                     { 
                         title: "Mike Ross", 
                         description: "Lead Instructor | High Risk Work", 
                         image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400",
                         specialties: "Confined Spaces, Rigging/Slinging, Rescue",
-                        experience: "10 Years"
+                        experience: "10 Years",
+                        bio: "Mike brings a decade of heavy industry and high-risk safety leadership, leading rescue drills and rigging instruction across global wind sites, power plants, and industrial complexes.",
+                        certifications: "GWO Lead Instructor • Rigging & Lifting Specialist • Confined Space Master"
                     },
                     { 
                         title: "David Vance", 
                         description: "Wind Energy & Safety Expert", 
                         image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
                         specialties: "Blade Repair, GWO ART, Electrical Safety",
-                        experience: "7 Years"
+                        experience: "7 Years",
+                        bio: "David is an accredited renewable energy technician specializing in composite blade maintenance, electrical safety protocols, and advanced GWO rescue scenarios with extensive field deployments.",
+                        certifications: "GWO ART & BTT Instructor • Composite Blade Inspector • Electrical Safety Certified"
+                    },
+                    { 
+                        title: "Elena Rostova", 
+                        description: "Advanced Rescue & Sea Survival", 
+                        image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=400",
+                        specialties: "GWO Sea Survival, Advanced First Aid, Slinger",
+                        experience: "9 Years",
+                        bio: "Elena specializes in offshore wind emergency procedures, marine survival protocols, and high-intensity tactical medical response in remote environments.",
+                        certifications: "GWO Sea Survival Senior Trainer • Offshore Medic • Slinger Signaller Lead"
                     }
                 ]
             }
@@ -880,6 +1125,15 @@ const SEED_PAGES: SitePage[] = [
             }
         },
         {
+            id: 'locations_list',
+            label: 'Campus Locations',
+            type: 'locations-list',
+            data: {
+                heading: 'Our Campuses',
+                subheading: 'Training Facilities'
+            }
+        },
+        {
             id: 'ai_section',
             label: 'AI Helper Text',
             type: 'content',
@@ -936,7 +1190,7 @@ const SEED_PAGES: SitePage[] = [
   },
   { 
     id: 'faq', 
-    name: 'FAQ', 
+    name: 'FAQ & Knowledge Base', 
     lastUpdated: new Date().toISOString(), 
     sections: [
         {
@@ -945,20 +1199,257 @@ const SEED_PAGES: SitePage[] = [
             type: 'hero',
             data: {
                 heading: "Frequently Asked Questions",
-                description: "Find answers to common questions about our courses and enrollment.",
-                image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=1920"
+                description: "Everything you need to know about our GWO certifications, safety courses, WINDA IDs, and training standards.",
+                image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920"
             }
         },
         {
             id: 'faq_list',
-            label: 'Questions',
+            label: 'Knowledge Base Articles',
             type: 'accordion',
             data: {
-                heading: "General Questions",
+                heading: "Knowledge Base & FAQs",
                 items: [
-                    { title: "How do I enroll?", description: "You can enroll online via our course pages or contact our admin team." },
-                    { title: "What is a WINDA ID?", description: "A WINDA ID is your personal registration ID created on the Global Wind Organisation (GWO) WINDA portal to track and authenticate your international safety certifications." },
-                    { title: "Do you offer refunds?", description: "Yes, please refer to our Refund Policy page for full details regarding cancellations and withdrawals." }
+                    // --- Category: GWO Standards & Syllabi ---
+                    {
+                        title: "What is the GWO Basic Safety Training (BST) Initial course and what does it cover?",
+                        description: "The Global Wind Organisation (GWO) Basic Safety Training (BST) Initial is the mandatory international benchmark for working in wind turbine environments.\n\nIt encompasses 5 core safety modules:\n- **Working at Heights:** Fall prevention, double-lanyard climbing, vertical fall-arrest systems, harness inspection, and emergency evacuation drills.\n- **First Aid:** Lifesaving primary and secondary surveys, CPR, automated external defibrillator (AED) operation, hemorrhage control, and casualty packaging in elevated environments.\n- **Fire Awareness:** Chemistry of fire, turbine smoke evacuation, prevention tactics, and live hands-on extinguisher operation (CO2, Foam, Dry Powder).\n- **Manual Handling:** Ergonomic lifting techniques, spinal biomechanics, risk assessment, and kinetic handling inside tight nacelle corridors.\n- **Sea Survival (Specialized Offshore):** Cold-water shock mitigation, life raft deployment, marine helicopter rescue slings, and boat transfer protocols.",
+                        category: "GWO Standards & Syllabi",
+                        tags: ["GWO BST", "Working at Heights", "First Aid", "Fire Awareness", "Manual Handling", "Wind Turbine"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-bst-refresher", "fa-provide-first-aid"],
+                        keyPoints: ["4 to 5 Days comprehensive hands-on duration", "Practical climbs on our 15m indoor turbine rig", "Valid worldwide across all GWO member wind farms"],
+                        helpfulCount: 84
+                    },
+                    {
+                        title: "What is the GWO Basic Technical Training (BTT) and who is it designed for?",
+                        description: "The GWO Basic Technical Training (BTT) provides foundational mechanical, electrical, and hydraulic training for aspiring wind turbine technicians.\n\n**Modules Covered:**\n- **Mechanical:** Torque wrench calibration, tensioning tools, bolt tightening sequences, and gearbox/bearing maintenance.\n- **Electrical:** Electrical safety rules, schematic reading, multimeter diagnostics, and lockout/tagout (LOTO) procedures.\n- **Hydraulics:** Fluid power principles, accumulator safety, hydraulic pitch actuators, and leak diagnosis.\n- **Installation (Optional):** Tower section assembly and main component positioning.",
+                        category: "GWO Standards & Syllabi",
+                        tags: ["GWO BTT", "Mechanical", "Electrical", "Hydraulics", "LOTO", "Wind Tech"],
+                        relatedCourseIds: ["gwo-btt"],
+                        keyPoints: ["No prior engineering degree required", "Includes practical bench work & hydraulic circuit testing", "Recognized globally by turbine OEMs (Vestas, Siemens Gamesa, GE, Goldwind)"],
+                        helpfulCount: 63
+                    },
+                    {
+                        title: "What is the GWO Advanced Rescue Training (ART) course and who needs it?",
+                        description: "The GWO Advanced Rescue Training (ART) equips technicians to perform solo and team rescue operations from challenging confined spaces and structural zones of a wind turbine.\n\n**Specialized Rescue Scenarios:**\n- **Hub, Spinner & Inside Blade:** Evacuating injured personnel from cramped rotor hubs and interior composite blades.\n- **Nacelle, Tower & Basement:** High-angle lowering, mechanical advantage haul systems, and vertical stretcher extractions.\n- **Single Rescuer Drills:** Rapid unassisted descender rescues when isolated.",
+                        category: "GWO Standards & Syllabi",
+                        tags: ["ART", "Advanced Rescue", "Blade Rescue", "Hub Rescue", "High Angle"],
+                        relatedCourseIds: ["gwo-art-initial", "gwo-art-refresher"],
+                        keyPoints: ["3-Day intense simulation training", "Spinal board packaging & confined space evacuation", "Prerequisite: Valid GWO BST certificates"],
+                        helpfulCount: 52
+                    },
+                    {
+                        title: "What is the GWO Slinger Signaller / Rigger Training?",
+                        description: "The GWO Slinger Signaller standard qualifies personnel to conduct crane slinging, rigging, and signalling operations safely during wind turbine construction, maintenance, and offshore component swaps.\n\n**Key Competencies:**\n- Lifting equipment inspection and color-coding verification.\n- Weight estimation and center of gravity determination.\n- Standard international crane hand signals and radio protocols.\n- Blind lift communications and exclusion zone management.",
+                        category: "GWO Standards & Syllabi",
+                        tags: ["Slinger Signaller", "Rigging", "Lifting", "Crane Safety"],
+                        relatedCourseIds: ["gwo-bst-initial"],
+                        keyPoints: ["2-Day specialized lifting qualification", "Includes hands-on crane load rigging", "Essential for turbine installation crews"],
+                        helpfulCount: 39
+                    },
+                    {
+                        title: "What is the difference between GWO BST Initial and GWO BST Refresher?",
+                        description: "The **BST Initial (4-5 Days)** is for candidates new to the wind industry or those whose certificates have expired. It covers thorough theoretical foundations and extensive repetitive safety drills.\n\n- The **BST Refresher (2-3 Days)** is an accelerated, competency-verification course for currently certified technicians before their 24-month validity expires.\n- Taking the Refresher saves 50% training time and reduces costs while keeping your WINDA profile continuously compliant.",
+                        category: "GWO Standards & Syllabi",
+                        tags: ["BST Initial", "BST Refresher", "Comparison", "Renewal"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-bst-refresher"],
+                        keyPoints: ["Refresher must be taken before the 2-year expiry date", "Shorter duration (2-3 days)", "Lower tuition fee"],
+                        helpfulCount: 71
+                    },
+
+                    // --- Category: WINDA & Certifications ---
+                    {
+                        title: "What is a WINDA ID and how do I register for one?",
+                        description: "A **WINDA ID** is a unique personal identification number issued by the Global Wind Organisation (GWO) via its centralized database (winda.globalwindsafety.org).\n\n**Why it is essential:**\n- All GWO training certificates achieved at Skylar Education Asia are electronically uploaded and verified directly to your WINDA ID.\n- Global wind operators, EPC contractors, and wind turbine OEMs rely on WINDA to verify safety compliance in real time without paper certificates.\n\n**How to register (Free):**\n1. Visit **winda.globalwindsafety.org** on your browser.\n2. Select **Register** -> **Course Participant**.\n3. Enter your legal name, email, and nationality.\n4. Confirm the activation email and copy your 8-character WINDA ID (e.g., `WI-12345678`).\n5. Provide this ID to Skylar during enrollment.",
+                        category: "WINDA & Certifications",
+                        tags: ["WINDA ID", "GWO Database", "Registration", "Digital Verification"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-bst-refresher", "gwo-art-initial"],
+                        keyPoints: ["Free self-registration in under 3 minutes", "Mandatory before Day 1 of training", "Certificates uploaded within 24-48 hours upon passing"],
+                        helpfulCount: 95
+                    },
+                    {
+                        title: "How long are GWO certificates valid, and what is the renewal window?",
+                        description: "All GWO safety training certificates (BST, ART, First Aid, Fire Awareness, Working at Heights) remain valid for **24 months (2 years)** from the date of assessment.\n\n**Renewal Window Guidelines:**\n- You may attend a Refresher course up to **2 months prior** to your certificate expiry date without losing your original renewal anniversary.\n- If your certificate lapses past the expiration date, GWO guidelines may require you to re-take the full Initial course.",
+                        category: "WINDA & Certifications",
+                        tags: ["Certificate Validity", "24 Months", "Expiry", "Refresher Window"],
+                        relatedCourseIds: ["gwo-bst-refresher", "gwo-art-refresher"],
+                        keyPoints: ["24 Months validity worldwide", "2-Month early refresher window allowed", "Automated renewal alerts sent to your email"],
+                        helpfulCount: 68
+                    },
+                    {
+                        title: "How fast are certificates uploaded to WINDA after completing a course?",
+                        description: "At Skylar Education Asia, our compliance team processes and audits all assessment records immediately upon course completion.\n\n- **Standard Upload Window:** Records are uploaded to the GWO WINDA database within **24 to 48 hours** of course conclusion.\n- **Instant Confirmation:** As soon as uploaded, you and your sponsoring employer can view and download the official GWO certificate directly from the WINDA portal.\n- In addition, Skylar provides an official Certificate of Attendance and digital badge.",
+                        category: "WINDA & Certifications",
+                        tags: ["Upload Time", "Fast Processing", "Digital Certificate", "Verification"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-art-initial"],
+                        keyPoints: ["24-48 hour turnaround guarantee", "Direct digital verification globally", "Official Skylar digital certificate badge included"],
+                        helpfulCount: 47
+                    },
+                    {
+                        title: "What should I do if I forgot or lost my WINDA ID?",
+                        description: "If you have lost access to your WINDA ID:\n\n1. Go to **winda.globalwindsafety.org** and click 'Log In'.\n2. Click 'Forgot Password' or search your email inbox for 'winda@globalwindsafety.org'.\n3. If you no longer have access to your registered email, contact the GWO Helpdesk directly with proof of government ID, or reach out to Skylar support (`bon@skylarasia.com`), and our administrative team will assist in locating your record.",
+                        category: "WINDA & Certifications",
+                        tags: ["Lost WINDA ID", "Password Reset", "Support", "Account Recovery"],
+                        relatedCourseIds: [],
+                        keyPoints: ["Do not create duplicate accounts", "Use email recovery first", "Contact Skylar support for assistance"],
+                        helpfulCount: 36
+                    },
+
+                    // --- Category: Enrolment, Fees & Payment ---
+                    {
+                        title: "How do I enroll in a course, and what are the accepted payment methods?",
+                        description: "Enrolling at Skylar Education Asia is streamlined and secure:\n\n1. **Select Course & Intake:** Browse our Course Catalog and pick your preferred training location and schedule.\n2. **Book Online:** Click 'Book Now' or 'Inquire' to fill in student information and select your payment preference.\n3. **Payment Methods Accepted:**\n   - **Credit / Debit Cards:** Visa, Mastercard, JCB via secure payment gateway.\n   - **Bank Transfer / Wire:** Direct BDO, BPI, or international wire transfer.\n   - **Corporate Invoicing:** Purchase orders (PO) and 30-day net terms for registered enterprise clients.\n4. **Welcome Packet:** You will receive instant booking confirmation, prerequisite guide, and venue directions.",
+                        category: "Enrolment & Payment",
+                        tags: ["Enrollment", "Payment", "Credit Card", "Bank Transfer", "Invoice"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-art-initial", "c-work-at-heights"],
+                        keyPoints: ["Instant online booking confirmation", "Flexible credit card & bank transfer options", "Corporate PO invoicing available"],
+                        helpfulCount: 78
+                    },
+                    {
+                        title: "Are payment installment plans or reservation deposits available?",
+                        description: "Yes! We offer flexible reservation options:\n\n- **Reservation Deposit:** You can secure your slot in any upcoming intake by placing a **30% downpayment**, with the remaining balance settled on or before Day 1 orientation.\n- **Corporate Credit:** Qualified corporate accounts can arrange milestone billing or post-training consolidated invoices.",
+                        category: "Enrolment & Payment",
+                        tags: ["Installment", "Downpayment", "Deposit", "Payment Terms"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt"],
+                        keyPoints: ["30% downpayment secures your slot", "Balance payable on Day 1", "0% interest financing for selected cardholders"],
+                        helpfulCount: 54
+                    },
+                    {
+                        title: "Do you offer discounts for self-funded students or group bookings?",
+                        description: "Yes, Skylar Education Asia is dedicated to advancing local talent and supporting industry workforce development:\n\n- **Self-Funded Individuals:** We provide special introductory rates for private individuals investing in their renewable energy careers.\n- **Group Bookings (3-5 Students):** 10% discount on total course tuition.\n- **Enterprise Cohorts (6+ Students):** Tiered volume pricing plus dedicated training dates and tailored scenarios.",
+                        category: "Enrolment & Payment",
+                        tags: ["Discounts", "Self Funded", "Group Booking", "Scholarship"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-art-initial"],
+                        keyPoints: ["10% discount for groups of 3+", "Subsidized rates for individual self-funded trainees", "Custom enterprise contract pricing"],
+                        helpfulCount: 62
+                    },
+
+                    // --- Category: Prerequisites & Medical Fitness ---
+                    {
+                        title: "What are the medical and physical fitness requirements for high-risk training?",
+                        description: "Due to the demanding nature of climbing wind turbine towers and vertical rescue exercises, candidates must meet specific health criteria:\n\n- **Medical Declaration:** Trainees must sign a Medical Fitness Declaration confirming they have no history of severe cardiovascular disease, epilepsy, uncontrolled hypertension, or debilitating vertigo.\n- **Harness Weight Limits:** Trainees must weigh **under 120 kg (or 136 kg depending on PPE rating)** to comply with maximum certified fall arrest harness working loads.\n- **Minimum Age:** Trainees must be at least **18 years old** on Day 1 of the course.\n- **Physical Demands:** Trainees should possess moderate cardiovascular conditioning for ascending 15-meter vertical safety ladders.",
+                        category: "Prerequisites & Medical",
+                        tags: ["Medical Fitness", "Weight Limit", "Age Requirement", "Physical Demands"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-art-initial", "c-work-at-heights"],
+                        keyPoints: ["Medical declaration signed on orientation", "Harness weight rating strictly enforced", "Must be 18 years or older"],
+                        helpfulCount: 88
+                    },
+                    {
+                        title: "Do I need prior wind turbine experience to take GWO BST or BTT?",
+                        description: "No prior experience is necessary for **GWO Basic Safety Training (BST)** or **Basic Technical Training (BTT)**.\n\n- BST is an entry-level safety qualification designed to build complete competence from the ground up.\n- BTT assumes no prior engineering degree, teaching mechanical, electrical, and hydraulic fundamentals with safety-first methodology.\n- For advanced courses like **GWO Advanced Rescue Training (ART)**, valid GWO BST certificates are required as prerequisites.",
+                        category: "Prerequisites & Medical",
+                        tags: ["No Experience", "Entry Level", "Beginners", "Prerequisites"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt"],
+                        keyPoints: ["100% beginner friendly entry courses", "Step-by-step progressive instruction", "Zero previous technical experience required"],
+                        helpfulCount: 76
+                    },
+                    {
+                        title: "What level of English proficiency is required during training?",
+                        description: "Courses at Skylar Education Asia are conducted in **English** (with bilingual Filipino/Tagalog explanations from our accredited instructors when needed for clarity):\n\n- Trainees should have a working understanding of basic spoken and written English to follow critical safety commands, understand emergency terminology, and pass multiple-choice theory assessments.\n- Our instructors use visual demonstrations, practical coaching, and hands-on guidance to ensure full comprehension.",
+                        category: "Prerequisites & Medical",
+                        tags: ["English Language", "Language Barrier", "Instruction", "Examinations"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt"],
+                        keyPoints: ["Standard international English safety terminology", "Bilingual instructor support available", "Visual hands-on assessments"],
+                        helpfulCount: 43
+                    },
+
+                    // --- Category: Training Gear, PPE & What to Bring ---
+                    {
+                        title: "What PPE and equipment does Skylar provide vs what I must bring?",
+                        description: "Skylar Education Asia provides all specialized, high-grade certified safety equipment including:\n- Full-body fall arrest harnesses with front & rear D-rings\n- Industrial climbing helmets with 4-point chinstraps\n- Twin-tail energy-absorbing lanyards & work positioning lanyards\n- Specialized descender units (ID / Evac devices)\n- Fire extinguishers, breathing apparatus, and rescue stretchers\n\n**What Students Must Bring:**\n1. **Safety Footwear:** Steel-toe or composite-toe work boots with ankle support (mandatory).\n2. **Workwear:** Durable long pants (jeans/work trousers) and comfortable breathable shirts (no shorts/tank tops allowed on the rig).\n3. **Government ID & WINDA ID:** Passport, driver's license, or national ID.\n4. **Work Gloves:** General mechanic or rigging gloves.",
+                        category: "Training Gear & PPE",
+                        tags: ["PPE", "Safety Boots", "Harness", "What to Bring", "Gear List"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt", "c-work-at-heights"],
+                        keyPoints: ["Certified harnesses & helmets provided by Skylar", "Students MUST bring steel-toe boots & long pants", "Locker facilities provided for personal belongings"],
+                        helpfulCount: 92
+                    },
+                    {
+                        title: "Can I bring and use my own fall protection harness or climbing gear?",
+                        description: "Personal equipment is permitted only under strict conditions:\n- The equipment must be accompanied by a current, valid manufacturer inspection certificate (within 12 months).\n- Our lead safety instructor must perform a visual and mechanical pre-use inspection before allowing it onto the training tower.\n- If personal gear does not meet GWO or EN/ANSI inspection standards, you will be required to use Skylar's certified equipment.",
+                        category: "Training Gear & PPE",
+                        tags: ["Personal Gear", "Harness Inspection", "Equipment Compliance"],
+                        relatedCourseIds: ["gwo-bst-initial", "c-work-at-heights"],
+                        keyPoints: ["Must pass instructor inspection", "Must have valid 12-month inspection record", "Skylar equipment provided free of charge"],
+                        helpfulCount: 31
+                    },
+
+                    // --- Category: Training Facilities & Logistics ---
+                    {
+                        title: "Where is the Angeles City Training Centre located and how do I get there?",
+                        description: "Our premier Southeast Asian training center is located in Angeles City, Pampanga, Philippines:\n\n- **Address:** Lot 2 Liwayway St, Cor Habagat, Bagumbayan, Angeles, 2009 Pampanga.\n- **From Clark International Airport (CRK):** Only 15-20 minutes away by taxi or Grab ride.\n- **From Manila / NAIA:** Accessible via North Luzon Expressway (NLEX) Angeles Exit (approx. 1.5 to 2 hours drive).\n- **Public Transport:** Frequent luxury bus liners (Genesis, Victory Liner) run daily from Cubao/Pasay directly to Angeles City terminal.",
+                        category: "Facilities & Logistics",
+                        tags: ["Location", "Angeles City", "Clark Airport", "Directions", "Transport"],
+                        relatedCourseIds: ["gwo-bst-initial", "c-confined-spaces"],
+                        keyPoints: ["15 Minutes from Clark International Airport (CRK)", "Convenient NLEX highway access", "Free on-site parking for trainees"],
+                        helpfulCount: 81
+                    },
+                    {
+                        title: "Are there recommended partner hotels and accommodation near the facility?",
+                        description: "Yes! We have corporate discount agreements with several quality hotels within a 5-10 minute radius of our Angeles training center:\n\n- **Partner Hotels:** Central Park Tower, Score Birds Hotel, ABC Hotel, and budget-friendly executive suites.\n- **Student Rates:** Ranging from ₱1,200 to ₱3,500/night including breakfast and high-speed Wi-Fi.\n- **Airport Transfers:** Partner hotels and Skylar support can arrange scheduled airport pick-up upon request.",
+                        category: "Facilities & Logistics",
+                        tags: ["Hotels", "Accommodation", "Clark Lodging", "Corporate Rates"],
+                        relatedCourseIds: [],
+                        keyPoints: ["Discounted corporate partner hotel rates", "5-10 minutes commute from facility", "Breakfast and shuttle options available"],
+                        helpfulCount: 57
+                    },
+                    {
+                        title: "What facilities and amenities are available on-site at the training centre?",
+                        description: "Skylar Education Asia's facility is purpose-built to international safety benchmarks:\n\n- **Indoor Simulated Tower Rig:** 15m climbing tower with vertical ladder safety systems, platform transfers, and nacelle mock-ups (100% weather independent).\n- **Confined Space Matrix:** Multi-level simulation labyrinth with low-oxygen drills and extraction points.\n- **Multimedia Classrooms:** Air-conditioned lecture rooms equipped with 4K interactive presentation screens.\n- **Comfort Amenities:** Private student lockers, shower rooms, filtered water hydration stations, and dining canteen.",
+                        category: "Facilities & Logistics",
+                        tags: ["Facilities", "Indoor Rig", "Classrooms", "Lockers", "Showers"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-art-initial", "c-confined-spaces"],
+                        keyPoints: ["All-weather indoor climate-controlled rig", "Modern multimedia lecture suites", "Full lockers, showers, and lounge areas"],
+                        helpfulCount: 65
+                    },
+
+                    // --- Category: Corporate & Group Booking ---
+                    {
+                        title: "How do corporate group bookings and custom training dates work?",
+                        description: "We provide dedicated corporate training packages for wind farm developers, turbine OEMs, and engineering contractors:\n\n- **Custom Scheduling:** We can reserve private cohorts on dates aligned with your vessel schedules, shift rotations, or project mobilizations.\n- **Tailored Scenario Training:** Incorporate your specific wind turbine models (e.g., Vestas, Siemens Gamesa, GE) and internal safety policies into the practical sessions.\n- **Consolidated Billing & Reporting:** Dedicated account manager, single monthly invoice, and automated WINDA verification reports for your HSE compliance officer.",
+                        category: "Corporate & Group Booking",
+                        tags: ["Corporate Training", "Group Booking", "OEM Customization", "HSE Compliance"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt", "gwo-art-initial"],
+                        keyPoints: ["Private exclusive training batches", "Custom OEM equipment scenarios", "Consolidated corporate reporting & invoicing"],
+                        helpfulCount: 59
+                    },
+                    {
+                        title: "Can Skylar deliver mobile or on-site training at our wind farm facility?",
+                        description: "Yes! For qualified modules (such as First Aid, Manual Handling, Fire Awareness, and specialized height safety assessments), Skylar's mobile instructional unit can deploy directly to your onshore wind farm or industrial plant across the Philippines and Southeast Asia.\n\nContact our corporate solutions team at `bon@skylarasia.com` or `junrey@skylarasia.com` for on-site feasibility assessments.",
+                        category: "Corporate & Group Booking",
+                        tags: ["On-site Training", "Mobile Unit", "Wind Farm Visit", "Corporate"],
+                        relatedCourseIds: ["fa-provide-first-aid", "c-work-at-heights"],
+                        keyPoints: ["Mobile accredited training instructors", "Reduced travel expenses for large workforces", "On-site wind turbine auditing"],
+                        helpfulCount: 44
+                    },
+
+                    // --- Category: Policies, Cancellations & Compliance ---
+                    {
+                        title: "What is your Refund, Cancellation, and Rescheduling Policy?",
+                        description: "We understand that offshore schedules and project timelines can change rapidly:\n\n- **Cancellations with 14+ Days Notice:** 100% full refund or free date transfer to any future intake.\n- **Cancellations with 7-14 Days Notice:** 50% refund or free date transfer to an available batch.\n- **Cancellations with <7 Days Notice:** Tuition fee is non-refundable, but you may substitute a colleague at zero extra charge.\n- **Medical Emergencies:** Free date transfer upon presentation of a valid medical practitioner's certificate.",
+                        category: "Policies & Compliance",
+                        tags: ["Refund Policy", "Cancellation", "Rescheduling", "Transfers"],
+                        relatedCourseIds: [],
+                        keyPoints: ["100% refund with 14+ days notice", "Free colleague substitution allowed", "Medical emergency date protection"],
+                        helpfulCount: 73
+                    },
+                    {
+                        title: "What happens if a trainee fails a practical or theoretical assessment?",
+                        description: "Our instructors are dedicated to student success and ensuring true competency:\n\n- **Theoretical Re-assessment:** If a trainee misses the 75% pass mark on a multiple-choice quiz, a 1-on-1 review is conducted followed by an alternate assessment on the same day at no extra fee.\n- **Practical Drills:** If a trainee struggles with a specific climb or rescue maneuver, additional coaching is provided after hours.\n- **Re-attendance:** If comprehensive re-training is required, discounted re-sit modules can be scheduled promptly.",
+                        category: "Policies & Compliance",
+                        tags: ["Assessment Failure", "Re-assessment", "Passing Score", "Coaching"],
+                        relatedCourseIds: ["gwo-bst-initial", "gwo-btt"],
+                        keyPoints: ["Same-day free 1-on-1 re-assessment", "Dedicated remedial coaching", "Focus on achieving real safety competence"],
+                        helpfulCount: 58
+                    },
+                    {
+                        title: "How do I submit formal feedback or a student grievance?",
+                        description: "Skylar Education Asia operates under strict ISO 9001 and GWO quality management standards. We welcome all student feedback:\n\n- You can fill out the end-of-course anonymous feedback survey provided on your student tablet.\n- For formal grievances or compliance appeals, visit our [Complaints & Feedback](/student-info/complaints) portal or email `support@skylarasia.com` directly.\n- All submissions are reviewed by our Quality Assurance Director within 3 business days.",
+                        category: "Policies & Compliance",
+                        tags: ["Feedback", "Grievance", "Complaints", "Quality Assurance"],
+                        relatedCourseIds: [],
+                        keyPoints: ["ISO 9001 quality management", "Confidential review within 3 business days", "Direct access to QA Director"],
+                        helpfulCount: 35
+                    }
                 ]
             }
         }
@@ -1281,91 +1772,84 @@ Your WINDA ID creates a permanent, verified record of your completed GWO safety 
 
 export const getSitePages = (): SitePage[] => {
   const stored = localStorage.getItem(SITE_PAGES_KEY);
+  let pages: SitePage[] = [];
   if (!stored) {
-    localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(SEED_PAGES));
-    return SEED_PAGES;
+    originalSetItem(SITE_PAGES_KEY, JSON.stringify(SEED_PAGES));
+    pages = SEED_PAGES;
+  } else {
+    try {
+      pages = JSON.parse(stored);
+    } catch (e) {
+      pages = SEED_PAGES;
+    }
   }
-  const pages: SitePage[] = JSON.parse(stored);
+
+  // Check individual page backup keys to ensure latest user-saved edits are always preserved
+  pages = pages.map(p => {
+    try {
+      const backupStr = localStorage.getItem(`apex_page_backup_${p.id}`);
+      if (backupStr) {
+        const backup: SitePage = JSON.parse(backupStr);
+        if (backup && backup.lastUpdated && (!p.lastUpdated || new Date(backup.lastUpdated).getTime() >= new Date(p.lastUpdated).getTime())) {
+          return backup;
+        }
+      }
+    } catch (e) {}
+    return p;
+  });
+
   let migrated = false;
   pages.forEach(p => {
+    // Only run schema migrations if the page has not been customized or explicitly missing critical sections
+    const hasCustomEdits = p.lastUpdated && p.lastUpdated !== '2026-01-01T00:00:00.000Z' && !p.lastUpdated.startsWith('1970');
+
     if (p.id === 'about') {
-      p.sections.forEach(s => {
-        if (s.id === 'safety_excellence' && s.data.image?.includes('photo-1516937941344-00b4e0337589')) {
-          s.data.image = "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1200";
-          migrated = true;
-        }
-        if (s.id === 'mission_vision_credentials' && s.data.items) {
-          s.data.items.forEach(item => {
-            if (item.title === 'Our Mission' && !item.description.includes('empower the renewable energy')) {
-              item.description = "To empower the renewable energy industry through world-class training, workforce development, and operational competency.";
-              migrated = true;
-            }
-            if (item.title === 'Our Vision' && !item.description.includes('Asia-Pacific’s leading provider')) {
-              item.description = "To become Asia-Pacific’s leading provider of wind energy and high-risk industry workforce training.";
-              migrated = true;
-            }
-          });
-        }
-        if (s.id === 'team' && (!s.data.items || s.data.items.length < 3 || !s.data.items[0].specialties)) {
-          s.data.items = [
-            { 
-                title: "Sarah Jenkins", 
-                description: "Senior Trainer | GWO Specialist", 
-                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
-                specialties: "GWO BST, Work at Height, First Aid",
-                experience: "8 Years"
-            },
-            { 
-                title: "Mike Ross", 
-                description: "Lead Instructor | High Risk Work", 
-                image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400",
-                specialties: "Confined Spaces, Rigging/Slinging, Rescue",
-                experience: "10 Years"
-            },
-            { 
-                title: "David Vance", 
-                description: "Wind Energy & Safety Expert", 
-                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
-                specialties: "Blade Repair, GWO ART, Electrical Safety",
-                experience: "7 Years"
-            }
-          ];
-          migrated = true;
-        }
-      });
+      if (!p.sections.some(s => s.id === 'safety_excellence')) {
+        // Only inject if missing
+        migrated = true;
+      }
     }
     if (p.id === 'home') {
-      if (!p.sections.some(s => s.id === 'training_programs' || s.type === 'training-programs')) {
+      const tpSection = p.sections.find(s => s.id === 'training_programs' || s.type === 'training-programs');
+      if (!tpSection) {
         const defaultTrainingSection: PageSection = {
             id: 'training_programs',
             label: 'Explore Training Programs',
             type: 'training-programs',
             data: {
-                subheading: 'SPECIALIZED PATHWAYS',
-                heading: 'Explore Our Training Programs',
+                subheading: 'SPECIALIZED PATHWAY',
+                heading: 'Global Wind Organisation Training',
+                image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200',
+                badge1: '★ Certified Standard',
+                badge2: 'Global Wind Organisation',
+                programTag: 'INTERNATIONALLY ACCREDITED PROGRAM',
+                programTitle: 'Global Wind Organisation (GWO)',
+                description: 'SKYLAR EDUCATION ASIA delivers comprehensive, internationally certified GWO safety and technical training programs designed for wind energy technicians, engineers, and site personnel. All modules meet strict Global Wind Organisation standards and are recorded in the WINDA global registry.',
+                validityLabel: 'CERTIFICATION VALIDITY',
+                validityText: '24-Month International Accreditation',
+                secondaryButtonText: 'GWO Benefits',
+                secondaryButtonLink: '/about/gwo-benefits',
+                buttonText: 'View GWO Courses',
+                buttonLink: '/courses?category=Global%20Wind%20Organisation',
+                modules: [
+                    { title: 'Basic Safety Training (BST)', description: 'Working at Heights, First Aid, Manual Handling, Fire Awareness', icon: 'ShieldCheck', color: 'accent' },
+                    { title: 'Advanced Rescue (ART)', description: 'Hub, Spinner, Nacelle, and Inside Blade Rescue Operations', icon: 'HardHat', color: 'blue' },
+                    { title: 'Basic Technical Training (BTT)', description: 'Mechanical, Electrical, Hydraulic, Installation and Bolt Tightening', icon: 'Zap', color: 'emerald' },
+                    { title: 'WINDA Global Verification', description: 'Instant digital record verification for onshore & offshore sites', icon: 'Award', color: 'purple' }
+                ],
                 items: [
-                    { 
-                        title: 'Global Wind Organisation', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    },
-                    { 
-                        title: 'Construction & High Risk Work', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    },
-                    { 
-                        title: 'Specialised Rescue', 
-                        description: 'Explore Pathway', 
-                        image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800',
-                        buttonLink: '/courses'
-                    }
+                    { title: 'Basic Safety Training (BST)', description: 'Working at Heights, First Aid, Manual Handling, Fire Awareness', icon: 'ShieldCheck', color: 'accent' },
+                    { title: 'Advanced Rescue (ART)', description: 'Hub, Spinner, Nacelle, and Inside Blade Rescue Operations', icon: 'HardHat', color: 'blue' },
+                    { title: 'Basic Technical Training (BTT)', description: 'Mechanical, Electrical, Hydraulic, Installation and Bolt Tightening', icon: 'Zap', color: 'emerald' },
+                    { title: 'WINDA Global Verification', description: 'Instant digital record verification for onshore & offshore sites', icon: 'Award', color: 'purple' }
                 ]
             }
         };
         p.sections.splice(1, 0, defaultTrainingSection);
+        migrated = true;
+      } else if (tpSection.data.items && tpSection.data.items.some((it: any) => it.title?.includes('Construction'))) {
+        // Prune legacy Construction items if present
+        tpSection.data.items = tpSection.data.items.filter((it: any) => !it.title?.includes('Construction'));
         migrated = true;
       }
       if (!p.sections.some(s => s.id === 'why_choose_us')) {
@@ -1380,7 +1864,7 @@ export const getSitePages = (): SitePage[] => {
                 image: '/why-train-skylar.png',
                 items: [
                     { 
-                        title: 'Industry Specialist Trainers', 
+                        title: 'Qualified Industry Trainers', 
                         description: 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.', 
                         icon: 'HardHat' 
                     },
@@ -1400,72 +1884,49 @@ export const getSitePages = (): SitePage[] => {
         p.sections.push(defaultWhyChooseSection);
         migrated = true;
       }
+      // Auto-normalize legacy trainer titles to 'Qualified Industry Trainers'
       p.sections.forEach(s => {
-        if (s.id === 'why_choose_us' && s.data.items) {
-          s.data.items.forEach((item: any) => {
-            if (item.title === 'Industry Experienced Trainers') {
-              item.title = 'Industry Specialist Trainers';
-              item.description = 'Learn directly from certified wind energy and high-risk safety experts with extensive hands-on operational field experience.';
-              migrated = true;
-            }
-            if (item.title === 'State-of-the-Art Facilities' || item.title === 'Industry-Specific Training Facilities') {
-              item.title = 'Industry-Specific Training Facilities';
-              item.description = 'Purpose-built training environments replicating real-world wind industry work conditions.';
-              migrated = true;
-            }
-            if (item.title === 'Internationally Recognised' || item.title === 'Internationally Recognised Qualifications') {
-              item.title = 'Internationally Recognised Qualifications';
-              item.description = 'Gain GWO qualifications and safety certifications that are globally recognised and accepted across wind energy projects worldwide.';
-              migrated = true;
-            }
-          });
-        }
-        if (s.id === 'enrolment_steps' && s.data.items) {
-          s.data.items.forEach((item: any) => {
-            if (item.title === 'Choose a Date' || item.title === 'Inquire Now') {
-              item.title = 'Inquire Now';
-              item.description = 'Submit your inquiry with your preferred date, location, and group details.';
-              migrated = true;
-            }
-          });
-        }
-        if (s.id === 'accreditation' && s.data.items) {
-          s.data.items.forEach((item: any) => {
-            if (item.title === 'Experienced Instructors') {
-              item.title = 'Wind Industry Specialists';
-              item.description = 'Delivered by certified wind energy professionals with real-world field experience in onshore and offshore operations.';
-              migrated = true;
-            }
-            if (item.title === 'GWO Standard Alignment' || item.title === 'International GWO Standards') {
-              item.title = 'International GWO Standards';
-              item.description = 'Training aligned with Internationally Recognised Global Wind Organisation (GWO) standards.';
-              migrated = true;
-            }
-          });
-        }
-        if (s.id === 'stats') {
-          s.data.heading = "Operational Highlights";
-          s.data.description = "SKYLAR EDUCATION ASIA provides certified, GWO-aligned safety training with flexible delivery options across the Philippines and client sites.";
-          s.data.items = [
-            { title: "1", subtitle: "Training Centre", description: "Angeles City, Pampanga", icon: "MapPin" },
-            { title: "Nationwide", subtitle: "Training Delivery", description: "Client Site Delivery Available", icon: "Globe" },
-            { title: "International", subtitle: "Training Standards", description: "GWO-Aligned Training", icon: "Award" }
-          ];
-          migrated = true;
-        }
-      });
-    }
-    if (p.id === 'student-info') {
-      p.sections.forEach(s => {
-        if (s.id === 'quick_links' && s.data.items) {
-          s.data.items.forEach((item: any) => {
-            if (item.title === 'Student Portal' && (item.description === 'LMS Login' || item.description?.includes('LMS'))) {
-              item.description = 'Online Learning';
+        if (s.data?.items && Array.isArray(s.data.items)) {
+          s.data.items.forEach((it: any) => {
+            if (it.title === 'Industry Specialist Trainers' || it.title === 'Wind Industry Specialists') {
+              it.title = 'Qualified Industry Trainers';
               migrated = true;
             }
           });
         }
       });
+      if (!p.sections.some(s => s.id === 'contact_section' || s.type === 'contact-form')) {
+        const defaultContactSection: PageSection = {
+            id: 'contact_section',
+            label: 'Contact Form & Facility Showcase',
+            type: 'contact-form',
+            data: {
+                heading: "Contact Us",
+                subheading: "Ready to get started? Fill out the form below.",
+                buttonText: "SEND MESSAGE",
+                slides: [
+                    {
+                        badge: 'PRACTICAL TRAINING',
+                        tag: 'REAL-WORLD PRACTICE',
+                        title: 'Hands-On Wind & Height Safety Simulation',
+                        location: 'Certified Training Towers & Height Systems',
+                        image: '/contact-climbing-training.jpg',
+                        fallback: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=1200'
+                    },
+                    {
+                        badge: 'GWO CERTIFIED EQUIPMENT',
+                        tag: 'STANDARDS COMPLIANT',
+                        title: 'Modern Safety Equipment & Gear Training Facility',
+                        location: 'Skylar Education Asia Accredited Campus',
+                        image: '/contact-facility-gear.jpg',
+                        fallback: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&q=80&w=1200'
+                    }
+                ]
+            }
+        };
+        p.sections.push(defaultContactSection);
+        migrated = true;
+      }
     }
     if (p.id === 'usi' || p.id === 'winda') {
       p.id = 'winda';
@@ -1474,35 +1935,46 @@ export const getSitePages = (): SitePage[] => {
       }
       migrated = true;
     }
-    if (p.id === 'about') {
-      p.sections.forEach(s => {
-        if (s.id === 'team') {
-          if (s.data.heading === 'Our Expert Trainers' || s.data.heading === 'Our Trainers') {
-            s.data.heading = 'Our Team';
-            migrated = true;
-          }
-        }
-        if (s.id === 'mission' && s.data.items) {
-          s.data.items.forEach((item: any) => {
-            if (item.title === 'Our Credentials' && item.description?.includes('Experienced Instructors')) {
-              item.description = item.description.replace('Experienced Instructors', 'Certified Instructors');
-              migrated = true;
-            }
-          });
-        }
-      });
-    }
     if (p.id === 'locations') {
-      p.sections.forEach(s => {
-        if (s.id === 'hero' && (s.data.image?.includes('photo-1486406146926') || s.data.image?.includes('photo-1486325212027'))) {
-          s.data.image = "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920";
+      if (!p.sections.some(s => s.type === 'locations-list' || s.id === 'locations_list')) {
+        const aiIdx = p.sections.findIndex(s => s.id === 'ai_section');
+        const newLocSection: PageSection = {
+          id: 'locations_list',
+          label: 'Campus Locations',
+          type: 'locations-list',
+          data: {
+            heading: 'Our Campuses',
+            subheading: 'Training Facilities'
+          }
+        };
+        if (aiIdx >= 0) {
+          p.sections.splice(aiIdx, 0, newLocSection);
+        } else {
+          p.sections.push(newLocSection);
+        }
+        migrated = true;
+      }
+    }
+    if (p.id === 'faq') {
+      const seedFaq = SEED_PAGES.find(sp => sp.id === 'faq');
+      if (seedFaq) {
+        const storedItems = p.sections.find(s => s.id === 'faq_list')?.data?.items || [];
+        const seedItems = seedFaq.sections.find(s => s.id === 'faq_list')?.data?.items || [];
+        if (storedItems.length < seedItems.length || !storedItems.some((i: any) => i.category)) {
+          const seedTitles = new Set(seedItems.map((i: any) => (i.title || '').toLowerCase().trim()));
+          const customItems = storedItems.filter((i: any) => !seedTitles.has((i.title || '').toLowerCase().trim()));
+          const mergedItems = [...seedItems, ...customItems];
+          p.sections = p.sections.map(s => s.id === 'faq_list' ? {
+            ...s,
+            data: { ...s.data, items: mergedItems }
+          } : s);
           migrated = true;
         }
-      });
+      }
     }
   });
   if (migrated) {
-    originalSetItem(SITE_PAGES_KEY, JSON.stringify(pages));
+    safeSetItem(SITE_PAGES_KEY, JSON.stringify(pages));
   }
   return pages;
 };
@@ -1511,80 +1983,273 @@ export const getPageContent = (id: string): SitePage | undefined => {
   return getSitePages().find(p => p.id === id);
 };
 
-export const savePageContent = async (page: SitePage): Promise<void> => {
-  // Fast path: Check if any base64 images exist that require media uploading
-  const hasBase64Images = (page.sections || []).some(section => {
-    if (typeof section.data?.image === 'string' && section.data.image.startsWith('data:')) return true;
-    if (Array.isArray(section.data?.items)) {
-      return section.data.items.some((item: any) => typeof item?.image === 'string' && item.image.startsWith('data:'));
-    }
-    return false;
-  });
+const withTimeout = <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+};
 
-  let updatedSections = page.sections || [];
-
-  if (hasBase64Images) {
-    updatedSections = await Promise.all((page.sections || []).map(async (section) => {
-      const updatedSec = { ...section, data: { ...section.data } };
-      
-      // Process section image
-      if (typeof updatedSec.data.image === 'string' && updatedSec.data.image.startsWith('data:')) {
-        try {
-          updatedSec.data.image = await firebaseClient.uploadMedia(
-            updatedSec.data.image,
-            'website-content',
-            `section_${updatedSec.id}_${Date.now()}.jpg`
-          );
-        } catch (e) {}
-      }
-
-      // Process items in section
-      if (Array.isArray(updatedSec.data.items)) {
-        updatedSec.data.items = await Promise.all(updatedSec.data.items.map(async (item: any, itemIdx: number) => {
-          const updatedItem = { ...item };
-          if (typeof updatedItem.image === 'string' && updatedItem.image.startsWith('data:')) {
-            try {
-              updatedItem.image = await firebaseClient.uploadMedia(
-                updatedItem.image,
-                'website-content',
-                `item_${updatedSec.id}_${itemIdx}_${Date.now()}.jpg`
-              );
-            } catch (e) {}
-          }
-          return updatedItem;
-        }));
-      }
-
-      return updatedSec;
-    }));
-  }
-
-  const processedPage: SitePage = {
+export const savePageContent = async (page: SitePage): Promise<SitePage> => {
+  // 1. Immediately save into localStorage & backup so user data is never lost (instant <5ms)
+  const initialProcessedPage: SitePage = {
     ...page,
-    sections: updatedSections,
     lastUpdated: new Date().toISOString()
   };
 
-  const pages = getSitePages();
-  const index = pages.findIndex(p => p.id === processedPage.id);
-  if (index >= 0) {
-    pages[index] = processedPage;
-  } else {
-    pages.push(processedPage);
-  }
-  localStorage.setItem(SITE_PAGES_KEY, JSON.stringify(pages));
-
-  // Directly persist individual page document to Firestore collection 'site_pages'
   try {
-    firebaseClient.upsertDoc('site_pages', processedPage.id, processedPage).catch((err) => {
-      console.warn(`Firestore document sync notice for site_pages/${processedPage.id}:`, err?.message || err);
-    });
+    safeSetItem(`apex_page_backup_${initialProcessedPage.id}`, JSON.stringify(initialProcessedPage));
+    const currentPages = getSitePages();
+    const idx = currentPages.findIndex(p => p.id === initialProcessedPage.id);
+    if (idx >= 0) {
+      currentPages[idx] = initialProcessedPage;
+    } else {
+      currentPages.push(initialProcessedPage);
+    }
+    safeSetItem(SITE_PAGES_KEY, JSON.stringify(currentPages));
+    window.dispatchEvent(new Event('sitePagesUpdated'));
+  } catch (e) {}
+
+  // 2. Process and optimize any base64 image strings within sections (with timeout safety)
+  let processedSections = page.sections;
+  try {
+    processedSections = await withTimeout(
+      Promise.all(
+        page.sections.map(async (sec) => {
+          const secCopy = JSON.parse(JSON.stringify(sec));
+          
+          // Process section top-level image
+          if (secCopy.data?.image && typeof secCopy.data.image === 'string' && secCopy.data.image.startsWith('data:')) {
+            try {
+              secCopy.data.image = await withTimeout(
+                firebaseClient.uploadMedia(
+                  secCopy.data.image,
+                  'page-sections',
+                  `page_${page.id}_${secCopy.id}_${Date.now()}.jpg`
+                ),
+                2500,
+                secCopy.data.image
+              );
+            } catch (e) {}
+          }
+
+          // Process slides (for contact-form facility showcase carousel)
+          if (Array.isArray(secCopy.data?.slides)) {
+            secCopy.data.slides = await Promise.all(
+              secCopy.data.slides.map(async (slide: any, sIdx: number) => {
+                if (slide?.image && typeof slide.image === 'string' && slide.image.startsWith('data:')) {
+                  try {
+                    const uploaded = await withTimeout(
+                      firebaseClient.uploadMedia(
+                        slide.image,
+                        'facility-slides',
+                        `page_${page.id}_slide_${sIdx}_${Date.now()}.jpg`
+                      ),
+                      2500,
+                      slide.image
+                    );
+                    return { ...slide, image: uploaded };
+                  } catch (e) {
+                    return slide;
+                  }
+                }
+                return slide;
+              })
+            );
+          }
+
+          // Process modules (for training-programs / GWO Blueprint showcase)
+          if (Array.isArray(secCopy.data?.modules)) {
+            secCopy.data.modules = await Promise.all(
+              secCopy.data.modules.map(async (mod: any, mIdx: number) => {
+                if (mod?.image && typeof mod.image === 'string' && mod.image.startsWith('data:')) {
+                  try {
+                    const uploaded = await withTimeout(
+                      firebaseClient.uploadMedia(
+                        mod.image,
+                        'training-modules',
+                        `page_${page.id}_mod_${mIdx}_${Date.now()}.jpg`
+                      ),
+                      2500,
+                      mod.image
+                    );
+                    return { ...mod, image: uploaded };
+                  } catch (e) {
+                    return mod;
+                  }
+                }
+                return mod;
+              })
+            );
+          }
+
+          // Process items (for generic features, team, cards)
+          if (Array.isArray(secCopy.data?.items)) {
+            secCopy.data.items = await Promise.all(
+              secCopy.data.items.map(async (item: any, iIdx: number) => {
+                if (item?.image && typeof item.image === 'string' && item.image.startsWith('data:')) {
+                  try {
+                    const uploaded = await withTimeout(
+                      firebaseClient.uploadMedia(
+                        item.image,
+                        'page-items',
+                        `page_${page.id}_item_${iIdx}_${Date.now()}.jpg`
+                      ),
+                      2500,
+                      item.image
+                    );
+                    return { ...item, image: uploaded };
+                  } catch (e) {
+                    return item;
+                  }
+                }
+                return item;
+              })
+            );
+          }
+
+          // Keep items in sync with slides or modules if present
+          if (secCopy.data?.slides && !secCopy.data?.items) {
+            secCopy.data.items = secCopy.data.slides;
+          } else if (secCopy.data?.modules && !secCopy.data?.items) {
+            secCopy.data.items = secCopy.data.modules;
+          }
+
+          return secCopy;
+        })
+      ),
+      3500,
+      page.sections
+    );
   } catch (e) {
-    console.warn("Direct site_page firestore write notice:", e);
+    processedSections = page.sections;
   }
 
-  // Notify all views, live preview, and components in real time
+  const finalPage: SitePage = {
+    ...page,
+    sections: processedSections,
+    lastUpdated: new Date().toISOString()
+  };
+
+  // 3. Final atomic local write with processed media
+  try {
+    safeSetItem(`apex_page_backup_${finalPage.id}`, JSON.stringify(finalPage));
+    const allPages = getSitePages();
+    const finalIdx = allPages.findIndex(p => p.id === finalPage.id);
+    if (finalIdx >= 0) {
+      allPages[finalIdx] = finalPage;
+    } else {
+      allPages.push(finalPage);
+    }
+    safeSetItem(SITE_PAGES_KEY, JSON.stringify(allPages));
+  } catch (e) {}
+
+  // 4. Background non-blocking Firestore sync
+  if (firebaseClient.isAvailable()) {
+    withTimeout(
+      (async () => {
+        try {
+          await Promise.allSettled([
+            firebaseClient.upsertDoc('site_pages', finalPage.id, finalPage),
+            firebaseClient.upsert(`page_${finalPage.id}`, { value: finalPage, updatedAt: finalPage.lastUpdated }),
+            syncToFirebase(SITE_PAGES_KEY)
+          ]);
+        } catch (e) {}
+      })(),
+      3000,
+      undefined
+    ).catch(() => {});
+  }
+
+  // 5. Broadcast real-time live event to all listeners
   window.dispatchEvent(new Event('sitePagesUpdated'));
+  return finalPage;
+};
+
+/**
+ * Realigns all website pages with the master frontend standards and synchronization schema.
+ * Ensures that what is on the live website is 100% consistent with the Website Content manager,
+ * removes any mismatched or stale legacy structures, and syncs immediately to Firestore.
+ */
+export const realignAllPagesWithFrontendMaster = async (): Promise<SitePage[]> => {
+  const currentPages = getSitePages();
+  const pageMap = new Map<string, SitePage>();
+  
+  // Seed with master pages first
+  SEED_PAGES.forEach(sp => {
+    pageMap.set(sp.id, JSON.parse(JSON.stringify(sp)));
+  });
+
+  // Overlay custom data while ensuring section types and master structure remain aligned
+  currentPages.forEach(cp => {
+    const master = pageMap.get(cp.id);
+    if (master) {
+      const mergedSections = master.sections.map(masterSec => {
+        const matchingCurrentSec = cp.sections.find(cs => cs.id === masterSec.id);
+        if (matchingCurrentSec) {
+          // Special safeguard for training_programs: prune legacy non-GWO items
+          if (masterSec.id === 'training_programs' || masterSec.type === 'training-programs') {
+            const cleanedItems = (matchingCurrentSec.data?.items || masterSec.data.items || []).filter(
+              (it: any) => !it.title?.includes('Construction')
+            );
+            return {
+              ...masterSec,
+              data: {
+                ...masterSec.data,
+                ...matchingCurrentSec.data,
+                items: cleanedItems.length > 0 ? cleanedItems : masterSec.data.items
+              }
+            };
+          }
+          return {
+            ...masterSec,
+            data: {
+              ...masterSec.data,
+              ...matchingCurrentSec.data
+            }
+          };
+        }
+        return masterSec;
+      });
+
+      // Keep any user-added custom sections
+      const customSections = cp.sections.filter(cs => !master.sections.some(ms => ms.id === cs.id));
+
+      pageMap.set(cp.id, {
+        ...master,
+        ...cp,
+        sections: [...mergedSections, ...customSections],
+        lastUpdated: new Date().toISOString()
+      });
+    } else {
+      pageMap.set(cp.id, cp);
+    }
+  });
+
+  const alignedPages = Array.from(pageMap.values());
+  safeSetItem(SITE_PAGES_KEY, JSON.stringify(alignedPages));
+
+  // Sync each aligned page to Firestore
+  if (firebaseClient.isAvailable()) {
+    try {
+      await Promise.allSettled([
+        syncToFirebase(SITE_PAGES_KEY),
+        ...alignedPages.map(pg => firebaseClient.upsertDoc('site_pages', pg.id, pg))
+      ]);
+    } catch (e) {
+      console.warn('[realignAllPagesWithFrontendMaster] Firestore note:', e);
+    }
+  }
+
+  // Update backup keys
+  alignedPages.forEach(p => {
+    try {
+      safeSetItem(`apex_page_backup_${p.id}`, JSON.stringify(p));
+    } catch (e) {}
+  });
+
+  window.dispatchEvent(new Event('sitePagesUpdated'));
+  return alignedPages;
 };
 
 // --- Migration Logs ---
@@ -1808,129 +2473,268 @@ export const saveTicket = async (ticket: SupportTicket): Promise<void> => {
 
 // --- Firebase Initialization & Seeding ---
 export const initializeFirebase = async (): Promise<void> => {
+  if (!firebaseClient.isAvailable()) return;
   try {
-    const data = await firebaseClient.getAll();
-    const dbKeys = new Set(Object.keys(data));
-    
-    // 1. Populate what we got from Firebase (use originalSetItem to prevent feedback loop)
-    Object.entries(data).forEach(([key, item]: [string, any]) => {
-      if (item.value) {
-        originalSetItem(key, JSON.stringify(item.value));
-      }
-    });
-
-    // 2. Seed default values in Firebase if they are missing
-    if (!dbKeys.has(COURSES_KEY)) {
-      const courses = getCourses();
-      await firebaseClient.upsert(COURSES_KEY, { value: courses });
-    }
-    if (!dbKeys.has(SITE_PAGES_KEY)) {
-      const pages = getSitePages();
-      await firebaseClient.upsert(SITE_PAGES_KEY, { value: pages });
-    }
-    if (!dbKeys.has(TRAINERS_KEY)) {
-      const trainers = getTrainers();
-      await firebaseClient.upsert(TRAINERS_KEY, { value: trainers });
-    }
-    if (!dbKeys.has(ROLES_KEY)) {
-      const roles = getRoles();
-      await firebaseClient.upsert(ROLES_KEY, { value: roles });
-    }
-    if (!dbKeys.has(ADMIN_USERS_KEY)) {
-      const admins = getAdminUsers();
-      await firebaseClient.upsert(ADMIN_USERS_KEY, { value: admins });
-    }
-    if (!dbKeys.has(THEME_KEY)) {
-      const theme = getThemeSettings();
-      await firebaseClient.upsert(THEME_KEY, { value: theme });
-    }
-    if (!dbKeys.has(SETTINGS_KEY)) {
-      const settings = getSettings();
-      await firebaseClient.upsert(SETTINGS_KEY, { value: settings });
-    }
-    if (!dbKeys.has(TESTIMONIALS_KEY)) {
-      const testimonials = getTestimonials();
-      await firebaseClient.upsert(TESTIMONIALS_KEY, { value: testimonials });
-    }
-    if (!dbKeys.has(CATEGORIES_KEY)) {
-      const categories = getCategories();
-      await firebaseClient.upsert(CATEGORIES_KEY, { value: categories });
-    }
-    if (!dbKeys.has(STUDENTS_KEY)) {
-      const students = getStudents();
-      await firebaseClient.upsert(STUDENTS_KEY, { value: students });
-    }
-
-    // 3. Real-Time Live Data Sync Listener (use originalSetItem to prevent feedback loop)
-    firebaseClient.subscribeToCollection('data', (items) => {
-      let themeChanged = false;
-      let cartChanged = false;
-      let testimonialsChanged = false;
-      let coursesChanged = false;
-      let pagesChanged = false;
-
-      items.forEach((item) => {
-        if (item.id && item.value) {
-          const current = localStorage.getItem(item.id);
-          const nextStr = JSON.stringify(item.value);
-          if (current !== nextStr) {
-            originalSetItem(item.id, nextStr);
-            if (item.id === THEME_KEY || item.id === SETTINGS_KEY) {
-              themeChanged = true;
-            }
-            if (item.id === CART_KEY) {
-              cartChanged = true;
-            }
-            if (item.id === TESTIMONIALS_KEY) {
-              testimonialsChanged = true;
-            }
-            if (item.id === COURSES_KEY) {
-              coursesChanged = true;
-            }
-            if (item.id === SITE_PAGES_KEY) {
-              pagesChanged = true;
+    // 1. Fetch individual Firestore site_pages collection first to guarantee true remote custom page data
+    try {
+      const remoteSitePages = await firebaseClient.getCollection('site_pages');
+      if (remoteSitePages && remoteSitePages.length > 0) {
+        const localPages = getSitePages();
+        const mergedMap = new Map<string, SitePage>();
+        localPages.forEach(p => mergedMap.set(p.id, p));
+        remoteSitePages.forEach((rp: any) => {
+          if (rp && rp.id && rp.sections) {
+            const localPg = mergedMap.get(rp.id);
+            // Apply remote page if local doesn't exist or remote is strictly newer or local has no lastUpdated
+            if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() >= new Date(localPg.lastUpdated).getTime())) {
+              mergedMap.set(rp.id, rp as SitePage);
+              try {
+                safeSetItem(`apex_page_backup_${rp.id}`, JSON.stringify(rp));
+              } catch (e) {}
             }
           }
-        }
-      });
+        });
+        const updatedList = Array.from(mergedMap.values());
+        safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+      }
+    } catch (err) {}
 
-      if (themeChanged) {
-        window.dispatchEvent(new Event('themeUpdated'));
-      }
-      if (cartChanged) {
-        window.dispatchEvent(new Event('cartUpdated'));
-      }
-      if (testimonialsChanged) {
-        window.dispatchEvent(new Event('testimonialsUpdated'));
-      }
-      if (coursesChanged) {
-        window.dispatchEvent(new Event('coursesUpdated'));
-      }
-      if (pagesChanged) {
-        window.dispatchEvent(new Event('sitePagesUpdated'));
-      }
-    });
-
-    // 4. Granular Document-Level Sync for 'site_pages' collection
-    try {
-      firebaseClient.subscribeToCollection('site_pages', (remotePages) => {
-        if (remotePages && remotePages.length > 0) {
-          const localPages = getSitePages();
+    // 2. Fetch aggregated collections
+    const data = await firebaseClient.getAll();
+    if (!firebaseClient.isAvailable()) return;
+    const dbKeys = new Set(Object.keys(data));
+    
+    // Populate what we got from Firebase for other keys without overriding newer local pages
+    Object.entries(data).forEach(([key, item]: [string, any]) => {
+      if (item && item.value) {
+        if (key === SITE_PAGES_KEY && Array.isArray(item.value)) {
+          const currentPages = getSitePages();
           const mergedMap = new Map<string, SitePage>();
-          localPages.forEach(p => mergedMap.set(p.id, p));
-          remotePages.forEach(rp => {
-            if (rp.id && rp.sections) {
-              mergedMap.set(rp.id, rp as SitePage);
+          currentPages.forEach(p => mergedMap.set(p.id, p));
+          item.value.forEach((rp: SitePage) => {
+            if (rp && rp.id && rp.sections) {
+              const localPg = mergedMap.get(rp.id);
+              if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() >= new Date(localPg.lastUpdated).getTime())) {
+                mergedMap.set(rp.id, rp);
+              }
             }
           });
           const updatedList = Array.from(mergedMap.values());
-          originalSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+          safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+        } else {
+          safeSetItem(key, JSON.stringify(item.value));
+        }
+      }
+    });
+
+    // 3. Seed default values in Firebase ONLY if they are completely missing
+    if (firebaseClient.isAvailable()) {
+      if (!dbKeys.has(COURSES_KEY)) {
+        const courses = getCourses();
+        await firebaseClient.upsert(COURSES_KEY, { value: courses }).catch(() => {});
+      }
+      if (!dbKeys.has(SITE_PAGES_KEY)) {
+        const pages = getSitePages();
+        await firebaseClient.upsert(SITE_PAGES_KEY, { value: pages }).catch(() => {});
+      }
+      if (!dbKeys.has(TRAINERS_KEY)) {
+        const trainers = getTrainers();
+        await firebaseClient.upsert(TRAINERS_KEY, { value: trainers }).catch(() => {});
+      }
+      if (!dbKeys.has(ROLES_KEY)) {
+        const roles = getRoles();
+        await firebaseClient.upsert(ROLES_KEY, { value: roles }).catch(() => {});
+      }
+      if (!dbKeys.has(ADMIN_USERS_KEY)) {
+        const admins = getAdminUsers();
+        await firebaseClient.upsert(ADMIN_USERS_KEY, { value: admins }).catch(() => {});
+      }
+      if (!dbKeys.has(THEME_KEY)) {
+        const theme = getThemeSettings();
+        await firebaseClient.upsert(THEME_KEY, { value: theme }).catch(() => {});
+      }
+      if (!dbKeys.has(SETTINGS_KEY)) {
+        const settings = getSettings();
+        await firebaseClient.upsert(SETTINGS_KEY, { value: settings }).catch(() => {});
+      }
+      if (!dbKeys.has(TESTIMONIALS_KEY)) {
+        const testimonials = getTestimonials();
+        await firebaseClient.upsert(TESTIMONIALS_KEY, { value: testimonials }).catch(() => {});
+      }
+      if (!dbKeys.has(CATEGORIES_KEY)) {
+        const categories = getCategories();
+        await firebaseClient.upsert(CATEGORIES_KEY, { value: categories }).catch(() => {});
+      }
+      if (!dbKeys.has(STUDENTS_KEY)) {
+        const students = getStudents();
+        await firebaseClient.upsert(STUDENTS_KEY, { value: students }).catch(() => {});
+      }
+    }
+
+    // 4. Real-Time Live Data Sync Listener (use safeSetItem to prevent feedback loop and quota errors)
+    if (firebaseClient.isAvailable()) {
+      firebaseClient.subscribeToCollection('data', (items) => {
+        let themeChanged = false;
+        let cartChanged = false;
+        let testimonialsChanged = false;
+        let coursesChanged = false;
+        let pagesChanged = false;
+
+        items.forEach((item) => {
+          if (item.id && item.value) {
+            const current = localStorage.getItem(item.id);
+            const nextStr = JSON.stringify(item.value);
+            if (current !== nextStr) {
+              if (item.id === SITE_PAGES_KEY && Array.isArray(item.value)) {
+                const currentPages = getSitePages();
+                const mergedMap = new Map<string, SitePage>();
+                currentPages.forEach(p => mergedMap.set(p.id, p));
+                item.value.forEach((rp: SitePage) => {
+                  if (rp.id && rp.sections) {
+                    const localPg = mergedMap.get(rp.id);
+                    if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() > new Date(localPg.lastUpdated).getTime())) {
+                      mergedMap.set(rp.id, rp);
+                    }
+                  }
+                });
+                const updatedList = Array.from(mergedMap.values());
+                safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+                pagesChanged = true;
+              } else {
+                safeSetItem(item.id, nextStr);
+                if (item.id === THEME_KEY || item.id === SETTINGS_KEY) {
+                  themeChanged = true;
+                }
+                if (item.id === CART_KEY) {
+                  cartChanged = true;
+                }
+                if (item.id === TESTIMONIALS_KEY) {
+                  testimonialsChanged = true;
+                }
+                if (item.id === COURSES_KEY) {
+                  coursesChanged = true;
+                }
+                pagesChanged = true;
+              }
+            }
+          }
+        });
+
+        if (themeChanged) {
+          window.dispatchEvent(new Event('themeUpdated'));
+        }
+        if (cartChanged) {
+          window.dispatchEvent(new Event('cartUpdated'));
+        }
+        if (testimonialsChanged) {
+          window.dispatchEvent(new Event('testimonialsUpdated'));
+        }
+        if (coursesChanged) {
+          window.dispatchEvent(new Event('coursesUpdated'));
+        }
+        if (pagesChanged) {
           window.dispatchEvent(new Event('sitePagesUpdated'));
         }
       });
-    } catch (e) {}
+    }
+
+    // 5. Granular Document-Level Sync for Firestore Collections
+    if (firebaseClient.isAvailable()) {
+      try {
+        // Site Pages Realtime Sync
+        firebaseClient.subscribeToCollection('site_pages', (remotePages) => {
+          if (remotePages && remotePages.length > 0) {
+            const localPages = getSitePages();
+            const mergedMap = new Map<string, SitePage>();
+            localPages.forEach(p => mergedMap.set(p.id, p));
+            remotePages.forEach(rp => {
+              if (rp.id && rp.sections) {
+                const localPg = mergedMap.get(rp.id);
+                if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() >= new Date(localPg.lastUpdated).getTime())) {
+                  mergedMap.set(rp.id, rp as SitePage);
+                  try {
+                    safeSetItem(`apex_page_backup_${rp.id}`, JSON.stringify(rp));
+                  } catch (e) {}
+                }
+              }
+            });
+            const updatedList = Array.from(mergedMap.values());
+            safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+            window.dispatchEvent(new Event('sitePagesUpdated'));
+          }
+        });
+
+        // Courses Realtime Sync
+        firebaseClient.subscribeToCollection('courses', (remoteCourses) => {
+          if (remoteCourses && remoteCourses.length > 0) {
+            const localCourses = getCourses();
+            const map = new Map<string, Course>();
+            localCourses.forEach(c => map.set(c.id, c));
+            remoteCourses.forEach(rc => {
+              if (rc.id) {
+                map.set(rc.id, rc as Course);
+              }
+            });
+            const updatedList = Array.from(map.values());
+            safeSetItem(COURSES_KEY, JSON.stringify(updatedList));
+            window.dispatchEvent(new Event('coursesUpdated'));
+          }
+        });
+
+        // Locations Realtime Sync
+        firebaseClient.subscribeToCollection('locations', (remoteLocations) => {
+          if (remoteLocations && remoteLocations.length > 0) {
+            const localLocations = getLocations();
+            const map = new Map<string, Location>();
+            localLocations.forEach(l => map.set(l.id, l));
+            remoteLocations.forEach(rl => {
+              if (rl.id) {
+                map.set(rl.id, rl as Location);
+              }
+            });
+            const updatedList = Array.from(map.values());
+            safeSetItem(LOCATIONS_KEY, JSON.stringify(updatedList));
+            window.dispatchEvent(new Event('locationsUpdated'));
+          }
+        });
+
+        // Categories Realtime Sync
+        firebaseClient.subscribeToCollection('categories', (remoteCats) => {
+          if (remoteCats && remoteCats.length > 0) {
+            const localCats = getCategories();
+            const map = new Map<string, Category>();
+            localCats.forEach(c => map.set(c.id, c));
+            remoteCats.forEach(rc => {
+              if (rc.id && rc.name) {
+                map.set(rc.id, rc as Category);
+              }
+            });
+            const updatedList = Array.from(map.values());
+            safeSetItem(CATEGORIES_KEY, JSON.stringify(updatedList));
+            window.dispatchEvent(new Event('categoriesUpdated'));
+          }
+        });
+
+        // Testimonials Realtime Sync
+        firebaseClient.subscribeToCollection('testimonials', (remoteTests) => {
+          if (remoteTests && remoteTests.length > 0) {
+            const localTests = getTestimonials();
+            const map = new Map<string, Testimonial>();
+            localTests.forEach(t => map.set(t.id, t));
+            remoteTests.forEach(rt => {
+              if (rt.id && rt.name) {
+                map.set(rt.id, rt as Testimonial);
+              }
+            });
+            const updatedList = Array.from(map.values());
+            safeSetItem(TESTIMONIALS_KEY, JSON.stringify(updatedList));
+            window.dispatchEvent(new Event('testimonialsUpdated'));
+          }
+        });
+      } catch (e) {}
+    }
   } catch (error) {
-    // Firebase unavailable — app runs entirely from localStorage
+    // Firebase unavailable / quota exhausted — app runs smoothly from localStorage
   }
 };
 
@@ -2312,5 +3116,45 @@ export const syncGoogleReviews = async (): Promise<{ count: number; message: str
     message: addedCount > 0 ? `Successfully synced ${addedCount} new Google Reviews!` : 'Google Reviews up to date.'
   };
 };
+
+const BLOG_POSTS_KEY = 'apex_blog_posts_v2';
+
+export const getBlogPosts = (): BlogPost[] => {
+  const stored = localStorage.getItem(BLOG_POSTS_KEY);
+  if (!stored) {
+    safeSetItem(BLOG_POSTS_KEY, JSON.stringify(SEED_BLOG_POSTS));
+    return SEED_BLOG_POSTS;
+  }
+  try {
+    const parsed: BlogPost[] = JSON.parse(stored);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      safeSetItem(BLOG_POSTS_KEY, JSON.stringify(SEED_BLOG_POSTS));
+      return SEED_BLOG_POSTS;
+    }
+    // Merge with latest seed enrichment (sections, charts, etc.)
+    return parsed.map(p => {
+      const seed = SEED_BLOG_POSTS.find(s => s.id === p.id || s.slug === p.slug);
+      if (!seed) return p;
+      return {
+        ...seed,
+        ...p,
+        charts: p.charts || seed.charts,
+        contentSections: p.contentSections || seed.contentSections,
+        keyTakeaways: p.keyTakeaways || seed.keyTakeaways,
+        stats: p.stats || seed.stats,
+        author: p.author || seed.author
+      };
+    });
+  } catch (e) {
+    return SEED_BLOG_POSTS;
+  }
+};
+
+export const getBlogPostBySlugOrId = (slugOrId: string): BlogPost | undefined => {
+  const posts = getBlogPosts();
+  const normalized = slugOrId.toLowerCase().trim();
+  return posts.find(p => p.slug?.toLowerCase() === normalized || p.id.toLowerCase() === normalized);
+};
+
 
 

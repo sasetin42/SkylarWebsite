@@ -19,6 +19,7 @@ import { Complaints } from './pages/Complaints';
 import { FAQ } from './pages/FAQ';
 import { Contact } from './pages/Contact';
 import { Blog } from './pages/Blog';
+import { BlogDetail } from './pages/BlogDetail';
 import { TermsOfService } from './pages/TermsOfService';
 import { GeminiChat } from './components/GeminiChat';
 import { MyLearning } from './pages/MyLearning';
@@ -351,12 +352,14 @@ const App: React.FC = () => {
               <Route path="/locations" element={<Locations />} />
               <Route path="/locations/:id" element={<LocationDetail />} />
               <Route path="/news" element={<Blog />} />
+              <Route path="/news/:slug" element={<BlogDetail />} />
               <Route path="/student-info" element={<StudentInfo />} />
               <Route path="/student-info/online-enrolments" element={<OnlineEnrolments />} />
               <Route path="/student-info/refund-policy" element={<RefundPolicy />} />
               <Route path="/student-info/privacy-notice" element={<PrivacyNotice />} />
               <Route path="/student-info/complaints" element={<Complaints />} />
               <Route path="/student-info/faq" element={<FAQ />} />
+              <Route path="/faq" element={<FAQ />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/my-learning" element={<MyLearning />} />
               <Route path="/checkout" element={<Checkout />} />

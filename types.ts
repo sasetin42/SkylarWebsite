@@ -79,6 +79,17 @@ export interface GoogleReviewSettings {
   lastSyncedAt?: string;
 }
 
+export interface LocationFacility {
+  label: string;
+  desc: string;
+  icon?: string;
+}
+
+export interface LocationFaq {
+  q: string;
+  a: string;
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -88,15 +99,64 @@ export interface Location {
   image: string;
   coordinates: { lat: number; lng: number };
   state: string;
+  badge?: string;
+  googleMapsUrl?: string;
+  aboutDescription?: string;
+  facilities?: LocationFacility[];
+  faqs?: LocationFaq[];
+}
+
+export interface BlogAuthor {
+  name: string;
+  role: string;
+  avatar: string;
+  bio?: string;
+}
+
+export interface BlogChartDataPoint {
+  label: string;
+  value: number;
+  formattedValue: string;
+  color?: string;
+  description?: string;
+}
+
+export interface BlogChart {
+  title: string;
+  subtitle?: string;
+  type: 'bar' | 'donut' | 'metric-grid' | 'comparison';
+  data: BlogChartDataPoint[];
+}
+
+export interface BlogContentSection {
+  heading: string;
+  paragraphs: string[];
+  callout?: {
+    type: 'tip' | 'warning' | 'quote' | 'stat';
+    title: string;
+    text: string;
+  };
+  listItems?: string[];
+  image?: string;
+  caption?: string;
 }
 
 export interface BlogPost {
   id: string;
+  slug?: string;
   title: string;
   excerpt: string;
   date: string;
   category: string;
   image: string;
+  readTime?: string;
+  author?: BlogAuthor;
+  tags?: string[];
+  keyTakeaways?: string[];
+  stats?: { label: string; value: string; sublabel?: string }[];
+  charts?: BlogChart[];
+  contentSections?: BlogContentSection[];
+  relatedCourseIds?: string[];
 }
 
 export interface ChatMessage {
@@ -271,19 +331,32 @@ export interface ImportFieldMapping {
 export interface PageSectionItem {
   title: string;
   subtitle?: string;
-  description: string;
+  description?: string;
   image?: string;
   icon?: string;
+  color?: string;
+  badge?: string;
+  tag?: string;
+  location?: string;
+  fallback?: string;
   buttonText?: string;
   buttonLink?: string;
   specialties?: string;
   experience?: string;
+  bio?: string;
+  certifications?: string;
+  courses?: string;
+  category?: string;
+  tags?: string[];
+  relatedCourseIds?: string[];
+  keyPoints?: string[];
+  helpfulCount?: number;
 }
 
 export interface PageSection {
   id: string;
   label: string; // e.g. "Hero Section"
-  type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'course-list' | 'accordion' | 'training-programs';
+  type: 'hero' | 'content' | 'features' | 'cta' | 'team' | 'course-list' | 'accordion' | 'training-programs' | 'locations-list' | 'contact-form';
   data: {
     heading?: string;
     subheading?: string;
@@ -291,9 +364,19 @@ export interface PageSection {
     image?: string;
     buttonText?: string;
     buttonLink?: string;
+    secondaryButtonText?: string;
+    secondaryButtonLink?: string;
     badgeTitle?: string;
     badgeDescription?: string;
+    programTag?: string;
+    programTitle?: string;
+    badge1?: string;
+    badge2?: string;
+    validityLabel?: string;
+    validityText?: string;
     items?: PageSectionItem[];
+    modules?: PageSectionItem[];
+    slides?: PageSectionItem[];
     partners?: string[]; // Added for partner logos
   };
 }
@@ -373,6 +456,7 @@ export interface CourseInquiry {
   location: string;
   preferredDate?: string;
   participantsCount: string;
+  participants?: string;
   message?: string;
   status: 'New' | 'Pending' | 'Contacted' | 'Quoted' | 'Resolved' | 'Archived';
   notes?: string;

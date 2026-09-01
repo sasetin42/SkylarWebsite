@@ -15,8 +15,13 @@ export const OnlineEnrolments: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    const content = getPageContent('online-enrolments');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('online-enrolments');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

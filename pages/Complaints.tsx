@@ -11,8 +11,13 @@ export const Complaints: React.FC = () => {
   const [pageContent, setPageContent] = useState<SitePage | null>(null);
 
   useEffect(() => {
-    const content = getPageContent('complaints');
-    if (content) setPageContent(content);
+    const loadContent = () => {
+      const content = getPageContent('complaints');
+      if (content) setPageContent(content);
+    };
+    loadContent();
+    window.addEventListener('sitePagesUpdated', loadContent);
+    return () => window.removeEventListener('sitePagesUpdated', loadContent);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

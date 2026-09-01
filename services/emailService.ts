@@ -19,7 +19,7 @@ export const sendInquiryConfirmationEmail = async (inquiry: CourseInquiry): Prom
     course_title: inquiry.courseTitle || 'Industrial Safety Training',
     reference_code: inquiry.referenceCode || 'REF-PENDING',
     preferred_date: inquiry.preferredDate || 'To be scheduled',
-    participants: inquiry.participants ? `${inquiry.participants} Person(s)` : '1 Person',
+    participants: (inquiry.participantsCount || inquiry.participants) ? `${inquiry.participantsCount || inquiry.participants}` : '1 Person',
     company_name: inquiry.company || 'Private Individual',
     location: inquiry.location || 'Angeles City Training Centre, Pampanga'
   };
@@ -73,7 +73,7 @@ export const sendAdminInquiryAlert = async (inquiry: CourseInquiry): Promise<boo
     course_title: inquiry.courseTitle || 'Industrial Course',
     reference_code: inquiry.referenceCode || 'REF-PENDING',
     preferred_date: inquiry.preferredDate || 'N/A',
-    participants: inquiry.participants ? `${inquiry.participants} Person(s)` : '1 Person',
+    participants: (inquiry.participantsCount || inquiry.participants) ? `${inquiry.participantsCount || inquiry.participants}` : '1 Person',
     company_name: inquiry.company || 'Private Individual',
     location: inquiry.location || 'Angeles City Training Centre'
   };

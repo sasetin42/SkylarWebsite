@@ -11,7 +11,10 @@ export const CategoryManager: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
 
   useEffect(() => {
-    setCategories(getCategories());
+    const loadCats = () => setCategories(getCategories());
+    loadCats();
+    window.addEventListener('categoriesUpdated', loadCats);
+    return () => window.removeEventListener('categoriesUpdated', loadCats);
   }, []);
 
   const handleEdit = (category: Category) => {
@@ -45,10 +48,15 @@ export const CategoryManager: React.FC = () => {
     }
   };
 
-  const filteredCategories = categories.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCategories = (categories || []).filter(c => {
+    if (!c) return false;
+    const term = (searchTerm || '').toLowerCase().trim();
+    if (!term) return true;
+    return (
+      (c.name || '').toLowerCase().includes(term) ||
+      (c.description || '').toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="space-y-6">

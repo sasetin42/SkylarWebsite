@@ -46,10 +46,12 @@ export const EnrollmentManager: React.FC = () => {
       addAuditLog('Notification Sent', `Sent document reminder to ${student.firstName}`, 'Enrollment');
   };
 
-  const filteredEnrollments = students.filter(s => {
-    const matchesText = 
-      s.firstName.toLowerCase().includes(filterText.toLowerCase()) || 
-      s.lastName.toLowerCase().includes(filterText.toLowerCase());
+  const filteredEnrollments = (students || []).filter(s => {
+    if (!s) return false;
+    const term = (filterText || '').toLowerCase().trim();
+    const matchesText = !term ||
+      (s.firstName || '').toLowerCase().includes(term) || 
+      (s.lastName || '').toLowerCase().includes(term);
     
     const matchesStatus = statusFilter === 'All' || s.status === statusFilter;
     return matchesText && matchesStatus;
