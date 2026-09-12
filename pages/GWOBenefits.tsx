@@ -83,7 +83,35 @@ export const GWOBenefits: React.FC = () => {
       title: 'Basic Safety Training (BST)',
       icon: Shield,
       color: 'bg-primary',
-      courses: ['Working at Heights', 'Manual Handling', 'Fire Awareness', 'First Aid', 'Sea Survival'],
+      courses: [
+        { 
+          name: 'Working at Heights', 
+          isUpcoming: false, 
+          description: 'Harness inspection, vertical ladder safety & self-evacuation.' 
+        },
+        { 
+          name: 'Manual Handling', 
+          isUpcoming: false, 
+          description: 'Ergonomic lifting, spinal safety & heavy component maneuvering.' 
+        },
+        { 
+          name: 'Fire Awareness', 
+          isUpcoming: false, 
+          description: 'Fire chemistry, extinguisher deployment & turbine egress drills.' 
+        },
+        { 
+          name: 'First Aid', 
+          isUpcoming: false, 
+          description: 'Life-saving CPR, AED operation & trauma care in remote wind sites.' 
+        },
+        { 
+          name: 'Sea Survival', 
+          isUpcoming: true, 
+          disabled: true,
+          badge: 'Upcoming', 
+          description: 'Cold water survival, vessel transfer drills & life raft deployment.' 
+        }
+      ],
       duration: '3-5 Days',
       description: 'Foundational safety qualifications mandatory for all personnel working on onshore and offshore wind turbines.',
       courseLink: '/courses/gwo-bst-initial'
@@ -93,7 +121,28 @@ export const GWOBenefits: React.FC = () => {
       title: 'Advanced Rescue Training (ART)',
       icon: HardHat,
       color: 'bg-blue-600',
-      courses: ['Hub & Spinner Rescue', 'Nacelle & Tower Rescue', 'Blade & Over-the-Side Rescue', 'Single Rescuer Evacuation'],
+      courses: [
+        { 
+          name: 'Hub & Spinner Rescue', 
+          isUpcoming: false, 
+          description: 'High-angle extraction from tight blade roots and rotor hubs.' 
+        },
+        { 
+          name: 'Nacelle & Tower Rescue', 
+          isUpcoming: false, 
+          description: 'Stretcher lowering down internal ladders and enclosed shafts.' 
+        },
+        { 
+          name: 'Blade & Over-the-Side Rescue', 
+          isUpcoming: false, 
+          description: 'Controlled descent and external turbine exterior retrieval.' 
+        },
+        { 
+          name: 'Single Rescuer Evacuation', 
+          isUpcoming: false, 
+          description: 'Solo emergency egress using automated descent controllers.' 
+        }
+      ],
       duration: '2-4 Days',
       description: 'Specialised high-angle rescue techniques for complex wind turbine emergencies and confined spaces.',
       courseLink: '/courses/gwo-art-initial'
@@ -103,20 +152,31 @@ export const GWOBenefits: React.FC = () => {
       title: 'Basic Technical Training (BTT)',
       icon: Zap,
       color: 'bg-accent',
-      courses: ['Hydraulic Systems', 'Electrical Safety & Lockout/Tagout', 'Mechanical Assembly', 'Installation & Bolt Torquing'],
+      courses: [
+        { 
+          name: 'Hydraulic Systems', 
+          isUpcoming: false, 
+          description: 'Pitch system pumps, valves & proportional circuit diagnostics.' 
+        },
+        { 
+          name: 'Electrical Safety & LOTO', 
+          isUpcoming: false, 
+          description: 'High-voltage isolation, busbar checks & safe multimeters.' 
+        },
+        { 
+          name: 'Mechanical Assembly', 
+          isUpcoming: false, 
+          description: 'Gearbox alignment, brake servicing & heavy mechanical fittings.' 
+        },
+        { 
+          name: 'Installation & Bolt Torquing', 
+          isUpcoming: false, 
+          description: 'Flange bolting, hydraulic tensioning & structural assembly.' 
+        }
+      ],
       duration: '3-7 Days',
       description: 'Technical competencies for turbine erection, commissioning, and scheduled maintenance.',
       courseLink: '/courses/gwo-btt'
-    },
-    {
-      id: 'supervisor',
-      title: 'Control of Hazardous Energy (COHE)',
-      icon: Users,
-      color: 'bg-green-600',
-      courses: ['Safety Management (DOLE OSH)', 'Risk Assessment & JSA', 'Lockout/Tagout Protocols', 'Emergency Action Planning'],
-      duration: '2-3 Days',
-      description: 'Supervisory protocols ensuring full compliance with international safety and Philippine OSH standards.',
-      courseLink: '/courses?category=Workplace%20Safety%20%26%20Emergency%20Response'
     }
   ];
 
@@ -219,12 +279,11 @@ export const GWOBenefits: React.FC = () => {
       {/* ─── Stats Bar ────────────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100">
             {[
               { value: 100, suffix: '%', label: 'WINDA Registry Verified' },
               { value: 35, suffix: '%', label: 'PH 2030 RE Target (DOE)' },
-              { value: 60, suffix: '+ GW', label: 'PH Wind Potential Pipeline' },
-              { value: 40, suffix: '%', label: 'Fewer Workplace Incidents' }
+              { value: 60, suffix: '+ GW', label: 'PH Wind Potential Pipeline' }
             ].map((stat, idx) => (
               <div key={idx} className="py-8 md:py-10 text-center">
                 <div className="text-3xl md:text-4xl font-heading font-bold text-primary mb-1">
@@ -395,20 +454,77 @@ export const GWOBenefits: React.FC = () => {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {trainingModules[activeModule].courses.map((course, idx) => (
-                  <Link 
-                    key={idx} 
-                    to={trainingModules[activeModule].courseLink || '/courses?category=GWO'}
-                    className="bg-white dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all duration-300 hover:-translate-y-0.5 group block"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500 rounded-lg flex items-center justify-center shrink-0 transition-colors">
-                        <CheckCircle size={15} className="text-amber-500 group-hover:text-slate-950 transition-colors" />
+                {trainingModules[activeModule].courses.map((course, idx) => {
+                  const isUpcoming = course.isUpcoming;
+                  const isDisabled = course.disabled;
+
+                  const cardContent = (
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                        isDisabled
+                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                          : isUpcoming
+                          ? 'bg-amber-500 text-slate-950 shadow-xs'
+                          : 'bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500'
+                      }`}>
+                        <CheckCircle size={15} className={
+                          isDisabled
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : isUpcoming
+                            ? 'text-slate-950'
+                            : 'text-amber-500 group-hover:text-slate-950 transition-colors'
+                        } />
                       </div>
-                      <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{course}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className={`text-xs sm:text-sm font-bold transition-colors ${
+                            isDisabled
+                              ? 'text-slate-500 dark:text-slate-400'
+                              : 'text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400'
+                          }`}>
+                            {course.name}
+                          </span>
+                          {isUpcoming && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 shadow-xs">
+                              Upcoming
+                            </span>
+                          )}
+                        </div>
+                        {course.description && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-1">
+                            {course.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </Link>
-                ))}
+                  );
+
+                  if (isDisabled) {
+                    return (
+                      <div 
+                        key={idx} 
+                        className="p-4 rounded-xl border border-dashed border-amber-400/50 bg-amber-500/[0.03] dark:bg-amber-500/[0.05] cursor-not-allowed select-none opacity-85 block relative overflow-hidden"
+                        title="This module is currently unavailable"
+                      >
+                        {cardContent}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link 
+                      key={idx} 
+                      to={trainingModules[activeModule].courseLink || '/courses?category=GWO'}
+                      className={`p-4 rounded-xl border transition-all duration-300 hover:-translate-y-0.5 group block relative overflow-hidden ${
+                        isUpcoming
+                          ? 'bg-amber-500/[0.04] dark:bg-amber-500/[0.08] border-amber-400/50 hover:border-amber-400 hover:shadow-md'
+                          : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-amber-400/80 dark:hover:border-amber-400/80'
+                      }`}
+                    >
+                      {cardContent}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>

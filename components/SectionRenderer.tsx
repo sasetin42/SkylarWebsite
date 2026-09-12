@@ -1630,26 +1630,6 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, locat
                           )}
                         </div>
                       </div>
-                      
-                      {/* Action Buttons: View Profile & Inquire Session */}
-                      <div className="px-5 pb-6 sm:pb-7 pt-1 flex items-center gap-2.5">
-                        <button 
-                          type="button"
-                          onClick={() => handleOpenModal(item, 'profile')}
-                          className="flex-1 py-2.5 px-2 bg-slate-100 dark:bg-slate-800 hover:bg-secondary hover:text-white dark:hover:bg-amber-400 dark:hover:text-slate-950 text-slate-800 dark:text-slate-200 font-bold text-[11px] uppercase tracking-wider rounded-xl transition-all border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs text-center group/btn flex items-center justify-center gap-1.5"
-                        >
-                          <User size={13} className="text-accent group-hover/btn:text-white dark:group-hover/btn:text-slate-950" />
-                          <span>Profile</span>
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => handleOpenModal(item, 'inquire')}
-                          className="flex-1 py-2.5 px-2 bg-[#FFC107] hover:bg-[#e5ac06] text-[#000000] font-black text-[11px] uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1 cursor-pointer font-sans text-center"
-                        >
-                          <Mail size={13} />
-                          <span>Inquire</span>
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
