@@ -5,7 +5,7 @@ import {
   Shield, Award, Users, CheckCircle, Globe, ArrowRight, 
   Wind, Zap, BookOpen, ChevronDown, ChevronRight, Star,
   TrendingUp, Target, Heart, Clock, MapPin, Phone,
-  GraduationCap, HardHat, Eye, Compass
+  GraduationCap, HardHat, Eye, Compass, Sparkles, FileCheck, Building2
 } from 'lucide-react';
 import { getTestimonials } from '../services/storageService';
 import { Testimonial } from '../types';
@@ -86,28 +86,29 @@ export const GWOBenefits: React.FC = () => {
       courses: [
         { 
           name: 'Working at Heights', 
-          isUpcoming: false, 
-          description: 'Harness inspection, vertical ladder safety & self-evacuation.' 
+          isUpcoming: false,
+          description: 'Fall prevention, vertical fall-arrest systems & emergency evacuation drills.' 
         },
         { 
           name: 'Manual Handling', 
-          isUpcoming: false, 
-          description: 'Ergonomic lifting, spinal safety & heavy component maneuvering.' 
+          isUpcoming: false,
+          description: 'Ergonomic lifting techniques & kinetic handling inside tight nacelle corridors.' 
         },
         { 
           name: 'Fire Awareness', 
-          isUpcoming: false, 
-          description: 'Fire chemistry, extinguisher deployment & turbine egress drills.' 
+          isUpcoming: false,
+          description: 'Turbine fire prevention, smoke evacuation & hands-on extinguisher operation.' 
         },
         { 
           name: 'First Aid', 
-          isUpcoming: false, 
-          description: 'Life-saving CPR, AED operation & trauma care in remote wind sites.' 
+          isUpcoming: false,
+          description: 'Lifesaving primary survey, CPR, AED operation & casualty stabilization.' 
         },
         { 
           name: 'Sea Survival', 
           isUpcoming: true, 
           disabled: true,
+          subtitle: 'Upcoming GWO Module', 
           badge: 'Upcoming', 
           description: 'Cold water survival, vessel transfer drills & life raft deployment.' 
         }
@@ -124,23 +125,23 @@ export const GWOBenefits: React.FC = () => {
       courses: [
         { 
           name: 'Hub & Spinner Rescue', 
-          isUpcoming: false, 
-          description: 'High-angle extraction from tight blade roots and rotor hubs.' 
+          isUpcoming: false,
+          description: 'Evacuation of injured casualties from tight turbine hubs and spinners.'
         },
         { 
           name: 'Nacelle & Tower Rescue', 
-          isUpcoming: false, 
-          description: 'Stretcher lowering down internal ladders and enclosed shafts.' 
+          isUpcoming: false,
+          description: 'Complex vertical rescue and retrieval within tower shafts and basements.'
         },
         { 
           name: 'Blade & Over-the-Side Rescue', 
-          isUpcoming: false, 
-          description: 'Controlled descent and external turbine exterior retrieval.' 
+          isUpcoming: false,
+          description: 'Specialised high-angle retrieval from turbine blades and exterior surfaces.'
         },
         { 
           name: 'Single Rescuer Evacuation', 
-          isUpcoming: false, 
-          description: 'Solo emergency egress using automated descent controllers.' 
+          isUpcoming: false,
+          description: 'Solo rapid extrication and descent procedures during solo operations.'
         }
       ],
       duration: '2-4 Days',
@@ -155,23 +156,23 @@ export const GWOBenefits: React.FC = () => {
       courses: [
         { 
           name: 'Hydraulic Systems', 
-          isUpcoming: false, 
-          description: 'Pitch system pumps, valves & proportional circuit diagnostics.' 
+          isUpcoming: false,
+          description: 'Fluid power fundamentals, pitch actuators, accumulators & leak diagnosis.'
         },
         { 
-          name: 'Electrical Safety & LOTO', 
-          isUpcoming: false, 
-          description: 'High-voltage isolation, busbar checks & safe multimeters.' 
+          name: 'Electrical Safety & Lockout/Tagout', 
+          isUpcoming: false,
+          description: 'High-voltage awareness, circuit schematics, multimeter diagnostics & LOTO.'
         },
         { 
           name: 'Mechanical Assembly', 
-          isUpcoming: false, 
-          description: 'Gearbox alignment, brake servicing & heavy mechanical fittings.' 
+          isUpcoming: false,
+          description: 'Gearbox inspection, bearings, brake calipers & mechanical drivetrain systems.'
         },
         { 
           name: 'Installation & Bolt Torquing', 
-          isUpcoming: false, 
-          description: 'Flange bolting, hydraulic tensioning & structural assembly.' 
+          isUpcoming: false,
+          description: 'Tower flange alignment, torque wrench calibration & tensioning sequences.'
         }
       ],
       duration: '3-7 Days',
@@ -297,76 +298,194 @@ export const GWOBenefits: React.FC = () => {
       </section>
 
       {/* ─── Introduction Section ─────────────────────────────────── */}
-      <section className="py-20 md:py-28 bg-white overflow-hidden">
+      <section className="py-20 md:py-28 bg-gradient-to-b from-white via-slate-50/60 to-white dark:from-[#041024] dark:via-[#071733] dark:to-[#041024] overflow-hidden transition-colors">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-            {/* Left Content */}
-            <div>
-              <span className="text-accent font-bold uppercase tracking-widest text-xs mb-3 block">Philippine Wind Energy Standards</span>
-              <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-6 leading-tight">
-                Empowering the Philippines' Wind Energy Transition
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+            
+            {/* Left Content (7 cols) */}
+            <div className="lg:col-span-7">
+              {/* Top Eyebrow Tag */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
+                <Wind size={14} className="text-amber-500 animate-spin-slow" />
+                <span>Philippine Wind Energy Standards</span>
+              </div>
+
+              {/* Main Headline */}
+              <h2 className="text-3xl md:text-4xl lg:text-[42px] font-heading font-extrabold text-secondary dark:text-white mb-5 leading-tight tracking-tight">
+                Empowering the Philippines’ <br className="hidden sm:inline" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500">
+                  Wind Energy Transition
+                </span>
               </h2>
-              <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6">
-                Under the Philippine Department of Energy's (DOE) National Renewable Energy Program (NREP) and Executive Order No. 21 for Offshore Wind, the Philippines is rapidly expanding its wind energy capacity across Luzon, Visayas, and Mindanao.
-              </p>
-              <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-8">
-                Operating on active wind farms in Ilocos Norte, Rizal, Aklan, and emerging offshore projects requires rigorous safety protocols. GWO Certification provides technicians with verified WINDA credentials, aligned with international standards and Philippine DOLE OSH (RA 11058) regulations.
+
+              {/* Layman-Friendly Executive Summary */}
+              <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed mb-6 font-normal">
+                As wind farms rapidly rise across <strong className="text-slate-900 dark:text-white font-semibold">Ilocos Norte, Rizal, Aklan</strong>, and upcoming offshore coastlines, specialized safety training is the mandatory passport for every field engineer and turbine technician.
               </p>
 
-              {/* Overview Card */}
-              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Globe size={20} className="text-primary" />
-                  </div>
-                  <h3 className="font-heading font-bold text-secondary text-lg">GWO & Philippine Industry Alignment</h3>
+              {/* Government & Industry Direct Alignment Badges */}
+              <div className="flex flex-wrap gap-2.5 mb-8">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200/80 dark:border-slate-700/80">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  DOE National RE Program (NREP)
                 </div>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  GWO is an industry-led non-profit founded by leading wind turbine manufacturers and operators. Standardised training ensures technicians possess verified competencies in working at heights, electrical lockouts, first aid, and complex nacelle rescues—critical for zero-harm operations across Southeast Asia.
-                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200/80 dark:border-slate-700/80">
+                  <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                  Executive Order No. 21 (Offshore Wind)
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200/80 dark:border-slate-700/80">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  DOLE OSH (RA 11058) High-Risk Mandate
+                </div>
               </div>
 
-              {/* Key Points */}
-              <div className="space-y-3">
-                {[
-                  'Direct WINDA Registry upload recognized by 500+ global and regional wind operators',
-                  'Full alignment with DOLE OSH (RA 11058) high-risk workplace safety mandates',
-                  'Hands-on practical rescue, heights, and sea survival simulation at our Angeles City Centre'
-                ].map((point, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                      <CheckCircle size={14} className="text-green-600" />
+              {/* 3 High-Impact Value Pillar Cards (Layman-First & Clear) */}
+              <div className="space-y-3.5 mb-8">
+                {/* Pillar 1: WINDA Global Passport */}
+                <div className="group relative bg-white dark:bg-slate-800/60 rounded-2xl p-4 md:p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:border-amber-400/50 dark:hover:border-amber-400/40 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                      <Globe size={22} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="text-gray-600 text-sm">{point}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                        <h4 className="font-heading font-bold text-slate-900 dark:text-white text-base">
+                          Globally Recognized WINDA Digital Credential
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                          500+ Operators
+                        </span>
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                        Instant digital registration in the Global Wind Organisation database. Your certificate is verified and trusted by major wind energy employers in the Philippines and abroad.
+                      </p>
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Pillar 2: Philippine DOLE Compliance */}
+                <div className="group relative bg-white dark:bg-slate-800/60 rounded-2xl p-4 md:p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:border-amber-400/50 dark:hover:border-amber-400/40 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                      <Shield size={22} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                        <h4 className="font-heading font-bold text-slate-900 dark:text-white text-base">
+                          100% High-Risk Safety Compliance (DOLE OSH)
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                          RA 11058 Law
+                        </span>
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                        Meets mandatory Philippine workplace safety legislation. Protects technicians against hazards and assures employers of zero-harm site preparedness.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pillar 3: Realistic Hands-On Simulation */}
+                <div className="group relative bg-white dark:bg-slate-800/60 rounded-2xl p-4 md:p-5 border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-md hover:border-amber-400/50 dark:hover:border-amber-400/40 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                      <HardHat size={22} className="text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                        <h4 className="font-heading font-bold text-slate-900 dark:text-white text-base">
+                          Practical Simulation at Angeles City Centre
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+                          Pampanga Hub
+                        </span>
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                        Real-world vertical tower climbs, confined space nacelle rescues, and hands-on sea survival drills with certified instructors before stepping onto active turbines.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Call to Action / Trust Indicator */}
+              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle size={15} className="text-emerald-500" /> No prior experience required for BST Initial
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle size={15} className="text-emerald-500" /> 2-Year Global Validity
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle size={15} className="text-emerald-500" /> Industry Preferred in PH & Overseas
+                </span>
               </div>
             </div>
 
-            {/* Right Images */}
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl overflow-hidden shadow-lg h-64 md:h-80">
-                  <img src="https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=600" alt="Wind Turbines" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                </div>
-                <div className="rounded-2xl overflow-hidden shadow-lg h-64 md:h-80 mt-8">
-                  <img src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=600" alt="Wind Farm" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                </div>
-              </div>
+            {/* Right Showcase Media (5 cols) */}
+            <div className="lg:col-span-5 relative">
+              <div className="relative mx-auto max-w-md lg:max-w-none">
+                
+                {/* Ambient backdrop glow */}
+                <div className="absolute -top-10 -right-10 w-72 h-72 bg-amber-400/15 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-blue-500/15 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Build a Stable Future Card */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 lg:translate-x-0 lg:left-auto lg:right-0 bg-white rounded-2xl shadow-xl border border-gray-100 p-5 max-w-[260px]">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <TrendingUp size={16} className="text-accent" />
+                {/* Staggered Visual Grid */}
+                <div className="grid grid-cols-2 gap-4 relative z-10">
+                  {/* Image 1: Green Hills & Turbines */}
+                  <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-white dark:border-slate-700 h-64 md:h-80 group">
+                    <img 
+                      src="https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?auto=format&fit=crop&q=80&w=600" 
+                      alt="Wind Turbines in Green Hills" 
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md text-white text-[11px] font-medium border border-white/20">
+                        <MapPin size={11} className="text-amber-400" /> Luzon & Visayas Grid
+                      </span>
+                    </div>
                   </div>
-                  <h4 className="font-heading font-bold text-secondary text-sm">Empowering Local Talent</h4>
+
+                  {/* Image 2: Golden Sunset Wind Farm */}
+                  <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-white dark:border-slate-700 h-64 md:h-80 mt-8 group">
+                    <img 
+                      src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=600" 
+                      alt="Wind Farm at Sunset" 
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
+                    <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md text-white text-[11px] font-medium border border-white/20">
+                        <Zap size={11} className="text-amber-400" /> 60+ GW Potential
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-gray-500 text-xs leading-relaxed">
-                  SKYLAR EDUCATION ASIA empowers Filipino engineers and technicians with world-class safety skills, opening doors to local and overseas renewable energy careers.
-                </p>
+
+                {/* Floating Highlight Card: Empowering Local Talent */}
+                <div className="relative mt-6 sm:mt-0 sm:absolute sm:-bottom-7 sm:left-4 sm:right-4 z-20 bg-white/95 dark:bg-[#071328]/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-700/80 p-5 transition-transform hover:-translate-y-1 duration-300">
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                      <TrendingUp size={18} />
+                    </div>
+                    <div>
+                      <h4 className="font-heading font-bold text-slate-900 dark:text-white text-sm">
+                        Empowering Local Filipino Talent
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        World-class training for onshore & offshore careers
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
+                    SKYLAR EDUCATION ASIA bridges the local skills gap by certifying Filipino engineers to global safety standards—opening high-paying opportunities across Southeast Asia and worldwide.
+                  </p>
+                </div>
+
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -454,39 +573,42 @@ export const GWOBenefits: React.FC = () => {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {trainingModules[activeModule].courses.map((course, idx) => {
+                {trainingModules[activeModule].courses.map((course: any, idx) => {
                   const isUpcoming = course.isUpcoming;
                   const isDisabled = course.disabled;
-
-                  const cardContent = (
+                  
+                  const content = (
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                         isDisabled
-                          ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                          ? 'bg-amber-500/20 text-amber-500/70 border border-amber-400/30'
                           : isUpcoming
-                          ? 'bg-amber-500 text-slate-950 shadow-xs'
-                          : 'bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500'
+                            ? 'bg-amber-500 text-slate-950 shadow-xs'
+                            : 'bg-amber-500/10 dark:bg-amber-500/20 group-hover:bg-amber-500'
                       }`}>
-                        <CheckCircle size={15} className={
-                          isDisabled
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : isUpcoming
-                            ? 'text-slate-950'
-                            : 'text-amber-500 group-hover:text-slate-950 transition-colors'
-                        } />
+                        <CheckCircle size={15} className={isDisabled ? 'text-amber-500/70' : isUpcoming ? 'text-slate-950' : 'text-amber-500 group-hover:text-slate-950 transition-colors'} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-0.5">
                           <span className={`text-xs sm:text-sm font-bold transition-colors ${
-                            isDisabled
-                              ? 'text-slate-500 dark:text-slate-400'
+                            isDisabled 
+                              ? 'text-slate-400 dark:text-slate-400' 
                               : 'text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400'
                           }`}>
                             {course.name}
                           </span>
                           {isUpcoming && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 shadow-xs">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              isDisabled 
+                                ? 'bg-amber-500/30 text-amber-400 border border-amber-400/40' 
+                                : 'bg-amber-500 text-slate-950 shadow-xs'
+                            }`}>
                               Upcoming
+                            </span>
+                          )}
+                          {isDisabled && (
+                            <span className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700/80 text-slate-500 dark:text-slate-400">
+                              Disabled
                             </span>
                           )}
                         </div>
@@ -501,12 +623,13 @@ export const GWOBenefits: React.FC = () => {
 
                   if (isDisabled) {
                     return (
-                      <div 
-                        key={idx} 
-                        className="p-4 rounded-xl border border-dashed border-amber-400/50 bg-amber-500/[0.03] dark:bg-amber-500/[0.05] cursor-not-allowed select-none opacity-85 block relative overflow-hidden"
-                        title="This module is currently unavailable"
+                      <div
+                        key={idx}
+                        aria-disabled="true"
+                        title="Sea Survival module is currently undergoing accreditation and is unavailable for booking."
+                        className="p-4 rounded-xl border border-amber-400/30 bg-amber-500/[0.02] dark:bg-amber-500/[0.04] opacity-75 cursor-not-allowed select-none relative overflow-hidden"
                       >
-                        {cardContent}
+                        {content}
                       </div>
                     );
                   }
@@ -515,13 +638,13 @@ export const GWOBenefits: React.FC = () => {
                     <Link 
                       key={idx} 
                       to={trainingModules[activeModule].courseLink || '/courses?category=GWO'}
-                      className={`p-4 rounded-xl border transition-all duration-300 hover:-translate-y-0.5 group block relative overflow-hidden ${
+                      className={`p-4 rounded-xl border transition-all duration-300 hover:-translate-y-0.5 group block relative overflow-hidden cursor-pointer ${
                         isUpcoming
                           ? 'bg-amber-500/[0.04] dark:bg-amber-500/[0.08] border-amber-400/50 hover:border-amber-400 hover:shadow-md'
                           : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-amber-400/80 dark:hover:border-amber-400/80'
                       }`}
                     >
-                      {cardContent}
+                      {content}
                     </Link>
                   );
                 })}
