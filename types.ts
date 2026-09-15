@@ -77,6 +77,9 @@ export interface GoogleReviewSettings {
   autoSync: boolean;
   minimumRating: number; // e.g. 4 or 5
   lastSyncedAt?: string;
+  totalReviewsCount?: number;
+  averageRating?: number;
+  placeUrl?: string;
 }
 
 export interface LocationFacility {

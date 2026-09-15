@@ -633,6 +633,30 @@ export const TestimonialsManager: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label htmlFor="testimonial-place-url" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Google Maps / Review URL</label>
+                <input
+                  id="testimonial-place-url"
+                  type="text"
+                  value={googleSettings.placeUrl || ''}
+                  onChange={e => setGoogleSettings({ ...googleSettings, placeUrl: e.target.value })}
+                  className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
+                  placeholder="https://www.google.com/maps/search/?api=1&query=Skylar+Education"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="testimonial-total-reviews" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Total Google Reviews Count</label>
+                <input
+                  id="testimonial-total-reviews"
+                  type="number"
+                  value={googleSettings.totalReviewsCount || 154}
+                  onChange={e => setGoogleSettings({ ...googleSettings, totalReviewsCount: parseInt(e.target.value) || 154 })}
+                  className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl dark:text-white"
+                  placeholder="154"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="testimonial-min-rating" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1">Minimum Star Rating</label>

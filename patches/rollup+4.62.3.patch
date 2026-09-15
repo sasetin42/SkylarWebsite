@@ -1,0 +1,17 @@
+diff --git a/node_modules/rollup/dist/native.js b/node_modules/rollup/dist/native.js
+index a7b1d74..7c3cffb 100644
+--- a/node_modules/rollup/dist/native.js
++++ b/node_modules/rollup/dist/native.js
+@@ -102,6 +102,12 @@ const requireWithFriendlyError = id => {
+ 	try {
+ 		return require(id);
+ 	} catch (error) {
++		try {
++			return require('@rollup/wasm-node/dist/native.js');
++		} catch (wasmError) {
++			// ignore and proceed to original error handling
++		}
++
+ 		if (
+ 			platform === 'win32' &&
+ 			error instanceof Error &&

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SectionRenderer } from '../components/SectionRenderer';
+import { GoogleReviewsSection } from '../components/GoogleReviewsSection';
 import { getPageContent } from '../services/storageService';
 import { SitePage } from '../types';
 import { Sparkles, ArrowRight, ShieldCheck, Flame } from 'lucide-react';
@@ -33,6 +34,13 @@ export const About: React.FC = () => {
             <SectionRenderer key={idx} section={section} />
         ))}
       </div>
+
+      {/* Google Reviews Realtime & Live Sync Section */}
+      <GoogleReviewsSection 
+        title="What Delegates Say About Us" 
+        subtitle="VERIFIED GOOGLE REVIEWS"
+        className="mt-16 mb-8"
+      />
 
       {/* Call to Action - Hardcoded fallback if not in CMS or just to ensure it's there */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-16">

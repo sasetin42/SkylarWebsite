@@ -10,6 +10,7 @@ import {
 import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
 import { InteractiveMap } from '../components/InteractiveMap';
+import { GoogleReviewsSection } from '../components/GoogleReviewsSection';
 import { TESTIMONIALS, BLOG_POSTS, LOCATIONS } from '../constants';
 import { getCourses, getPageContent, saveTicket, getCategories, saveInquiry, getTestimonials, getLocations } from '../services/storageService';
 import { Course, SitePage, CourseInquiry, Testimonial } from '../types';
@@ -129,39 +130,8 @@ const Home: React.FC = () => {
     setContactSlide((prev) => ((prev - 1) % contactSlides.length + contactSlides.length) % contactSlides.length);
   };
 
-  const reviewItems = testimonials.length > 0 ? testimonials : TESTIMONIALS;
-  const visibleCardsCount = 4;
-  const maxReviewIndex = Math.max(0, reviewItems.length - visibleCardsCount);
-
   const fanRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const loadTestimonials = () => {
-      const all = getTestimonials();
-      const approved = all.filter(t => (t.status || 'Approved') === 'Approved');
-      setTestimonials(approved);
-    };
-    loadTestimonials();
-    window.addEventListener('testimonialsUpdated', loadTestimonials);
-    return () => window.removeEventListener('testimonialsUpdated', loadTestimonials);
-  }, []);
-
-  useEffect(() => {
-    if (reviewItems.length <= visibleCardsCount) return;
-    const interval = setInterval(() => {
-      setReviewIndex((prev) => (prev >= maxReviewIndex ? 0 : prev + 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [maxReviewIndex, reviewItems.length]);
-
-  const nextReviewSlide = () => {
-    setReviewIndex((prev) => (prev >= maxReviewIndex ? 0 : prev + 1));
-  };
-
-  const prevReviewSlide = () => {
-    setReviewIndex((prev) => (prev <= 0 ? maxReviewIndex : prev - 1));
-  };
 
   useEffect(() => {
     const loadContent = () => {
@@ -1438,115 +1408,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-secondary text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
-        <div className="container mx-auto px-4 md:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-accent font-bold uppercase tracking-widest text-xs md:text-sm mb-2 block">WHAT DELEGATES & CLIENTS SAY</span>
-            <h2 className="text-3xl md:text-5xl font-heading font-extrabold mb-4 text-white">About Us</h2>
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/10 border border-white/15 text-xs text-gray-200 shadow-sm mt-1">
-              <span className="font-extrabold text-white text-sm">4.9 / 5.0</span>
-              <span className="text-amber-400">★★★★★</span>
-              <span className="text-gray-300 font-medium">Verified Google & GWO Reviews</span>
-            </div>
-          </div>
-
-          {/* Slider Controls Bar */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-bold">Showing</span>
-              <span className="text-xs font-bold text-accent px-3 py-1 bg-accent/10 rounded-full border border-accent/20">
-                {reviewIndex + 1} - {Math.min(reviewIndex + visibleCardsCount, reviewItems.length)} of {reviewItems.length} Reviews
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={prevReviewSlide}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-accent hover:text-secondary text-white transition-all duration-300 flex items-center justify-center border border-white/15 shadow-lg transform hover:scale-105 active:scale-95"
-                aria-label="Previous Reviews"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button 
-                onClick={nextReviewSlide}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-accent hover:text-secondary text-white transition-all duration-300 flex items-center justify-center border border-white/15 shadow-lg transform hover:scale-105 active:scale-95"
-                aria-label="Next Reviews"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Sliding Track Viewport */}
-          <div className="overflow-hidden w-full relative py-2">
-            <div 
-              className="flex transition-transform duration-700 ease-in-out gap-6"
-              style={{
-                transform: `translateX(-${reviewIndex * (100 / visibleCardsCount)}%)`
-              }}
-            >
-              {reviewItems.map((t: any, i: number) => (
-                <div 
-                  key={t.id || i} 
-                  className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 bg-[#162238]/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-white/10 hover:bg-[#1A2B48]/80 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 shadow-xl group min-h-[320px]"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex gap-1 text-amber-400">
-                        {Array.from({ length: t.rating || 5 }).map((_, star) => (
-                          <Star key={star} size={15} fill="currentColor" className="text-amber-400" />
-                        ))}
-                      </div>
-                      {t.source === 'Google' && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center gap-1">
-                          Google Verified
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[14px] md:text-[15px] text-gray-200 italic mb-6 leading-relaxed">
-                      “{t.content}”
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3.5 pt-4 border-t border-white/10 mt-auto">
-                    {!imageLoads[`avatar-${t.id || i}`] && <div className="w-11 h-11 rounded-full bg-gray-700 animate-pulse shrink-0" />}
-                    <img
-                      src={t.avatar || 'https://i.pravatar.cc/150?img=12'}
-                      alt={t.name}
-                      className={`w-11 h-11 rounded-full object-cover border-2 border-accent transition-opacity duration-300 shrink-0 ${imageLoads[`avatar-${t.id || i}`] ? 'opacity-100' : 'opacity-0'}`}
-                      onLoad={() => handleImageLoad(`avatar-${t.id || i}`)}
-                    />
-                    <div className="text-left overflow-hidden">
-                      <h4 className="font-bold text-white text-[14px] leading-tight mb-0.5 truncate">{t.name}</h4>
-                      <p className="text-accent text-[12px] font-medium leading-snug truncate">{t.role}</p>
-                      {t.locationName && (
-                        <p className="text-[10px] text-gray-400 truncate mt-0.5">{t.locationName}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Dots Indicator */}
-          {maxReviewIndex > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-8">
-              {Array.from({ length: maxReviewIndex + 1 }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setReviewIndex(idx)}
-                  className={`h-2.5 rounded-full transition-all duration-500 ${
-                    reviewIndex === idx ? 'w-8 bg-accent' : 'w-2.5 bg-white/20 hover:bg-white/40'
-                  }`}
-                  aria-label={`Go to review slide page ${idx + 1}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      {/* Testimonials & Google Reviews */}
+      <GoogleReviewsSection />
 
       {/* Latest News / Industry Insights */}
       <section className="py-24 bg-surface">

@@ -294,34 +294,130 @@ export const LOCATIONS: Location[] = [
   }
 ];
 
+export const GOOGLE_REVIEWS_STATS = {
+  rating: 4.9,
+  totalReviews: 154,
+  placeName: 'Skylar Education',
+  googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Skylar+Education'
+};
+
 export const TESTIMONIALS: Testimonial[] = [
   {
-    id: 't1',
-    name: 'James Wilson',
-    role: 'Wind Turbine Technician',
-    content: 'The GWO training at SKYLAR EDUCATION ASIA was exceptional. The simulators are exactly like what we use offshore.',
-    avatar: 'https://i.pravatar.cc/150?img=11'
+    id: 'g-rev-1',
+    name: 'Andrew Mykytowych',
+    role: 'Verified Delegate',
+    content: 'Brenton (WAH and Height Rescue) and Chris (First Aid, Manual Handling, LV Rescue and Fire) were excellent trainers, knowledgeable and approachable for numerous questions. The SKYLAR training facility is well set out, fully equipped and has comfortable training rooms. Thanks once again for another comprehensive GWO Training session.',
+    avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjXV6fOEs2U-M_QujJDfd6KCT2KRo8v7OchE2yq8yIkRNm-28gTp=w120-h120-c-rp-mo-ba2-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-12-04',
+    locationName: 'Skylar Education'
   },
   {
-    id: 't2',
-    name: 'Sarah Chen',
-    role: 'Safety Officer',
-    content: 'Excellent facilities and knowledgeable trainers. Highly recommended for industrial safety training.',
-    avatar: 'https://i.pravatar.cc/150?img=5'
+    id: 'g-rev-2',
+    name: 'Stephen Winter',
+    role: 'Verified Delegate',
+    content: 'Great facility and staff for doing your GWO training.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocLDQA3wNChtCSl4v_O2GJyl6vO48HVlOcTl-smhpJKHsKsXoA=w120-h120-c-rp-mo-ba2-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-11-30',
+    locationName: 'Skylar Education'
   },
   {
-    id: 't3',
-    name: 'Michael Rodriguez',
-    role: 'Site Supervisor',
-    content: 'The hands-on approach really helped our team understand the critical safety procedures effectively.',
-    avatar: 'https://i.pravatar.cc/150?img=12'
+    id: 'g-rev-3',
+    name: 'mikah k',
+    role: 'Verified Delegate',
+    content: 'Awesome training by Bon, very knowledgeable and easily transferable skills into the wind industry, highly recommended 👍',
+    avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjW-Dn9KmGzBtBsdoUDrPVsmtnkQpb41THGRjATHOtm923S0rl4=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-09-11',
+    locationName: 'Skylar Education'
   },
   {
-    id: 't4',
-    name: 'Emma Thompson',
-    role: 'Renewable Energy Engineer',
-    content: 'A world-class training center. The instruction quality is on par with the best international standards.',
-    avatar: 'https://i.pravatar.cc/150?img=9'
+    id: 'g-rev-4',
+    name: 'Alex Cook',
+    role: 'Verified Delegate',
+    content: 'Great crew at Skylar, always very informative and engaging. Bon was a great teacher, very well informed and easy to get along with.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocL9tSSxn1OhyZrW3JWfVtmcWkdGN86ESZfHBeOgSjED5NGJHA=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-07-24',
+    locationName: 'Skylar Education'
+  },
+  {
+    id: 'g-rev-5',
+    name: 'Darcy Owen',
+    role: 'Verified Delegate',
+    content: 'Really extensive course can’t recommend enough. Bon was awesome.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocIH3-vdVoLb8L64OUTI_EIPSnxjA8JcSur1ufeRCi8rLsLl=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-09-11',
+    locationName: 'Skylar Education'
+  },
+  {
+    id: 'g-rev-6',
+    name: 'Pee Jay Valle',
+    role: 'Verified Delegate',
+    content: 'Nice facilities and amazing training. Also Bon is a nice instructor, you learn more about the strategy, technique, and safety protocols.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocI4QIFXWdHGe8EItvfT3FNwc_NXTi4qSv0F5jaqB6rrgQHy1A=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-09-11',
+    locationName: 'Skylar Education'
+  },
+  {
+    id: 'g-rev-7',
+    name: 'Tong Yak',
+    role: 'Verified Delegate',
+    content: 'Great training for those entering the wind industry. Bon was a great trainer.',
+    avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWnsKU7wPK1iVrcfsEwL2jUiTl4Oqtcijxy7Ll8ytSfHNvvKh2w=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-09-11',
+    locationName: 'Skylar Education'
+  },
+  {
+    id: 'g-rev-8',
+    name: 'Harmon Rundle',
+    role: 'Verified Delegate',
+    content: 'Great experience training with the Skylar team! Facilities are modern and practical.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocJNLqwHEviPmvXctM2qpzNO3_rsphcV3yKANze5Gt4xPt5tzA=w120-h120-c-rp-mo-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-10-06',
+    locationName: 'Skylar Education'
+  },
+  {
+    id: 'g-rev-9',
+    name: 'hayden smith',
+    role: 'Verified Delegate',
+    content: 'Great trainers and training facility. Hands-on modules made all the difference.',
+    avatar: 'https://lh3.googleusercontent.com/a/ACg8ocKCzvBv7-uLSgs4Yo6ejK7DMSGQ-y5bJNOlHFlm3GKIvlbN2Q=w120-h120-c-rp-mo-ba2-br100',
+    rating: 5,
+    source: 'Google',
+    status: 'Approved',
+    isFeatured: true,
+    date: '2025-09-11',
+    locationName: 'Skylar Education'
   }
 ];
 

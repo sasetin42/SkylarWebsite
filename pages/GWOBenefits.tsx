@@ -183,27 +183,27 @@ export const GWOBenefits: React.FC = () => {
 
   const testimonials = [
     {
-      name: 'Arnel Bautista',
-      role: 'Lead Wind Turbine Technician',
-      company: 'North Luzon Wind Power Project',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100',
-      content: 'GWO Basic Safety Training at SKYLAR EDUCATION ASIA gave me the verified WINDA credentials required for turbine blade and nacelle maintenance in Ilocos Norte. The practical working-at-heights and rescue drills were world-class.',
+      name: 'Andrew Mykytowych',
+      role: 'Verified Delegate',
+      company: 'Skylar Education GWO Graduate',
+      avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjXV6fOEs2U-M_QujJDfd6KCT2KRo8v7OchE2yq8yIkRNm-28gTp=w120-h120-c-rp-mo-ba2-br100',
+      content: 'Brenton (WAH and Height Rescue) and Chris (First Aid, Manual Handling, LV Rescue and Fire) were excellent trainers, knowledgeable and approachable for numerous questions. The SKYLAR training facility is well set out, fully equipped and has comfortable training rooms. Thanks once again for another comprehensive GWO Training session.',
       rating: 5
     },
     {
-      name: 'Engr. Maria Santos-Cruz',
-      role: 'HSE & Compliance Manager',
-      company: 'Philippine Renewable Energy Dev Corp',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100',
-      content: 'Having our field engineers GWO-certified ensures full compliance with DOLE OSH standards (RA 11058) and developer safety criteria. The technicians demonstrate superior risk awareness on site.',
+      name: 'Stephen Winter',
+      role: 'Verified Delegate',
+      company: 'Skylar Education GWO Graduate',
+      avatar: 'https://lh3.googleusercontent.com/a/ACg8ocLDQA3wNChtCSl4v_O2GJyl6vO48HVlOcTl-smhpJKHsKsXoA=w120-h120-c-rp-mo-ba2-br100',
+      content: 'Great facility and staff for doing your GWO training.',
       rating: 5
     },
     {
-      name: 'Danilo Reyes',
-      role: 'Senior Rigger & Heights Specialist',
-      company: 'Luzon Energy Infrastructure Services',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100',
-      content: 'The hands-on nacelle rescue and manual handling training directly prepared our crew for high-risk onshore and offshore wind assignments across Southeast Asia.',
+      name: 'mikah k',
+      role: 'Verified Delegate',
+      company: 'Skylar Education GWO Graduate',
+      avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjW-Dn9KmGzBtBsdoUDrPVsmtnkQpb41THGRjATHOtm923S0rl4=w120-h120-c-rp-mo-br100',
+      content: 'Awesome training by Bon, very knowledgeable and easily transferable skills into the wind industry, highly recommended 👍',
       rating: 5
     }
   ];
