@@ -46,7 +46,7 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { InquireModal } from './components/InquireModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
-import { getThemeSettings, getPageContent, initializeFirebase, getSettings } from './services/storageService';
+import { getThemeSettings, getPageContent, initializeFirebase, getSettings, initCloudSync } from './services/storageService';
 import { ThemeSettings } from './types';
 
 // Helper to map route paths to CMS Page IDs
@@ -196,6 +196,10 @@ const PublicLayout: React.FC = () => {
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initCloudSync();
+  }, []);
 
   useEffect(() => {
     const init = async () => {

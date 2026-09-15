@@ -2475,6 +2475,7 @@ export const saveTicket = async (ticket: SupportTicket): Promise<void> => {
 export const initializeFirebase = async (): Promise<void> => {
   if (!firebaseClient.isAvailable()) return;
   try {
+    let hasChanges = false;
     // 1. Fetch individual Firestore site_pages collection first to guarantee true remote custom page data
     try {
       const remoteSitePages = await firebaseClient.getCollection('site_pages');
@@ -2485,9 +2486,9 @@ export const initializeFirebase = async (): Promise<void> => {
         remoteSitePages.forEach((rp: any) => {
           if (rp && rp.id && rp.sections) {
             const localPg = mergedMap.get(rp.id);
-            // Apply remote page if local doesn't exist or remote is strictly newer or local has no lastUpdated
             if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() >= new Date(localPg.lastUpdated).getTime())) {
               mergedMap.set(rp.id, rp as SitePage);
+              hasChanges = true;
               try {
                 safeSetItem(`apex_page_backup_${rp.id}`, JSON.stringify(rp));
               } catch (e) {}
@@ -2496,6 +2497,7 @@ export const initializeFirebase = async (): Promise<void> => {
         });
         const updatedList = Array.from(mergedMap.values());
         safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+        window.dispatchEvent(new Event('sitePagesUpdated'));
       }
     } catch (err) {}
 
@@ -2516,16 +2518,32 @@ export const initializeFirebase = async (): Promise<void> => {
               const localPg = mergedMap.get(rp.id);
               if (!localPg || !localPg.lastUpdated || (rp.lastUpdated && new Date(rp.lastUpdated).getTime() >= new Date(localPg.lastUpdated).getTime())) {
                 mergedMap.set(rp.id, rp);
+                hasChanges = true;
               }
             }
           });
           const updatedList = Array.from(mergedMap.values());
           safeSetItem(SITE_PAGES_KEY, JSON.stringify(updatedList));
+          window.dispatchEvent(new Event('sitePagesUpdated'));
         } else {
           safeSetItem(key, JSON.stringify(item.value));
+          hasChanges = true;
+          if (key === COURSES_KEY) window.dispatchEvent(new Event('coursesUpdated'));
+          if (key === SETTINGS_KEY) window.dispatchEvent(new Event('settingsUpdated'));
+          if (key === TESTIMONIALS_KEY) window.dispatchEvent(new Event('testimonialsUpdated'));
+          if (key === CATEGORIES_KEY) window.dispatchEvent(new Event('categoriesUpdated'));
+          if (key === LOCATIONS_KEY) window.dispatchEvent(new Event('locationsUpdated'));
+          if (key === TRAINERS_KEY) window.dispatchEvent(new Event('trainersUpdated'));
+          if (key === SECTIONS_KEY) window.dispatchEvent(new Event('sectionsUpdated'));
+          if (key === THEME_KEY) window.dispatchEvent(new Event('themeUpdated'));
+          if (key === BLOG_POSTS_KEY) window.dispatchEvent(new Event('blogPostsUpdated'));
         }
       }
     });
+
+    if (hasChanges) {
+      window.dispatchEvent(new Event('storage'));
+    }
 
     // 3. Seed default values in Firebase ONLY if they are completely missing
     if (firebaseClient.isAvailable()) {
@@ -3160,6 +3178,9 @@ export const getBlogPostBySlugOrId = (slugOrId: string): BlogPost | undefined =>
   const normalized = slugOrId.toLowerCase().trim();
   return posts.find(p => p.slug?.toLowerCase() === normalized || p.id.toLowerCase() === normalized);
 };
+
+export const initCloudSync = initializeFirebase;
+
 
 
 
