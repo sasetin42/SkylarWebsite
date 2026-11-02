@@ -10,7 +10,8 @@ export const SEED_CATEGORIES: Category[] = [
   { id: 'cat_electrical', name: 'Electrical & Utilities', description: 'Electrical safety and utilities training.' }
 ];
 
-export const LOGO_URL = "/skylar-logo.svg";
+export const LOGO_URL = "/skylar-official-logo.png";
+export const LOGO_WHITE_URL = "/skylar-official-logo-white.png";
 
 export const COURSES: Course[] = ([
   {

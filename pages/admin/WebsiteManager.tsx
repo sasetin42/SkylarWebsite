@@ -5,19 +5,40 @@ import {
     Type, Check, ArrowLeft, Eye, Smartphone, Monitor,
     Info, Home, Palette, RefreshCcw, PaintBucket, Sliders,
     FileText, Plus, Trash2, X, DollarSign, Clock, Star, UploadCloud, Upload,
-    MapPin, Zap, ShieldCheck, CheckCircle, Award, ArrowRight
+    MapPin, Zap, ShieldCheck, CheckCircle, Award, ArrowRight, Calendar, Sparkles, Flame,
+    ExternalLink, Search, Layers, Cloud, Database
 } from 'lucide-react';
 import { Button } from '../../components/Button';
-import { getSitePages, savePageContent, getPageContent, getThemeSettings, saveThemeSettings, getCourses, saveCourse, saveCourses, getLocations, saveLocations, syncToFirebase, realignAllPagesWithFrontendMaster } from '../../services/storageService';
+import { getSitePages, savePageContent, getPageContent, getThemeSettings, saveThemeSettings, getCourses, saveCourse, saveCourses, getLocations, saveLocations, syncToFirebase, realignAllPagesWithFrontendMaster, syncPageToFirestore } from '../../services/storageService';
 import { firebaseClient } from '../../services/firebaseClient';
 import { SitePage, ThemeSettings, PageSection, Course, Location } from '../../types';
 import { SectionRenderer } from '../../components/SectionRenderer';
+
+const PAGE_ROUTES: Record<string, string> = {
+    home: '/',
+    about: '/about',
+    courses: '/courses',
+    locations: '/locations',
+    contact: '/contact',
+    faq: '/faq',
+    'student-info': '/student-info',
+    news: '/news',
+    'online-enrolments': '/online-enrolments',
+    'refund-policy': '/refund-policy',
+    'privacy-notice': '/privacy-notice',
+    complaints: '/complaints',
+    winda: '/winda',
+    usi: '/winda'
+};
 
 export const WebsiteManager: React.FC = () => {
     const [pages, setPages] = useState<SitePage[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'all' | 'theme'>('all');
     const [isRealigning, setIsRealigning] = useState(false);
+    const [dashboardSearchQuery, setDashboardSearchQuery] = useState('');
+    const [syncingPageId, setSyncingPageId] = useState<string | null>(null);
+    const [syncedPages, setSyncedPages] = useState<Record<string, boolean>>({});
 
     // Editor State (Pages)
     const [editingPage, setEditingPage] = useState<SitePage | null>(null);
@@ -147,6 +168,28 @@ export const WebsiteManager: React.FC = () => {
             } finally {
                 setIsSaving(false);
             }
+        }
+    };
+
+    const handleSyncSinglePage = async (pageId: string) => {
+        setSyncingPageId(pageId);
+        try {
+            const res = await syncPageToFirestore(pageId);
+            if (res.success) {
+                setSyncedPages(prev => ({ ...prev, [pageId]: true }));
+                setShowSavedToast(true);
+                setTimeout(() => {
+                    setSyncedPages(prev => ({ ...prev, [pageId]: false }));
+                }, 3000);
+                setTimeout(() => setShowSavedToast(false), 4000);
+            } else {
+                alert(`Sync note: ${res.message}`);
+            }
+        } catch (e: any) {
+            console.error('Failed syncing page to Firestore:', e);
+            alert(`Could not sync to Firestore: ${e?.message || 'Unknown error'}`);
+        } finally {
+            setSyncingPageId(null);
         }
     };
 
@@ -638,6 +681,31 @@ export const WebsiteManager: React.FC = () => {
                         <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="hidden md:flex dark:text-white dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white">
                             {showPreview ? <><Eye size={18} className="mr-2" /> Hide Preview</> : <><Eye size={18} className="mr-2" /> Show Preview</>}
                         </Button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleSyncSinglePage(editingPage.id)}
+                            disabled={syncingPageId === editingPage.id}
+                            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 transition-all cursor-pointer shadow-sm active:scale-95"
+                            title="Directly synchronize this page to Google Firebase Cloud Firestore"
+                        >
+                            {syncingPageId === editingPage.id ? (
+                                <>
+                                    <RefreshCcw size={14} className="animate-spin text-blue-600 dark:text-blue-400" />
+                                    <span>Syncing to Cloud...</span>
+                                </>
+                            ) : syncedPages[editingPage.id] ? (
+                                <>
+                                    <Check size={14} className="text-emerald-500 font-bold" />
+                                    <span className="text-emerald-600 dark:text-emerald-400">Synced to Firestore!</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Cloud size={14} className="text-blue-600 dark:text-blue-400" />
+                                    <span>⚡ Sync to Firestore</span>
+                                </>
+                            )}
+                        </button>
 
                         <Button 
                             onClick={handleSavePage} 
@@ -1610,6 +1678,73 @@ export const WebsiteManager: React.FC = () => {
                                             </div>
                                         ) : (
                                             <>
+                                                {/* Hero Badge Settings (If Hero Section) */}
+                                                {(section.type === 'hero' || section.id === 'hero') && (
+                                                    <div className="bg-amber-500/10 dark:bg-amber-500/5 p-4 rounded-xl border border-amber-500/30 space-y-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                                <Award size={15} /> Hero Top Badge (Primary Slide)
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-500 bg-white dark:bg-gray-800 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/40">
+                                                                Floating Tag
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                            <div className="md:col-span-1">
+                                                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-1">Badge Text</label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="e.g. UPCOMING COURSE"
+                                                                    className="w-full p-2 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-bold"
+                                                                    value={section.data.badge || ''}
+                                                                    onChange={(e) => updateSectionData(idx, 'badge', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-1">Badge Color Theme</label>
+                                                                <select
+                                                                    className="w-full p-2 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-bold"
+                                                                    value={section.data.badgeVariant || 'gold'}
+                                                                    onChange={(e) => updateSectionData(idx, 'badgeVariant', e.target.value)}
+                                                                >
+                                                                    <option value="gold">Gold / Amber (High Contrast)</option>
+                                                                    <option value="amber">Warm Orange / Flame</option>
+                                                                    <option value="blue">Cyan / Electric Blue</option>
+                                                                    <option value="emerald">Emerald Green (Certified)</option>
+                                                                    <option value="rose">Rose Red (Urgent / Hot)</option>
+                                                                    <option value="slate">Glass Minimalist / White</option>
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-1">Badge Icon</label>
+                                                                <select
+                                                                    className="w-full p-2 text-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-bold"
+                                                                    value={section.data.badgeIcon || 'Award'}
+                                                                    onChange={(e) => updateSectionData(idx, 'badgeIcon', e.target.value)}
+                                                                >
+                                                                    <option value="Calendar">Calendar (Upcoming Date)</option>
+                                                                    <option value="Sparkles">Sparkles (New / Featured)</option>
+                                                                    <option value="Award">Award (Certified)</option>
+                                                                    <option value="ShieldCheck">Shield Check (Safety Standard)</option>
+                                                                    <option value="Flame">Flame (Hot / High Demand)</option>
+                                                                    <option value="Zap">Zap (Fast-Track)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 pt-1">
+                                                            <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={section.data.badgePulse !== false}
+                                                                    onChange={(e) => updateSectionData(idx, 'badgePulse', e.target.checked)}
+                                                                    className="rounded text-amber-500 focus:ring-amber-400 h-4 w-4"
+                                                                />
+                                                                <span className="font-semibold text-[11px]">Enable Glowing Radar Ping Dot (Live Attention Pulse)</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* Common Fields */}
                                                 {section.data.heading !== undefined && (
                                                     <div>
@@ -1831,6 +1966,82 @@ export const WebsiteManager: React.FC = () => {
                                                                         </div>
                                                                     ) : (
                                                                         <>
+                                                                            {/* Hero Slide Badge Configuration */}
+                                                                            {(section.type === 'hero' || section.id === 'hero') && (
+                                                                                <div className="bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 space-y-2">
+                                                                                    <div className="flex items-center justify-between">
+                                                                                        <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                                                                            <Award size={12} /> Slide Badge / Status Pill
+                                                                                        </span>
+                                                                                        {item.badge && (
+                                                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                                                                                                Active: {item.badge}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                                                        <div>
+                                                                                            <label htmlFor={`website-item-badge-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-0.5">Badge Text</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                id={`website-item-badge-${idx}-${itemIdx}`}
+                                                                                                name="sectionItemBadge"
+                                                                                                autoComplete="off"
+                                                                                                placeholder="e.g. UPCOMING COURSE"
+                                                                                                className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs font-bold"
+                                                                                                value={item.badge || ''}
+                                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'badge', e.target.value)}
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label htmlFor={`website-item-badgeVariant-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-0.5">Style / Color</label>
+                                                                                            <select
+                                                                                                id={`website-item-badgeVariant-${idx}-${itemIdx}`}
+                                                                                                name="sectionItemBadgeVariant"
+                                                                                                className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs font-semibold"
+                                                                                                value={item.badgeVariant || 'gold'}
+                                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'badgeVariant', e.target.value)}
+                                                                                            >
+                                                                                                <option value="gold">Gold / Amber</option>
+                                                                                                <option value="amber">Warm Orange</option>
+                                                                                                <option value="blue">Cyan / Blue</option>
+                                                                                                <option value="emerald">Emerald Green</option>
+                                                                                                <option value="rose">Rose Red</option>
+                                                                                                <option value="slate">Glass Minimalist</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label htmlFor={`website-item-badgeIcon-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-0.5">Badge Icon</label>
+                                                                                            <select
+                                                                                                id={`website-item-badgeIcon-${idx}-${itemIdx}`}
+                                                                                                name="sectionItemBadgeIcon"
+                                                                                                className="w-full p-1.5 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs font-semibold"
+                                                                                                value={item.badgeIcon || 'Calendar'}
+                                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'badgeIcon', e.target.value)}
+                                                                                            >
+                                                                                                <option value="Calendar">Calendar</option>
+                                                                                                <option value="Sparkles">Sparkles</option>
+                                                                                                <option value="Award">Award</option>
+                                                                                                <option value="ShieldCheck">Shield Check</option>
+                                                                                                <option value="Flame">Flame</option>
+                                                                                                <option value="Zap">Zap</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 pt-0.5">
+                                                                                        <label className="flex items-center gap-1.5 text-[11px] text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                checked={item.badgePulse !== false}
+                                                                                                onChange={(e) => updateSectionItemData(idx, itemIdx, 'badgePulse', e.target.checked)}
+                                                                                                className="rounded text-amber-500 focus:ring-amber-400 h-3.5 w-3.5"
+                                                                                            />
+                                                                                            <span className="font-medium">Live Radar Pulse (Glowing beacon)</span>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+
                                                                             <div>
                                                                                 <label htmlFor={`website-item-title-${idx}-${itemIdx}`} className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-0.5">Title / Name</label>
                                                                                 <input
@@ -2096,7 +2307,7 @@ export const WebsiteManager: React.FC = () => {
                 </div>
 
                 {/* Dashboard Area */}
-                <div className="flex-1 p-8 bg-white dark:bg-gray-800 flex flex-col items-center justify-center">
+                <div className={`flex-1 p-6 md:p-8 bg-white dark:bg-gray-800 flex flex-col ${activeTab === 'theme' ? 'items-center justify-center' : 'overflow-y-auto'}`}>
                     {activeTab === 'theme' ? (
                         <div className="w-full max-w-2xl animate-fade-in">
                             <div className="flex justify-between items-center mb-8">
@@ -2140,10 +2351,210 @@ export const WebsiteManager: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center text-gray-400">
-                            <Globe size={64} className="mx-auto mb-4 opacity-20" />
-                            <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300 mb-2">Select a Page to Edit</h3>
-                            <p className="max-w-md mx-auto text-gray-500 dark:text-gray-400">Choose a page from the sidebar to update its content, images, and layout in real-time.</p>
+                        <div className="w-full space-y-6 animate-fade-in">
+                            {/* Summary Metrics Bar */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20">
+                                        <Globe size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Published Pages</p>
+                                        <p className="text-xl font-bold text-gray-900 dark:text-white">{pages.length} Pages</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/20">
+                                        <Layers size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Sections</p>
+                                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                                            {pages.reduce((acc, p) => acc + (p.sections?.length || 0), 0)} Sections
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/20">
+                                        <Cloud size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Cloud Database</p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Firestore Live</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+                                    <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl border border-purple-500/20">
+                                        <Database size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Two-Way Sync</p>
+                                        <p className="text-sm font-bold text-purple-600 dark:text-purple-400">Realtime Active</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Search & Header Filter */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/70 dark:bg-gray-900/40 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div className="relative flex-1 max-w-md">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                    <input 
+                                        type="text"
+                                        placeholder="Search pages by name, section type, or keyword..."
+                                        value={dashboardSearchQuery}
+                                        onChange={(e) => setDashboardSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500"
+                                    />
+                                    {dashboardSearchQuery && (
+                                        <button 
+                                            onClick={() => setDashboardSearchQuery('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                        Showing {pages.filter(p => {
+                                            const query = dashboardSearchQuery.toLowerCase().trim();
+                                            if (!query) return true;
+                                            const nameMatch = (p.id === 'usi' || p.name === 'USI Info' || p.id === 'winda' ? 'WINDA Registration' : p.name).toLowerCase().includes(query);
+                                            const idMatch = p.id.toLowerCase().includes(query);
+                                            const sectionMatch = p.sections.some(s => s.label?.toLowerCase().includes(query) || s.type?.toLowerCase().includes(query));
+                                            return nameMatch || idMatch || sectionMatch;
+                                        }).length} of {pages.length} Pages
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Page Cards Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                {pages
+                                    .filter(p => {
+                                        const query = dashboardSearchQuery.toLowerCase().trim();
+                                        if (!query) return true;
+                                        const nameMatch = (p.id === 'usi' || p.name === 'USI Info' || p.id === 'winda' ? 'WINDA Registration' : p.name).toLowerCase().includes(query);
+                                        const idMatch = p.id.toLowerCase().includes(query);
+                                        const sectionMatch = p.sections.some(s => s.label?.toLowerCase().includes(query) || s.type?.toLowerCase().includes(query));
+                                        return nameMatch || idMatch || sectionMatch;
+                                    })
+                                    .map(page => {
+                                        const pageTitle = page.id === 'usi' || page.name === 'USI Info' || page.id === 'winda' ? 'WINDA Registration' : page.name;
+                                        const pageRoute = PAGE_ROUTES[page.id] || `/${page.id}`;
+                                        const isSyncingThis = syncingPageId === page.id;
+                                        const isSyncedThis = syncedPages[page.id];
+
+                                        return (
+                                            <div 
+                                                key={page.id}
+                                                className="group bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 hover:border-amber-400/80 dark:hover:border-amber-400/60 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                                            >
+                                                <div className="space-y-3.5">
+                                                    {/* Card Header */}
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg border border-amber-500/20 group-hover:scale-105 transition-transform">
+                                                                <FileText size={18} />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-base text-gray-900 dark:text-white leading-tight">
+                                                                    {pageTitle}
+                                                                </h4>
+                                                                <span className="text-[11px] font-mono text-gray-400 dark:text-gray-400">
+                                                                    {pageRoute}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <span className="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 font-bold gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 shrink-0">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                            Firestore Live
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Section Chips */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                                                            <span className="font-semibold">{page.sections.length} Configured Sections:</span>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {page.sections.slice(0, 4).map((sec, sIdx) => (
+                                                                <span 
+                                                                    key={sIdx}
+                                                                    className="text-[10px] font-medium bg-gray-100 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-md border border-gray-200 dark:border-gray-600 truncate max-w-[140px]"
+                                                                    title={sec.label}
+                                                                >
+                                                                    {sec.label || sec.type}
+                                                                </span>
+                                                            ))}
+                                                            {page.sections.length > 4 && (
+                                                                <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-700/80 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-600">
+                                                                    +{page.sections.length - 4} more
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Card Footer Actions */}
+                                                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSyncSinglePage(page.id)}
+                                                        disabled={isSyncingThis}
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer"
+                                                        title="Sync this page directly to Firestore"
+                                                    >
+                                                        {isSyncingThis ? (
+                                                            <>
+                                                                <RefreshCcw size={13} className="animate-spin text-blue-500" />
+                                                                <span className="text-[11px]">Syncing...</span>
+                                                            </>
+                                                        ) : isSyncedThis ? (
+                                                            <>
+                                                                <Check size={13} className="text-emerald-500 font-bold" />
+                                                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400">Synced!</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Cloud size={13} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                                                <span className="text-[11px]">⚡ Sync to Cloud</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+
+                                                    <div className="flex items-center gap-1.5">
+                                                        <a
+                                                            href={pageRoute}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                            title={`Open live ${pageTitle} page in new tab`}
+                                                        >
+                                                            <ExternalLink size={14} />
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSelectPage(page.id)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black bg-[#FDC70E] hover:bg-[#E5B200] text-[#041024] shadow-sm hover:shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                            <span>Edit Details</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
                         </div>
                     )}
                 </div>

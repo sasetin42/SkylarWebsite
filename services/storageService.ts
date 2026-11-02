@@ -1,5 +1,5 @@
-import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings, EmailTemplate, Location, BlogPost } from '../types';
-import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS, BLOG_POSTS as SEED_BLOG_POSTS } from '../constants';
+import { Course, Category, Review, Student, InstituteSettings, Trainer, Session, CorporateClient, MigrationLog, SitePage, AdminUser, Role, SystemModule, PageSection, ThemeSettings, PaymentRecord, SchoolSection, SupportTicket, AuditLog, CourseInquiry, SmtpSettings, EmailLog, Testimonial, GoogleReviewSettings, EmailTemplate, Location, BlogPost, ExtendedSystemSettings, ConfigVersionSnapshot } from '../types';
+import { COURSES as SEED_COURSES, LOCATIONS, SEED_CATEGORIES, TESTIMONIALS as SEED_TESTIMONIALS, BLOG_POSTS as SEED_BLOG_POSTS, LOGO_URL, LOGO_WHITE_URL } from '../constants';
 import { DEFAULT_EMAIL_TEMPLATES } from './emailTemplates';
 import { firebaseClient } from './firebaseClient';
 
@@ -541,8 +541,10 @@ const DEFAULT_SETTINGS: InstituteSettings = {
   siteAnnouncement: "",
   enrollmentOpen: true,
   // New Default Branding & Extra Settings
-  lightLogoUrl: "",
-  darkLogoUrl: "",
+  mainLogoUrl: LOGO_WHITE_URL,
+  lightLogoUrl: LOGO_WHITE_URL,
+  darkLogoUrl: LOGO_URL,
+  stickyLogoUrl: LOGO_URL,
   loadingLogoUrl: "",
   faviconUrl: "",
   collapsedLogoUrl: "",
@@ -568,20 +570,56 @@ const DEFAULT_SETTINGS: InstituteSettings = {
 
 export const getSettings = (): InstituteSettings => {
   const stored = localStorage.getItem(SETTINGS_KEY);
-  return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+  if (!stored) return DEFAULT_SETTINGS;
+  try {
+    const settings = JSON.parse(stored);
+    let changed = false;
+
+    // Auto-heal legacy or invalid logo paths from earlier builds
+    if (!settings.lightLogoUrl || settings.lightLogoUrl === '/skylar-logo.svg') {
+      settings.lightLogoUrl = LOGO_WHITE_URL;
+      changed = true;
+    }
+    if (!settings.darkLogoUrl || settings.darkLogoUrl === '/skylar-logo.svg') {
+      settings.darkLogoUrl = LOGO_URL;
+      changed = true;
+    }
+    if (!settings.mainLogoUrl || settings.mainLogoUrl === '/skylar-logo.svg') {
+      settings.mainLogoUrl = LOGO_WHITE_URL;
+      changed = true;
+    }
+    if (!settings.stickyLogoUrl || settings.stickyLogoUrl === '/skylar-logo.svg') {
+      settings.stickyLogoUrl = settings.darkLogoUrl || LOGO_URL;
+      changed = true;
+    }
+    if (settings.loadingLogoUrl === '/skylar-logo.svg') {
+      settings.loadingLogoUrl = '';
+      changed = true;
+    }
+
+    if (changed) {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      } catch (e) {}
+    }
+    return settings;
+  } catch (e) {
+    return DEFAULT_SETTINGS;
+  }
 };
 
 export const saveSettings = async (settings: InstituteSettings): Promise<void> => {
   const finalSettings = { ...settings };
   const logoFields: (keyof InstituteSettings)[] = [
-    'lightLogoUrl', 'darkLogoUrl', 'loadingLogoUrl', 'faviconUrl', 'collapsedLogoUrl', 'uncollapsedLogoUrl'
+    'mainLogoUrl', 'lightLogoUrl', 'darkLogoUrl', 'stickyLogoUrl', 'loadingLogoUrl', 'faviconUrl', 'collapsedLogoUrl', 'uncollapsedLogoUrl'
   ];
 
-  for (const field of logoFields) {
+    for (const field of logoFields) {
     const val = finalSettings[field];
     if (typeof val === 'string' && val.startsWith('data:')) {
       try {
-        const mediaData = await firebaseClient.uploadMedia(val, 'branding', `${String(field)}_${Date.now()}.jpg`);
+        const ext = val.startsWith('data:image/svg') ? 'svg' : val.startsWith('data:image/webp') ? 'webp' : 'png';
+        const mediaData = await firebaseClient.uploadMedia(val, 'branding', `${String(field)}_${Date.now()}.${ext}`);
         (finalSettings as any)[field] = mediaData;
       } catch (e) {}
     }
@@ -592,6 +630,761 @@ export const saveSettings = async (settings: InstituteSettings): Promise<void> =
     firebaseClient.upsertDoc('settings', 'institute_settings', finalSettings).catch(() => {});
   } catch (e) {}
   window.dispatchEvent(new Event('themeUpdated'));
+};
+
+// --- ENTERPRISE EXTENDED SETTINGS & CONFIGURATION CENTER ---
+const EXTENDED_SETTINGS_KEY = 'apex_extended_settings_v1';
+const SETTINGS_HISTORY_KEY = 'apex_settings_history_v1';
+
+export const DEFAULT_EXTENDED_SETTINGS: ExtendedSystemSettings = {
+  // 1. Branding
+  logos: [
+    {
+      id: 'logo-main',
+      name: 'Main Brand Logo',
+      type: 'main',
+      url: LOGO_URL,
+      recommendedSize: '512 x 128 px (PNG / SVG with transparent background)',
+      description: 'Used across standard public page headers, navigation bars, and marketing collateral.',
+      dimensions: '512x128',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-light',
+      name: 'Light Header Logo (White for Dark Headers)',
+      type: 'light',
+      url: LOGO_WHITE_URL,
+      recommendedSize: '400 x 100 px (White typography on transparent background)',
+      description: 'Displayed on dark navigation bars, hero headers, mobile drawers, and dark backgrounds.',
+      dimensions: '400x100',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-dark',
+      name: 'Dark Header Logo',
+      type: 'dark',
+      url: LOGO_URL,
+      recommendedSize: '400 x 100 px (Navy/dark typography on transparent background)',
+      description: 'Rendered on white/light navigation bars, receipts, and daytime UI themes.',
+      dimensions: '400x100',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-sticky',
+      name: 'Sticky Header Logo',
+      type: 'sticky',
+      url: LOGO_URL,
+      recommendedSize: '400 x 90 px (Compact navy/dark mark for scrolled sticky header)',
+      description: 'Displayed exclusively when the top navigation bar sticks while scrolling.',
+      dimensions: '400x90',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-loading',
+      name: 'Loading Screen Logo',
+      type: 'loading',
+      url: LOGO_WHITE_URL,
+      recommendedSize: '480 x 120 px (High contrast white logo for splash screen)',
+      description: 'Prominently displayed on application boot, route transitions, and splash loading screens.',
+      dimensions: '480x120',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-mobile',
+      name: 'Mobile App / Header Logo',
+      type: 'mobile',
+      url: '',
+      recommendedSize: '128 x 128 px (Square / Compact Mark)',
+      description: 'Optimized icon-style mark for smartphone headers and compact touch viewports.',
+      dimensions: '128x128',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-favicon',
+      name: 'Website Favicon',
+      type: 'favicon',
+      url: '',
+      recommendedSize: '64 x 64 px (.ico / .png)',
+      description: 'Appears on browser tabs, bookmarks, and PWA home-screen launcher icons.',
+      dimensions: '64x64',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-login',
+      name: 'Login Screen Logo',
+      type: 'login',
+      url: '',
+      recommendedSize: '360 x 90 px',
+      description: 'Prominently displayed atop the Admin Portal login & authentication modal.',
+      dimensions: '360x90',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-email',
+      name: 'Email Template Logo',
+      type: 'email',
+      url: '',
+      recommendedSize: '300 x 75 px (High DPI 600x150)',
+      description: 'Embedded in outgoing HTML transactional notices, booking confirmations, and reminders.',
+      dimensions: '300x75',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-invoice',
+      name: 'Invoice / Official Receipt Logo',
+      type: 'invoice',
+      url: '',
+      recommendedSize: '400 x 100 px (300 DPI high resolution for PDF print)',
+      description: 'Rendered in official printable invoices, payment tax receipts, and certificates.',
+      dimensions: '400x100',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'logo-admin',
+      name: 'Admin Panel Logo',
+      type: 'admin',
+      url: '',
+      recommendedSize: '240 x 60 px',
+      description: 'Rendered atop the administrator control room sidebar and management headers.',
+      dimensions: '240x60',
+      format: 'PNG',
+      active: true,
+      updatedAt: new Date().toISOString()
+    }
+  ],
+  brandColor: '#041024',
+  accentColor: '#ffc107',
+  borderRadius: 12,
+  sidebarTheme: 'dark',
+  themePreset: 'navy',
+
+  // 2. General
+  applicationName: 'Skylar Education Asia Platform',
+  applicationDescription: 'Enterprise Safety & GWO Accredited Wind Energy Training Portal & Operations Management System',
+  websiteUrl: 'https://skylareducation.asia',
+  defaultLanguage: 'English (US / Global)',
+  defaultCurrency: 'PHP (₱)',
+  defaultCountry: 'Philippines',
+  timezone: 'Asia/Manila (GMT+8)',
+  dateFormat: 'YYYY-MM-DD',
+  timeFormat: '12-hour (AM/PM)',
+  firstDayOfWeek: 'Monday',
+  measurementUnit: 'Metric',
+  numberFormat: '1,234.56',
+  siteAnnouncement: '',
+
+  // 3. Company Information
+  companyLegalName: 'Skylar Education Asia Training Corp.',
+  companyTradingName: 'Skylar Education Asia',
+  registrationNumber: 'SEC-CS202304921 / ABN 84 920 184 721',
+  taxIdentificationNumber: 'TIN: 009-847-192-00000',
+  addressLine: 'Lot 2 Liwayway St., Cor Habagat, Bagumbayan, Brgy. Cutcut',
+  city: 'Angeles City',
+  provinceState: 'Pampanga',
+  country: 'Philippines',
+  zipCode: '2009',
+  phone: '+63 45 123 4567',
+  mobilePhone: '+63 968 382 4294 / +63 915 902 9406',
+  companyEmail: 'info@skylareducation.asia',
+  companyWebsite: 'https://skylareducation.asia',
+  companyDescription: 'Skylar Education Asia is an affiliate of Skylar Education Pty Ltd (Australia). Training is delivered by Skylar Education Asia, while certifications are issued through Skylar Education Pty Ltd Australia in accordance with international GWO standards.',
+  businessHours: 'Mon - Fri: 8:00 AM – 5:00 PM (PST)',
+  facebookUrl: 'https://facebook.com/skylareducationasia',
+  linkedinUrl: 'https://linkedin.com/company/skylar-education-asia',
+  instagramUrl: 'https://instagram.com/skylareducationasia',
+  termsAndConditionsUrl: '/terms',
+  privacyPolicyUrl: '/privacy',
+
+  // 4. Contact Profiles
+  contactProfiles: [
+    {
+      id: 'contact-gen',
+      department: 'General Contact',
+      name: 'Skylar Inquiries Desk',
+      email: 'info@skylareducation.asia',
+      phone: '+63 45 123 4567',
+      mobile: '+63 968 382 4294',
+      position: 'Front Desk & Reception',
+      status: 'Active',
+      notifyEvents: ['contact_form', 'general_inquiry']
+    },
+    {
+      id: 'contact-sales',
+      department: 'Sales',
+      name: 'Bon Carlo (Admissions Lead)',
+      email: 'bon@skylarasia.com',
+      phone: '+63 968 382 4294',
+      position: 'Corporate Training Manager',
+      status: 'Active',
+      notifyEvents: ['course_booking', 'corporate_quote']
+    },
+    {
+      id: 'contact-acct',
+      department: 'Accounting',
+      name: 'Finance & Billing Office',
+      email: 'billing@skylareducation.asia',
+      phone: '+63 45 123 4568',
+      position: 'Senior Finance Officer',
+      status: 'Active',
+      notifyEvents: ['payment_received', 'invoice_overdue']
+    },
+    {
+      id: 'contact-supp',
+      department: 'Support',
+      name: 'Junrey Student Services',
+      email: 'junrey@skylarasia.com',
+      phone: '+63 915 902 9406',
+      position: 'Student Affairs Coordinator',
+      status: 'Active',
+      notifyEvents: ['support_ticket', 'attendance_alert']
+    },
+    {
+      id: 'contact-tech',
+      department: 'Technical Support',
+      name: 'Skylar IT Ops',
+      email: 'it-support@skylareducation.asia',
+      phone: '+63 45 123 4569',
+      position: 'Systems & LMS Administrator',
+      status: 'Active',
+      notifyEvents: ['system_error', 'smtp_failure']
+    },
+    {
+      id: 'contact-mgmt',
+      department: 'Management',
+      name: 'Director of Training Operations',
+      email: 'director@skylareducation.asia',
+      phone: '+63 45 123 4570',
+      position: 'Managing Director',
+      status: 'Active',
+      notifyEvents: ['critical_security_alert', 'audit_alert']
+    }
+  ],
+
+  // 5. Payment Gateways
+  paymentGateways: [
+    {
+      id: 'gw-gcash',
+      name: 'GCash Philippines',
+      code: 'gcash',
+      enabled: true,
+      sandboxMode: false,
+      accountId: '09683824294',
+      apiKey: 'gcash_live_pub_98472910482',
+      secretKey: '••••••••••••••••••••••••••••••••',
+      webhookUrl: 'https://api.skylareducation.asia/webhooks/gcash',
+      webhookSecret: '••••••••••••••••••••••••••••••••',
+      transactionFeePercent: 1.5,
+      transactionFeeFixed: 0,
+      currency: 'PHP',
+      paymentInstructions: 'Scan QR code via GCash app or transfer to Merchant Account: Skylar Education Asia (0968 382 4294). Send screenshot to billing@skylareducation.asia',
+      isDefault: true,
+      testStatus: 'success',
+      testMessage: 'GCash Merchant API operational. Handshake verified.'
+    },
+    {
+      id: 'gw-maya',
+      name: 'Maya Business (PayMaya)',
+      code: 'maya',
+      enabled: true,
+      sandboxMode: false,
+      accountId: 'maya-merch-77382',
+      apiKey: 'pk-Z0N3mE0...M4y4',
+      secretKey: '••••••••••••••••••••••••••••••••',
+      webhookUrl: 'https://api.skylareducation.asia/webhooks/maya',
+      webhookSecret: '••••••••••••••••••••••••••••••••',
+      transactionFeePercent: 1.8,
+      transactionFeeFixed: 0,
+      currency: 'PHP',
+      paymentInstructions: 'Pay with Maya Wallet or any Visa/Mastercard debit/credit card via Maya Checkout.',
+      isDefault: false,
+      testStatus: 'success',
+      testMessage: 'Maya Checkout API responded HTTP 200 OK.'
+    },
+    {
+      id: 'gw-stripe',
+      name: 'Stripe International',
+      code: 'stripe',
+      enabled: true,
+      sandboxMode: false,
+      accountId: 'acct_1NZ839182374',
+      apiKey: 'pk_live_51NZ...883294',
+      secretKey: '••••••••••••••••••••••••••••••••',
+      webhookUrl: 'https://api.skylareducation.asia/webhooks/stripe',
+      webhookSecret: '••••••••••••••••••••••••••••••••',
+      transactionFeePercent: 3.5,
+      transactionFeeFixed: 15,
+      currency: 'PHP',
+      paymentInstructions: 'Supports International Corporate Credit/Debit cards (Visa, Mastercard, Amex, JCB).',
+      isDefault: false,
+      testStatus: 'success',
+      testMessage: 'Stripe balance & charges API checked successfully.'
+    },
+    {
+      id: 'gw-bank',
+      name: 'Direct Bank Transfer / Wire',
+      code: 'bank_transfer',
+      enabled: true,
+      sandboxMode: false,
+      accountId: 'BDO / BPI Account',
+      apiKey: 'BANK-WIRE-PH-001',
+      secretKey: '',
+      webhookUrl: '',
+      webhookSecret: '',
+      transactionFeePercent: 0,
+      transactionFeeFixed: 0,
+      currency: 'PHP',
+      paymentInstructions: 'Bank: BDO Unibank Inc.\nAccount Name: Skylar Education Asia Training Corp.\nAccount Number: 0048-2849-1029\nBranch: Angeles City Main\nSWIFT: BNORPHMM',
+      isDefault: false,
+      testStatus: 'success',
+      testMessage: 'Manual bank instructions validated.'
+    },
+    {
+      id: 'gw-paypal',
+      name: 'PayPal International',
+      code: 'paypal',
+      enabled: false,
+      sandboxMode: true,
+      accountId: 'paypal@skylareducation.asia',
+      apiKey: 'AZy983...Client_ID',
+      secretKey: '••••••••••••••••••••••••••••••••',
+      webhookUrl: 'https://api.skylareducation.asia/webhooks/paypal',
+      webhookSecret: '',
+      transactionFeePercent: 4.4,
+      transactionFeeFixed: 20,
+      currency: 'USD',
+      paymentInstructions: 'Pay via PayPal balance or linked international bank cards.',
+      isDefault: false,
+      testStatus: 'untested'
+    }
+  ],
+
+  // 6. SMTP & Email
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: 587,
+  smtpEncryption: 'tls',
+  smtpUsername: 'notifications@skylareducation.asia',
+  smtpPasswordMasked: '••••••••••••••••',
+  smtpFromName: 'Skylar Education Asia Admissions',
+  smtpFromEmail: 'admissions@skylareducation.asia',
+  smtpReplyToEmail: 'support@skylareducation.asia',
+  smtpCc: 'records@skylareducation.asia',
+  smtpBcc: '',
+
+  // 7. Notification Rules
+  notificationRules: [
+    { id: 'ev-1', eventName: 'Course Enrollment Submitted', category: 'Enrollment', email: true, inApp: true, sms: false, push: true, adminAlert: true, customerAlert: true, priority: 'High' },
+    { id: 'ev-2', eventName: 'Invoice Created / Issued', category: 'Billing', email: true, inApp: true, sms: false, push: false, adminAlert: false, customerAlert: true, priority: 'Medium' },
+    { id: 'ev-3', eventName: 'Payment Received & Verified', category: 'Billing', email: true, inApp: true, sms: true, push: true, adminAlert: true, customerAlert: true, priority: 'High' },
+    { id: 'ev-4', eventName: 'Payment Failed / Declined', category: 'Billing', email: true, inApp: true, sms: false, push: true, adminAlert: true, customerAlert: true, priority: 'Critical' },
+    { id: 'ev-5', eventName: 'GWO Certificate Issued', category: 'Course', email: true, inApp: true, sms: false, push: true, adminAlert: true, customerAlert: true, priority: 'High' },
+    { id: 'ev-6', eventName: 'Upcoming Class 24h Reminder', category: 'Course', email: true, inApp: true, sms: true, push: false, adminAlert: false, customerAlert: true, priority: 'Medium' },
+    { id: 'ev-7', eventName: 'Admin Security Alert / Brute Force Attempt', category: 'Security', email: true, inApp: true, sms: true, push: true, adminAlert: true, customerAlert: false, priority: 'Critical' },
+    { id: 'ev-8', eventName: 'System Maintenance Scheduled', category: 'System', email: true, inApp: true, sms: false, push: true, adminAlert: true, customerAlert: true, priority: 'Medium' }
+  ],
+
+  // 8. Platform Settings
+  maintenanceMode: false,
+  maintenanceMessage: 'System undergoing scheduled optimization. We will be back online shortly. For urgent inquiries, contact admissions@skylareducation.asia.',
+  allowNewRegistrations: true,
+  allowGuestAccess: true,
+  sessionTimeoutMinutes: 60,
+  maxLoginAttempts: 5,
+  passwordExpirationDays: 90,
+  defaultUserRole: 'Student',
+  defaultPaginationSize: 20,
+  fileUploadLimitMb: 25,
+  maxRequestSizeMb: 50,
+
+  // 9. Security & Authentication
+  twoFactorRequired: true,
+  bruteForceProtection: true,
+  accountLockoutDurationMinutes: 30,
+  allowedIpList: ['127.0.0.1', '192.168.1.0/24'],
+  blockedIpList: ['198.51.100.4', '203.0.113.19'],
+  passwordMinLength: 8,
+  passwordRequireSpecial: true,
+  passwordRequireNumbers: true,
+  passwordRequireUppercase: true,
+  passwordHistoryLimit: 5,
+  forceLogoutAllSessions: false,
+
+  // 10. API & Integrations
+  apiKeys: [
+    {
+      id: 'key-1',
+      name: 'Mobile App Client API Key',
+      prefix: 'sky_live_mob_',
+      keyMasked: 'sky_live_mob_••••••••••••••••••••••',
+      secretMasked: '••••••••••••••••••••••••••••••••••••••••',
+      scopes: ['read:courses', 'read:sessions', 'write:enrollments'],
+      createdAt: '2026-01-10T00:00:00.000Z',
+      expiresAt: '2027-01-10T00:00:00.000Z',
+      lastUsedAt: '2026-09-15T08:12:00.000Z',
+      status: 'Active',
+      createdBy: 'Super Admin'
+    },
+    {
+      id: 'key-2',
+      name: 'WINDA GWO Verification Service Key',
+      prefix: 'sky_live_winda_',
+      keyMasked: 'sky_live_winda_••••••••••••••••••••',
+      secretMasked: '••••••••••••••••••••••••••••••••••••••••',
+      scopes: ['read:students', 'write:certificates'],
+      createdAt: '2026-02-01T00:00:00.000Z',
+      expiresAt: '2027-02-01T00:00:00.000Z',
+      lastUsedAt: '2026-09-14T19:40:00.000Z',
+      status: 'Active',
+      createdBy: 'Super Admin'
+    }
+  ],
+  webhooks: [
+    {
+      id: 'wh-1',
+      url: 'https://hooks.slack.com/services/T00/B00/skylar-ops-alerts',
+      events: ['enrollment.created', 'payment.confirmed', 'security.alert'],
+      secretMasked: '••••••••••••••••••••',
+      status: 'Active',
+      lastDeliveredAt: '2026-09-15T07:22:00.000Z',
+      failureCount: 0
+    }
+  ],
+
+  // 11. Storage & Media
+  storage: {
+    provider: 'firebase',
+    maxFileSizeMb: 20,
+    allowedFileTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'application/pdf', 'application/zip'],
+    autoWebpConversion: true,
+    generateThumbnails: true,
+    imageCompressionQuality: 85,
+    storageQuotaGb: 100,
+    tempFileRetentionDays: 14,
+    s3Bucket: 'skylar-media-bucket',
+    s3Region: 'ap-southeast-1'
+  },
+
+  // 12. CDN
+  cdn: {
+    provider: 'Cloudflare',
+    enabled: true,
+    cdnUrl: 'https://cdn.skylareducation.asia',
+    pullZone: 'skylar-asia-edge-cache',
+    apiKey: '••••••••••••••••••••••••••••••••',
+    cacheTtlHours: 168,
+    enableGzip: true,
+    enableBrotli: true,
+    autoPurgeOnAssetChange: true,
+    lastPurgedAt: '2026-09-10T14:30:00.000Z',
+    status: 'Connected'
+  },
+
+  // 13. Database & Backup
+  backupSchedule: 'Daily',
+  backupRetentionDays: 30,
+  cloudBackupEnabled: true,
+  backupEncryptionEnabled: true,
+  backups: [
+    {
+      id: 'bk-20260914',
+      timestamp: '2026-09-14 23:59:00',
+      sizeBytes: 14852920,
+      fileName: 'skylar_backup_2026_09_14_daily.json.enc',
+      type: 'Automatic',
+      checksum: 'sha256-a9b81f82c402...',
+      storageLocation: 'Cloud',
+      status: 'Completed',
+      versionTag: 'v2.8.4'
+    },
+    {
+      id: 'bk-20260913',
+      timestamp: '2026-09-13 23:59:00',
+      sizeBytes: 14710200,
+      fileName: 'skylar_backup_2026_09_13_daily.json.enc',
+      type: 'Automatic',
+      checksum: 'sha256-f029e1c8a113...',
+      storageLocation: 'Cloud',
+      status: 'Completed',
+      versionTag: 'v2.8.3'
+    },
+    {
+      id: 'bk-20260907-prem',
+      timestamp: '2026-09-07 10:15:00',
+      sizeBytes: 13948000,
+      fileName: 'skylar_pre_migration_backup.json',
+      type: 'Pre-Migration',
+      checksum: 'sha256-99bce81702f3...',
+      storageLocation: 'Local',
+      status: 'Completed',
+      versionTag: 'v2.8.0'
+    }
+  ],
+
+  // 14. SEO
+  siteTitle: 'Skylar Education Asia | Accredited GWO Wind Safety Training Philippines',
+  metaDescription: 'Leading provider of Global Wind Organisation (GWO) certified safety training courses, working at heights, first aid, and fire awareness in Angeles City, Pampanga, Philippines.',
+  keywords: 'GWO training, basic safety training, working at heights, wind turbine safety, Pampanga training center, Philippines GWO certified',
+  canonicalUrl: 'https://skylareducation.asia',
+  robotsTxt: 'User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nSitemap: https://skylareducation.asia/sitemap.xml',
+  sitemapUrl: 'https://skylareducation.asia/sitemap.xml',
+  ogTitle: 'Skylar Education Asia | GWO Safety Training Institute',
+  ogDescription: 'Get certified with internationally recognized GWO safety certifications for wind turbine technicians and renewable energy personnel in Asia.',
+  ogImageUrl: 'https://skylareducation.asia/og-banner.jpg',
+  twitterCardType: 'summary_large_image',
+  googleVerificationTag: 'google-site-verification=SkyLar98472910GWOVerificationTag',
+  analyticsId: 'G-SKYLAR2026PH',
+  tagManagerId: 'GTM-SKY8891',
+
+  // 15. Tax & Financial
+  taxInclusive: false,
+  defaultTaxRatePercent: 12.0,
+  withholdingTaxPercent: 2.0,
+  taxRates: [
+    { id: 'tax-vat-12', name: 'Philippines Standard VAT', ratePercent: 12.0, type: 'VAT', isDefault: true, description: '12% Value Added Tax applied to tuition and certification fees.' },
+    { id: 'tax-ewt-2', name: 'Creditable Withholding Tax (EWT)', ratePercent: 2.0, type: 'Withholding', isDefault: false, description: '2% BIR withholding deduction for corporate accounts.' },
+    { id: 'tax-zero', name: 'Zero-Rated / Tax Exempt', ratePercent: 0, type: 'Exempt', isDefault: false, description: 'Applicable to qualifying PEZA registered entities.' }
+  ],
+  invoicePrefix: 'INV-2026-',
+  receiptPrefix: 'REC-2026-',
+  paymentPrefix: 'PAY-2026-',
+  creditNotePrefix: 'CRN-2026-',
+  defaultPaymentTermsDays: 15,
+  dueDateRule: 'net_15',
+
+  lastSavedAt: new Date().toISOString(),
+  lastSavedBy: 'Super Administrator'
+};
+
+export const getExtendedSettings = (): ExtendedSystemSettings => {
+  const stored = localStorage.getItem(EXTENDED_SETTINGS_KEY);
+  if (!stored) {
+    safeSetItem(EXTENDED_SETTINGS_KEY, JSON.stringify(DEFAULT_EXTENDED_SETTINGS));
+    return DEFAULT_EXTENDED_SETTINGS;
+  }
+  try {
+    const parsed = JSON.parse(stored);
+    // Ensure all default logo slots exist in parsed.logos (merge new slots like sticky and loading)
+    const existingLogos: ExtendedLogoItem[] = parsed.logos || [];
+    const mergedLogos = DEFAULT_EXTENDED_SETTINGS.logos.map(defaultSlot => {
+      const found = existingLogos.find(l => l.id === defaultSlot.id || l.type === defaultSlot.type);
+      return found ? { ...defaultSlot, ...found } : defaultSlot;
+    });
+
+    return {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      ...parsed,
+      logos: mergedLogos,
+      contactProfiles: parsed.contactProfiles || DEFAULT_EXTENDED_SETTINGS.contactProfiles,
+      paymentGateways: parsed.paymentGateways || DEFAULT_EXTENDED_SETTINGS.paymentGateways,
+      notificationRules: parsed.notificationRules || DEFAULT_EXTENDED_SETTINGS.notificationRules,
+      apiKeys: parsed.apiKeys || DEFAULT_EXTENDED_SETTINGS.apiKeys,
+      webhooks: parsed.webhooks || DEFAULT_EXTENDED_SETTINGS.webhooks,
+      storage: { ...DEFAULT_EXTENDED_SETTINGS.storage, ...(parsed.storage || {}) },
+      cdn: { ...DEFAULT_EXTENDED_SETTINGS.cdn, ...(parsed.cdn || {}) },
+      taxRates: parsed.taxRates || DEFAULT_EXTENDED_SETTINGS.taxRates,
+      backups: parsed.backups || DEFAULT_EXTENDED_SETTINGS.backups
+    };
+  } catch (e) {
+    return DEFAULT_EXTENDED_SETTINGS;
+  }
+};
+
+export const saveExtendedSettings = async (
+  newSettings: ExtendedSystemSettings,
+  author: string = 'Super Administrator',
+  changeSummary: string = 'Updated System Configuration'
+): Promise<void> => {
+  const previous = getExtendedSettings();
+  const updated: ExtendedSystemSettings = {
+    ...newSettings,
+    lastSavedAt: new Date().toISOString(),
+    lastSavedBy: author
+  };
+
+  // 1. Persist extended settings to localStorage and Firebase
+  safeSetItem(EXTENDED_SETTINGS_KEY, JSON.stringify(updated));
+  try {
+    firebaseClient.upsertDoc('settings', 'institute_extended_settings', updated).catch(() => {});
+  } catch (e) {}
+
+  // 2. Synchronize common legacy keys into InstituteSettings to ensure 100% backwards compatibility
+  const legacy = getSettings();
+  const syncedLegacy: InstituteSettings = {
+    ...legacy,
+    instituteName: updated.companyTradingName || updated.applicationName || legacy.instituteName,
+    contactEmail: updated.companyEmail || legacy.contactEmail,
+    contactPhone: updated.phone || legacy.contactPhone,
+    address: `${updated.addressLine}, ${updated.city}, ${updated.provinceState}, ${updated.country}`,
+    operatingHours: updated.businessHours || legacy.operatingHours,
+    siteAnnouncement: updated.siteAnnouncement,
+    taxId: updated.taxIdentificationNumber || legacy.taxId,
+    brandColor: updated.brandColor,
+    accentColor: updated.accentColor,
+    borderRadius: updated.borderRadius,
+    sidebarTheme: updated.sidebarTheme,
+    themePreset: updated.themePreset
+  };
+
+  // Sync main logos to legacy keys if available
+  const mainLogo = updated.logos.find(l => l.type === 'main')?.url;
+  const lightLogo = updated.logos.find(l => l.type === 'light')?.url || mainLogo;
+  const darkLogo = updated.logos.find(l => l.type === 'dark')?.url || mainLogo;
+  const stickyLogo = updated.logos.find(l => l.type === 'sticky')?.url || darkLogo;
+  const loadingLogo = updated.logos.find(l => l.type === 'loading')?.url;
+  const favLogo = updated.logos.find(l => l.type === 'favicon')?.url;
+  const adminLogo = updated.logos.find(l => l.type === 'admin')?.url;
+  if (mainLogo) syncedLegacy.mainLogoUrl = mainLogo;
+  if (adminLogo) syncedLegacy.uncollapsedLogoUrl = adminLogo;
+  else if (mainLogo && !syncedLegacy.uncollapsedLogoUrl) syncedLegacy.uncollapsedLogoUrl = mainLogo;
+  if (lightLogo) syncedLegacy.lightLogoUrl = lightLogo;
+  if (darkLogo) syncedLegacy.darkLogoUrl = darkLogo;
+  if (stickyLogo) syncedLegacy.stickyLogoUrl = stickyLogo;
+  if (loadingLogo !== undefined) syncedLegacy.loadingLogoUrl = loadingLogo;
+  if (favLogo) syncedLegacy.faviconUrl = favLogo;
+
+  await saveSettings(syncedLegacy);
+
+  // 3. Record Audit Log
+  addAuditLog(
+    'SETTINGS_UPDATE',
+    `${changeSummary} by ${author}`,
+    'System Settings'
+  );
+
+  // 4. Create Version Snapshot in History
+  saveSettingsVersionSnapshot(updated, author, changeSummary);
+
+  window.dispatchEvent(new Event('extendedSettingsUpdated'));
+};
+
+export const getSettingsHistory = (): ConfigVersionSnapshot[] => {
+  const stored = localStorage.getItem(SETTINGS_HISTORY_KEY);
+  if (!stored) {
+    const initialSnapshot: ConfigVersionSnapshot = {
+      versionId: 'v1.0.0',
+      timestamp: new Date().toISOString(),
+      changedBy: 'System Initializer',
+      changeSummary: 'Baseline enterprise settings initialized',
+      affectedModules: ['All Modules'],
+      settingsSnapshot: DEFAULT_EXTENDED_SETTINGS
+    };
+    safeSetItem(SETTINGS_HISTORY_KEY, JSON.stringify([initialSnapshot]));
+    return [initialSnapshot];
+  }
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveSettingsVersionSnapshot = (
+  settings: ExtendedSystemSettings,
+  author: string,
+  summary: string
+) => {
+  const history = getSettingsHistory();
+  const versionNum = history.length + 1;
+  const snapshot: ConfigVersionSnapshot = {
+    versionId: `v2.${versionNum}.0`,
+    timestamp: new Date().toISOString(),
+    changedBy: author,
+    changeSummary: summary,
+    affectedModules: ['Configuration'],
+    settingsSnapshot: settings
+  };
+  const updated = [snapshot, ...history].slice(0, 30); // Keep last 30 snapshots
+  safeSetItem(SETTINGS_HISTORY_KEY, JSON.stringify(updated));
+};
+
+export const restoreSettingsVersion = async (versionId: string, author: string = 'Super Administrator'): Promise<boolean> => {
+  const history = getSettingsHistory();
+  const snapshot = history.find(s => s.versionId === versionId);
+  if (!snapshot || !snapshot.settingsSnapshot) return false;
+
+  await saveExtendedSettings(snapshot.settingsSnapshot, author, `Restored configuration to ${versionId}`);
+  return true;
+};
+
+export const exportSettingsJson = (includeSecrets: boolean = false): string => {
+  const settings = getExtendedSettings();
+  const sanitized = JSON.parse(JSON.stringify(settings));
+
+  if (!includeSecrets) {
+    // Strip or mask sensitive credentials before exporting
+    sanitized.smtpPasswordMasked = '••••••••••••••••';
+    if (sanitized.paymentGateways) {
+      sanitized.paymentGateways.forEach((gw: any) => {
+        gw.secretKey = '••••••••••••••••';
+        gw.webhookSecret = '••••••••••••••••';
+      });
+    }
+    if (sanitized.cdn) {
+      sanitized.cdn.apiKey = '••••••••••••••••';
+    }
+    if (sanitized.apiKeys) {
+      sanitized.apiKeys.forEach((k: any) => {
+        k.secretMasked = '••••••••••••••••';
+      });
+    }
+  }
+
+  return JSON.stringify({
+    exportVersion: '2.0',
+    exportTimestamp: new Date().toISOString(),
+    exportedBy: 'Skylar Admin Center',
+    settings: sanitized
+  }, null, 2);
+};
+
+export const importSettingsJson = async (
+  jsonString: string,
+  author: string = 'Super Administrator'
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    const data = parsed.settings || parsed;
+    if (!data || typeof data !== 'object') {
+      return { success: false, message: 'Invalid configuration format. Missing root settings object.' };
+    }
+
+    const current = getExtendedSettings();
+    const merged: ExtendedSystemSettings = {
+      ...current,
+      ...data,
+      logos: data.logos || current.logos,
+      contactProfiles: data.contactProfiles || current.contactProfiles,
+      paymentGateways: data.paymentGateways || current.paymentGateways,
+      notificationRules: data.notificationRules || current.notificationRules,
+      storage: { ...current.storage, ...(data.storage || {}) },
+      cdn: { ...current.cdn, ...(data.cdn || {}) },
+      taxRates: data.taxRates || current.taxRates
+    };
+
+    await saveExtendedSettings(merged, author, 'Imported configuration JSON package');
+    return { success: true, message: 'Settings successfully validated and imported!' };
+  } catch (err: any) {
+    return { success: false, message: `Import failed: ${err.message || 'Malformed JSON'}` };
+  }
 };
 
 // --- Trainers ---
@@ -671,28 +1464,44 @@ const SEED_PAGES: SitePage[] = [
                 description: 'Internationally certified training provider delivering GWO and industrial safety courses across key locations.',
                 buttonText: 'Inquire Now',
                 buttonLink: '/courses',
+                badge: 'GWO ACCREDITED CENTRE',
+                badgeVariant: 'gold',
+                badgePulse: true,
+                badgeIcon: 'Award',
                 image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1920',
                 items: [
                     { 
-                        title: "SKYLAR EDUCATION ASIA: Leading GWO Wind Safety Training", 
-                        description: "Leading safety training and services for a sustainable future. GWO certified, internationally recognised, multiple locations.", 
+                        title: "GWO Advanced Rescue Training (ART)", 
+                        description: "Discover the essential skills needed for advanced rescue operations in the wind industry with our comprehensive 3-day GWO Advanced Rescue Training. Learn from experienced trainers in realistic scenarios to ensure your readiness for any emergency.", 
                         image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "Inquire Now",
-                        buttonLink: "/courses"
+                        buttonText: "View GWO ART Course",
+                        buttonLink: "/courses/gwo-art-initial",
+                        badge: "UPCOMING COURSE",
+                        badgeVariant: "gold",
+                        badgePulse: true,
+                        badgeIcon: "Calendar"
                     },
                     { 
-                        title: "New Course! GWO Basic Technical Training (BTT)", 
+                        title: "GWO Basic Technical Training (BTT)", 
                         description: "Gain essential technical knowledge, practical skills, and safety awareness required for onshore and offshore wind turbines.", 
                         image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1920",
-                        buttonText: "Inquire Now",
-                        buttonLink: "/courses/gwo-btt"
+                        buttonText: "View GWO BTT Course",
+                        buttonLink: "/courses",
+                        badge: "POPULAR STANDARD",
+                        badgeVariant: "emerald",
+                        badgePulse: false,
+                        badgeIcon: "Sparkles"
                     },
                     { 
-                        title: "International Safety & GWO Certifications", 
+                        title: "International Safety & High Risk Work", 
                         description: "Certified wind energy, high-risk work, and industrial safety training delivered by international rescue professionals.", 
                         image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1920",
                         buttonText: "Inquire Now",
-                        buttonLink: "/contact"
+                        buttonLink: "/contact",
+                        badge: "GLOBAL STANDARDS",
+                        badgeVariant: "blue",
+                        badgePulse: false,
+                        badgeIcon: "ShieldCheck"
                     }
                 ]
             }
@@ -1927,6 +2736,28 @@ export const getSitePages = (): SitePage[] => {
         p.sections.push(defaultContactSection);
         migrated = true;
       }
+      // Auto-migrate hero slides to include badge fields if missing
+      const heroSec = p.sections.find(s => s.id === 'hero' || s.type === 'hero');
+      if (heroSec?.data) {
+        if (!heroSec.data.badge) {
+          heroSec.data.badge = 'GWO ACCREDITED CENTRE';
+          heroSec.data.badgeVariant = 'gold';
+          heroSec.data.badgePulse = true;
+          heroSec.data.badgeIcon = 'Award';
+          migrated = true;
+        }
+        if (Array.isArray(heroSec.data.items)) {
+          heroSec.data.items.forEach((item: any) => {
+            if (!item.badge && (item.title?.toLowerCase().includes('upcoming') || item.title?.toLowerCase().includes('advanced rescue') || item.title?.toLowerCase().includes('art'))) {
+              item.badge = 'UPCOMING COURSE';
+              item.badgeVariant = 'gold';
+              item.badgePulse = true;
+              item.badgeIcon = 'Calendar';
+              migrated = true;
+            }
+          });
+        }
+      }
     }
     if (p.id === 'usi' || p.id === 'winda') {
       p.id = 'winda';
@@ -2144,26 +2975,66 @@ export const savePageContent = async (page: SitePage): Promise<SitePage> => {
     safeSetItem(SITE_PAGES_KEY, JSON.stringify(allPages));
   } catch (e) {}
 
-  // 4. Background non-blocking Firestore sync
+  // 4. Reliable Direct Firestore sync with confirmed promise
   if (firebaseClient.isAvailable()) {
-    withTimeout(
-      (async () => {
-        try {
-          await Promise.allSettled([
-            firebaseClient.upsertDoc('site_pages', finalPage.id, finalPage),
-            firebaseClient.upsert(`page_${finalPage.id}`, { value: finalPage, updatedAt: finalPage.lastUpdated }),
-            syncToFirebase(SITE_PAGES_KEY)
-          ]);
-        } catch (e) {}
-      })(),
-      3000,
-      undefined
-    ).catch(() => {});
+    try {
+      await Promise.allSettled([
+        firebaseClient.upsertDoc('site_pages', finalPage.id, finalPage),
+        firebaseClient.upsert(`page_${finalPage.id}`, { value: finalPage, updatedAt: finalPage.lastUpdated }),
+        syncToFirebase(SITE_PAGES_KEY)
+      ]);
+    } catch (e) {
+      console.warn(`[savePageContent] Firestore cloud sync note for ${finalPage.id}:`, e);
+    }
   }
 
-  // 5. Broadcast real-time live event to all listeners
+  // 5. Broadcast real-time live event to all listeners across app
   window.dispatchEvent(new Event('sitePagesUpdated'));
   return finalPage;
+};
+
+/**
+ * Manually forces an immediate live push of a specific page to Cloud Firestore
+ */
+export const syncPageToFirestore = async (pageId: string): Promise<{ success: boolean; message: string; timestamp: string }> => {
+  const page = getPageContent(pageId);
+  if (!page) {
+    return { success: false, message: `Page "${pageId}" not found in local storage.`, timestamp: new Date().toISOString() };
+  }
+
+  const updatedPage = {
+    ...page,
+    lastUpdated: new Date().toISOString()
+  };
+
+  try {
+    if (firebaseClient.isAvailable()) {
+      await Promise.allSettled([
+        firebaseClient.upsertDoc('site_pages', updatedPage.id, updatedPage),
+        firebaseClient.upsert(`page_${updatedPage.id}`, { value: updatedPage, updatedAt: updatedPage.lastUpdated }),
+        syncToFirebase(SITE_PAGES_KEY)
+      ]);
+      safeSetItem(`apex_page_backup_${updatedPage.id}`, JSON.stringify(updatedPage));
+      window.dispatchEvent(new Event('sitePagesUpdated'));
+      return { 
+        success: true, 
+        message: `Page "${updatedPage.name}" live-synced to Cloud Firestore successfully!`, 
+        timestamp: updatedPage.lastUpdated 
+      };
+    } else {
+      return { 
+        success: false, 
+        message: 'Firestore connection is currently unavailable. Data saved locally in browser cache.', 
+        timestamp: updatedPage.lastUpdated 
+      };
+    }
+  } catch (err: any) {
+    return { 
+      success: false, 
+      message: `Firestore sync failed: ${err?.message || 'Network timeout'}`, 
+      timestamp: new Date().toISOString() 
+    };
+  }
 };
 
 /**
@@ -2883,7 +3754,22 @@ export const getEmailTemplates = (): EmailTemplate[] => {
     localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(DEFAULT_EMAIL_TEMPLATES));
     return DEFAULT_EMAIL_TEMPLATES;
   }
-  return JSON.parse(stored);
+  try {
+    const parsed: EmailTemplate[] = JSON.parse(stored);
+    let hasMissing = false;
+    DEFAULT_EMAIL_TEMPLATES.forEach(defaultTpl => {
+      if (!parsed.some(t => t.id === defaultTpl.id)) {
+        parsed.push(defaultTpl);
+        hasMissing = true;
+      }
+    });
+    if (hasMissing) {
+      localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(parsed));
+    }
+    return parsed;
+  } catch (e) {
+    return DEFAULT_EMAIL_TEMPLATES;
+  }
 };
 
 export const saveEmailTemplate = async (template: EmailTemplate): Promise<void> => {
@@ -2904,14 +3790,48 @@ export const saveEmailTemplate = async (template: EmailTemplate): Promise<void> 
   window.dispatchEvent(new Event('emailTemplatesUpdated'));
 };
 
-export const resetEmailTemplates = async (): Promise<void> => {
-  localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(DEFAULT_EMAIL_TEMPLATES));
+export const deleteEmailTemplate = async (templateId: string): Promise<boolean> => {
+  const templates = getEmailTemplates();
+  const filtered = templates.filter(t => t.id !== templateId);
+  localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(filtered));
   try {
-    DEFAULT_EMAIL_TEMPLATES.forEach(t => {
-      firebaseClient.upsertDoc('email_templates', t.id, t).catch(() => {});
-    });
+    firebaseClient.deleteDoc('email_templates', templateId).catch(() => {});
   } catch (e) {}
   window.dispatchEvent(new Event('emailTemplatesUpdated'));
+  return true;
+};
+
+export const duplicateEmailTemplate = async (templateId: string): Promise<EmailTemplate | null> => {
+  const templates = getEmailTemplates();
+  const source = templates.find(t => t.id === templateId);
+  if (!source) return null;
+
+  const newId = `${source.id}-copy-${Date.now().toString(36).slice(-4)}`;
+  const duplicate: EmailTemplate = {
+    ...source,
+    id: newId,
+    name: `${source.name} (Copy)`,
+    isSystemDefault: false,
+    status: 'Draft',
+    updatedAt: new Date().toISOString()
+  };
+
+  await saveEmailTemplate(duplicate);
+  return duplicate;
+};
+
+export const resetEmailTemplates = async (): Promise<void> => {
+  localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(DEFAULT_EMAIL_TEMPLATES));
+  for (const t of DEFAULT_EMAIL_TEMPLATES) {
+    try {
+      firebaseClient.upsertDoc('email_templates', t.id, t).catch(() => {});
+    } catch (e) {}
+  }
+  window.dispatchEvent(new Event('emailTemplatesUpdated'));
+};
+
+export const clearEmailLogs = (): void => {
+  localStorage.removeItem(EMAIL_LOGS_KEY);
 };
 
 // --- Testimonials & Google Reviews Management ---

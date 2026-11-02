@@ -170,8 +170,14 @@ export const InquireModal: React.FC<InquireModalProps> = ({
     saveInquiry(newInquiry);
 
     // Trigger SMTP Email transactions
-    await sendInquiryConfirmationEmail(newInquiry);
-    await sendAdminInquiryAlert(newInquiry);
+    try {
+      await Promise.allSettled([
+        sendInquiryConfirmationEmail(newInquiry),
+        sendAdminInquiryAlert(newInquiry)
+      ]);
+    } catch (emailErr) {
+      console.warn("[Inquiry Email Dispatch Warning]:", emailErr);
+    }
 
     setIsSubmitting(false);
     setSubmittedInquiry(newInquiry);

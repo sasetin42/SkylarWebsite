@@ -5,7 +5,7 @@ import {
   ChevronRight, ChevronLeft, HardHat, ShieldCheck, Target, Eye,
   Heart, Search, Calendar, ArrowRight, Star, Globe,
   GraduationCap, FileText, Mail, Phone, Clock, MapPin, LifeBuoy,
-  AlertCircle, X, Send, Navigation
+  AlertCircle, X, Send, Navigation, Sparkles, Flame
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { CourseCard } from '../components/CourseCard';
@@ -59,6 +59,8 @@ const getIconComponent = (iconName: string) => {
     case 'BookOpen': return BookOpen;
     case 'Briefcase': return Briefcase;
     case 'Target': return Target;
+    case 'Sparkles': return Sparkles;
+    case 'Flame': return Flame;
     default: return ShieldCheck;
   }
 };
@@ -208,7 +210,11 @@ const Home: React.FC = () => {
       heading: cmsHero?.heading || "Safety Training Specialists",
       description: cmsHero?.description || "The premier international provider of GWO and Industrial Safety training.",
       buttonText: cmsHero?.buttonText || "Inquire Now",
-      buttonLink: cmsHero?.buttonLink || "/courses"
+      buttonLink: cmsHero?.buttonLink || "/courses",
+      badge: cmsHero?.badge || "GWO ACCREDITED CENTRE",
+      badgeVariant: cmsHero?.badgeVariant || "gold",
+      badgePulse: cmsHero?.badgePulse ?? true,
+      badgeIcon: cmsHero?.badgeIcon || "Award"
     };
 
     if (cmsHero?.items && cmsHero.items.length > 0) {
@@ -218,7 +224,11 @@ const Home: React.FC = () => {
         heading: item.title || "Safety Training Specialists",
         description: item.description || "",
         buttonText: item.buttonText || "Inquire Now",
-        buttonLink: item.buttonLink || "/courses"
+        buttonLink: item.buttonLink || "/courses",
+        badge: item.badge || (item.title?.toLowerCase().includes('upcoming') ? 'UPCOMING COURSE' : undefined),
+        badgeVariant: item.badgeVariant || (item.title?.toLowerCase().includes('upcoming') ? 'gold' : 'gold'),
+        badgePulse: item.badgePulse !== undefined ? item.badgePulse : (item.title?.toLowerCase().includes('upcoming') ? true : false),
+        badgeIcon: item.badgeIcon || (item.title?.toLowerCase().includes('upcoming') ? 'Calendar' : 'Sparkles')
       }));
       setSlides([mainSlide, ...extraSlides]);
     } else {
@@ -227,10 +237,14 @@ const Home: React.FC = () => {
         {
           id: 2,
           image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=1920",
-          heading: "GWO Global Standards",
-          description: "Internationally recognised safety training for the wind energy sector.",
-          buttonText: "Inquire Now",
-          buttonLink: "/courses?category=GWO"
+          heading: "GWO Advanced Rescue Training (ART)",
+          description: "Discover the essential skills needed for advanced rescue operations in the wind industry with our comprehensive 3-day GWO Advanced Rescue Training. Learn from experienced trainers in realistic scenarios to ensure your readiness for any emergency.",
+          buttonText: "View GWO ART Course",
+          buttonLink: "/courses/gwo-art-initial",
+          badge: "UPCOMING COURSE",
+          badgeVariant: "gold",
+          badgePulse: true,
+          badgeIcon: "Calendar"
         },
         {
           id: 3,
@@ -238,7 +252,11 @@ const Home: React.FC = () => {
           heading: "Industrial Safety & High Risk Work",
           description: "Comprehensive certified safety training for working at heights, confined space, and rescue operations.",
           buttonText: "Inquire Now",
-          buttonLink: "/courses?category=Industrial Safety & High Risk Work"
+          buttonLink: "/courses?category=Industrial Safety & High Risk Work",
+          badge: "GLOBAL STANDARDS",
+          badgeVariant: "blue",
+          badgePulse: false,
+          badgeIcon: "ShieldCheck"
         }
       ];
       setSlides(defaultSlides);
@@ -494,35 +512,128 @@ const Home: React.FC = () => {
           <div className="container mx-auto px-4 md:px-8 relative z-20 text-white w-full">
             <div className="max-w-5xl">
               {slides.length > 0 && (
-                <div key={currentSlide} className="space-y-6 md:space-y-8">
+                <div key={currentSlide} className="space-y-3 md:space-y-4">
+                  {/* Enhanced Hero Badge (e.g. UPCOMING COURSE) */}
+                  {(() => {
+                    const slide = slides[currentSlide];
+                    // Clean title if user had typed "Upcoming Course! " in heading
+                    const hasPrefix = slide.heading?.toLowerCase().startsWith('upcoming course');
+                    const badgeText = slide.badge || (hasPrefix ? 'UPCOMING COURSE' : null);
+                    
+                    if (!badgeText) return null;
+
+                    const variant = slide.badgeVariant || (badgeText.toUpperCase().includes('UPCOMING') ? 'gold' : 'gold');
+                    const showPulse = slide.badgePulse !== undefined ? slide.badgePulse : true;
+                    const IconComponent = getIconComponent(slide.badgeIcon || (badgeText.toUpperCase().includes('UPCOMING') ? 'Calendar' : 'Award'));
+
+                    // Color theme classes
+                    const variantStyles: Record<string, { badge: string; ping: string; dot: string; icon: string }> = {
+                      gold: {
+                        badge: 'bg-amber-400/15 border-amber-400/40 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:bg-amber-400/25',
+                        ping: 'bg-amber-400',
+                        dot: 'bg-amber-400',
+                        icon: 'text-amber-400'
+                      },
+                      amber: {
+                        badge: 'bg-orange-500/15 border-orange-500/40 text-orange-300 shadow-[0_0_20px_rgba(249,115,22,0.25)] hover:bg-orange-500/25',
+                        ping: 'bg-orange-500',
+                        dot: 'bg-orange-500',
+                        icon: 'text-orange-400'
+                      },
+                      blue: {
+                        badge: 'bg-cyan-500/15 border-cyan-400/40 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.25)] hover:bg-cyan-500/25',
+                        ping: 'bg-cyan-400',
+                        dot: 'bg-cyan-400',
+                        icon: 'text-cyan-300'
+                      },
+                      emerald: {
+                        badge: 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:bg-emerald-500/25',
+                        ping: 'bg-emerald-400',
+                        dot: 'bg-emerald-400',
+                        icon: 'text-emerald-300'
+                      },
+                      rose: {
+                        badge: 'bg-rose-500/15 border-rose-400/40 text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.25)] hover:bg-rose-500/25',
+                        ping: 'bg-rose-400',
+                        dot: 'bg-rose-400',
+                        icon: 'text-rose-300'
+                      },
+                      slate: {
+                        badge: 'bg-white/10 border-white/30 text-white shadow-lg hover:bg-white/20',
+                        ping: 'bg-white',
+                        dot: 'bg-white',
+                        icon: 'text-gray-200'
+                      }
+                    };
+
+                    const style = variantStyles[variant] || variantStyles.gold;
+
+                    return (
+                      <div className="mb-1">
+                        <div
+                          className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full border backdrop-blur-md transition-all duration-300 ${style.badge} ${
+                            currentSlide % 3 === 0
+                              ? 'animate-hero-fade-up'
+                              : currentSlide % 3 === 1
+                              ? 'animate-hero-zoom-in'
+                              : 'animate-hero-slide-left'
+                          }`}
+                        >
+                          {showPulse && (
+                            <span className="relative flex h-2 w-2">
+                              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${style.ping}`} />
+                              <span className={`relative inline-flex rounded-full h-2 w-2 shadow-sm ${style.dot}`} />
+                            </span>
+                          )}
+                          <IconComponent size={13} className={`shrink-0 ${style.icon}`} />
+                          <span className="text-[11px] md:text-xs font-black tracking-wider uppercase drop-shadow-sm font-sans">
+                            {badgeText}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Main Heading */}
                   <h1
-                    className={`font-heading font-bold text-white mb-6 drop-shadow-xl tracking-tight leading-[1.1] ${
+                    className={`font-heading font-bold text-white mb-2 md:mb-3 drop-shadow-xl tracking-tight ${
                       currentSlide % 3 === 0
                         ? 'animate-hero-fade-up'
                         : currentSlide % 3 === 1
                         ? 'animate-hero-zoom-in'
                         : 'animate-hero-slide-left'
                     }`}
-                    style={{ fontSize: 'clamp(40px, 6vw, 72px)' }}
+                    style={{
+                      fontSize: 'clamp(34px, 4.5vw, 56px)',
+                      lineHeight: 'clamp(40px, 5vw, 62px)'
+                    }}
                   >
-                    {slides[currentSlide].heading.includes('Global Training') ? (
-                      <>
-                        {slides[currentSlide].heading.split('Global Training')[0]}
-                        <span style={{ color: '#FFC107' }}>Global Training</span>
-                        {slides[currentSlide].heading.split('Global Training')[1]}
-                      </>
-                    ) : (
-                      slides[currentSlide].heading
-                    )}
+                    {(() => {
+                      let rawHeading = slides[currentSlide].heading || '';
+                      // Strip "Upcoming Course! " or "Upcoming Course: " prefix from title if already shown in badge
+                      if (slides[currentSlide].badge || rawHeading.toLowerCase().startsWith('upcoming course')) {
+                        rawHeading = rawHeading.replace(/^upcoming course[!:\s-]*/i, '');
+                      }
+                      
+                      if (rawHeading.includes('Global Training')) {
+                        return (
+                          <>
+                            {rawHeading.split('Global Training')[0]}
+                            <span style={{ color: '#FFC107' }}>Global Training</span>
+                            {rawHeading.split('Global Training')[1]}
+                          </>
+                        );
+                      }
+                      return rawHeading;
+                    })()}
                   </h1>
 
                   {/* Yellow Accent Divider */}
-                  <div className="h-2 bg-accent mb-6 rounded-full shadow-md animate-hero-bar" />
+                  <div className="h-1.5 w-20 bg-accent mb-3 rounded-full shadow-md animate-hero-bar" />
 
                   {/* Description */}
                   <p
-                    className={`text-gray-100 font-medium max-w-3xl leading-relaxed text-lg md:text-xl drop-shadow-md ${
+                    className={`text-gray-100 font-medium max-w-3xl leading-relaxed text-base md:text-lg drop-shadow-md ${
                       currentSlide % 3 === 0
                         ? 'animate-hero-fade-up [animation-delay:150ms]'
                         : currentSlide % 3 === 1
