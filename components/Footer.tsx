@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSettings } from '../services/storageService';
-import { LOGO_URL } from '../constants';
+import { LOGO_URL, LOGO_WHITE_URL } from '../constants';
 
 export const Footer: React.FC = () => {
   const [settings, setSettings] = useState(getSettings());
@@ -42,8 +42,8 @@ export const Footer: React.FC = () => {
     }
   };
 
-  const footerLogo = settings.darkLogoUrl || settings.lightLogoUrl || LOGO_URL;
-  const isDefaultLogo = footerLogo === LOGO_URL;
+  const candidateLogo = settings.lightLogoUrl || settings.mainLogoUrl || LOGO_WHITE_URL;
+  const footerLogo = (candidateLogo && !candidateLogo.includes('skylar-logo.svg')) ? candidateLogo : LOGO_WHITE_URL;
 
   return (
     <footer className="bg-[#041024] text-white pt-10 md:pt-12 pb-6 border-t border-white/5 relative overflow-hidden">
@@ -61,7 +61,13 @@ export const Footer: React.FC = () => {
                   <img 
                     src={footerLogo} 
                     alt="SKYLAR EDUCATION ASIA Logo" 
-                    className="h-[52px] md:h-[64px] w-auto brightness-0 invert logo-color-white object-contain"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== LOGO_WHITE_URL) {
+                        target.src = LOGO_WHITE_URL;
+                      }
+                    }}
+                    className="h-[48px] md:h-[58px] w-auto object-contain"
                   />
                 </div>
               </Link>

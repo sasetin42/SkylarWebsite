@@ -4,22 +4,40 @@ import {
   ToggleLeft, ToggleRight, Plus, Trash2, Edit2, Check, Calendar, Activity,
   Database, UploadCloud, Download, RefreshCw, X, Palette, Image, ShieldAlert, Key,
   Type, Sparkles, Code, Monitor, Eye, Mail, Send, Smartphone, FileText, CheckCircle2,
-  Copy, ExternalLink, Sliders
+  Copy, ExternalLink, Sliders, AlertTriangle, Search, Filter, RotateCcw, AlertCircle
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { 
   getSettings, saveSettings, getAdminUsers, saveAdminUser, deleteAdminUser,
   getRoles, getModules, toggleModule, getAuditLogs, getCourses, getStudents,
-  getSmtpSettings, saveSmtpSettings, getEmailLogs, getEmailTemplates, saveEmailTemplate, resetEmailTemplates
+  getSmtpSettings, saveSmtpSettings, getEmailLogs, getEmailTemplates, saveEmailTemplate,
+  deleteEmailTemplate, duplicateEmailTemplate, clearEmailLogs, resetEmailTemplates,
+  getExtendedSettings, saveExtendedSettings, DEFAULT_EXTENDED_SETTINGS
 } from '../../services/storageService';
-import { testSmtpConnection, sendCustomTemplateEmail } from '../../services/emailService';
+import { testSmtpConnection, sendCustomTemplateEmail, retryEmailLog, validateSmtpConfiguration } from '../../services/emailService';
 import { generateFullEmailHtml, AVAILABLE_MERGE_TAGS, renderMergeTags } from '../../services/emailTemplates';
-import { firebaseClient } from '../../services/firebaseClient';
-import { AdminUser, Role, EmailTemplate } from '../../types';
+import { AdminUser, Role, EmailTemplate, EmailTemplateCategory, EmailTemplateStatus, EmailLog, ExtendedSystemSettings, SettingsTabId, SmtpHandshakeStep, SmtpTestResult } from '../../types';
+import { SettingsNavigation } from '../../components/admin/settings/SettingsNavigation';
+import { SettingsStickyBar } from '../../components/admin/settings/SettingsStickyBar';
+import { BrandingSettingsPanel } from '../../components/admin/settings/BrandingSettingsPanel';
+import { GeneralSettingsPanel } from '../../components/admin/settings/GeneralSettingsPanel';
+import { CompanySettingsPanel } from '../../components/admin/settings/CompanySettingsPanel';
+import { ContactSettingsPanel } from '../../components/admin/settings/ContactSettingsPanel';
+import { PaymentBillingPanel } from '../../components/admin/settings/PaymentBillingPanel';
+import { SecuritySettingsPanel } from '../../components/admin/settings/SecuritySettingsPanel';
+import { ApiStorageCdnPanel } from '../../components/admin/settings/ApiStorageCdnPanel';
+import { MaintenanceDiagnosticsPanel } from '../../components/admin/settings/MaintenanceDiagnosticsPanel';
+import { SeoTaxPanel } from '../../components/admin/settings/SeoTaxPanel';
+import { VersionHistoryExportPanel } from '../../components/admin/settings/VersionHistoryExportPanel';
+import { NotificationSettingsPanel } from '../../components/admin/settings/NotificationSettingsPanel';
 
 export const SettingsManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'system' | 'enrollment' | 'appearance' | 'smtp' | 'email-templates' | 'roles' | 'logs' | 'users' | 'backup'>('system');
+  const [activeTab, setActiveTab] = useState<SettingsTabId | 'system' | 'enrollment' | 'appearance' | 'smtp' | 'email-templates' | 'roles' | 'logs' | 'users' | 'backup'>('branding');
   const [settings, setSettings] = useState(getSettings());
+  const [extendedSettings, setExtendedSettings] = useState<ExtendedSystemSettings>(getExtendedSettings());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSavingExtended, setIsSavingExtended] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(getAdminUsers());
   const [roles, setRoles] = useState<Role[]>(getRoles());
@@ -30,20 +48,43 @@ export const SettingsManager: React.FC = () => {
   // SMTP Settings state
   const [smtpSettings, setSmtpSettingsState] = useState(getSmtpSettings());
   const [smtpTesting, setSmtpTesting] = useState(false);
-  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [smtpLiveSteps, setSmtpLiveSteps] = useState<SmtpHandshakeStep[]>([]);
+  const [smtpActiveStepId, setSmtpActiveStepId] = useState<string | null>(null);
+  const [smtpTestResult, setSmtpTestResult] = useState<SmtpTestResult | null>(null);
   const [emailLogs, setEmailLogsState] = useState(getEmailLogs());
 
   // Email Templates state
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(getEmailTemplates());
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(emailTemplates[0]?.id || 'inquiry-confirmation');
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>('All');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-  const [previewMode, setPreviewMode] = useState<'visual' | 'code'>('visual');
+  const [previewMode, setPreviewMode] = useState<'visual' | 'code' | 'plain'>('visual');
   const [testEmailRecipient, setTestEmailRecipient] = useState<string>('admissions@skylaredasia.ph');
   const [sendingTestEmail, setSendingTestEmail] = useState<boolean>(false);
-  const [testEmailStatus, setTestEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [testEmailProgressMessage, setTestEmailProgressMessage] = useState<string>('');
+  const [testEmailStatus, setTestEmailStatus] = useState<{ success: boolean; message: string; envelope?: import('../../types').EmailEnvelopeDetails; logId?: string } | null>(null);
+  const [inspectingEnvelope, setInspectingEnvelope] = useState<import('../../types').EmailEnvelopeDetails | null>(null);
   const [copiedTag, setCopiedTag] = useState<string | null>(null);
+  const [logFilterStatus, setLogFilterStatus] = useState<string>('All');
+  const [logSearchQuery, setLogSearchQuery] = useState<string>('');
+  const [retryingLogId, setRetryingLogId] = useState<string | null>(null);
+  const [newTemplateModalOpen, setNewTemplateModalOpen] = useState<boolean>(false);
+  const [newTemplateName, setNewTemplateName] = useState<string>('');
+  const [newTemplateCategory, setNewTemplateCategory] = useState<EmailTemplateCategory>('Custom');
 
-  const selectedTemplate = emailTemplates.find(t => t.id === selectedTemplateId) || emailTemplates[0];
+  const selectedTemplate = emailTemplates.find(t => t.id === selectedTemplateId) || emailTemplates[0] || {
+    id: 'custom-template',
+    name: 'Custom Template',
+    description: 'Custom email notification',
+    category: 'Custom' as EmailTemplateCategory,
+    status: 'Active' as EmailTemplateStatus,
+    subject: 'Notification from {{site_name}}',
+    headline: 'Notification Headline',
+    body: 'Dear {{student_name}},\n\nThis is a notification.',
+    buttonText: 'View Details',
+    buttonUrl: 'https://skylarasia.com',
+    footerNote: 'Skylar Education Asia Inc.'
+  };
 
   const handleUpdateCurrentTemplate = (fields: Partial<EmailTemplate>) => {
     if (!selectedTemplate) return;
@@ -58,6 +99,61 @@ export const SettingsManager: React.FC = () => {
     await saveEmailTemplate(selectedTemplate);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleDuplicateTemplate = async () => {
+    if (!selectedTemplate) return;
+    const duplicated = await duplicateEmailTemplate(selectedTemplate.id);
+    if (duplicated) {
+      const refreshed = getEmailTemplates();
+      setEmailTemplates(refreshed);
+      setSelectedTemplateId(duplicated.id);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate) return;
+    if (selectedTemplate.isSystemDefault) {
+      alert("System default master templates cannot be deleted, but you can set their status to 'Inactive'.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to permanently delete the template "${selectedTemplate.name}"?`)) {
+      await deleteEmailTemplate(selectedTemplate.id);
+      const refreshed = getEmailTemplates();
+      setEmailTemplates(refreshed);
+      setSelectedTemplateId(refreshed[0]?.id || '');
+    }
+  };
+
+  const handleCreateNewTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplateName.trim()) return;
+    const newId = `custom-${newTemplateName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36).slice(-4)}`;
+    const newTmpl: EmailTemplate = {
+      id: newId,
+      name: newTemplateName.trim(),
+      description: `Custom ${newTemplateCategory} email template`,
+      category: newTemplateCategory,
+      status: 'Draft',
+      isSystemDefault: false,
+      subject: `Notice: {{course_title}} - {{site_name}}`,
+      headline: `Important Notice from {{site_name}}`,
+      badgeText: 'Notice',
+      body: `Dear {{student_name}},\n\nWe would like to share an update regarding your training with **{{site_name}}**.\n\n### Details:\n- **Course:** {{course_title}}\n- **Date:** {{current_date}}\n\nPlease review your portal for further information.`,
+      plainText: `Dear {{student_name}},\n\nUpdate regarding {{course_title}} on {{current_date}}.\nPlease visit {{site_url}}.`,
+      buttonText: 'Visit Student Portal',
+      buttonUrl: 'https://skylarasia.com/student-info',
+      footerNote: 'Skylar Education Asia Inc. • Angeles City Training Centre',
+      updatedAt: new Date().toISOString()
+    };
+    await saveEmailTemplate(newTmpl);
+    const refreshed = getEmailTemplates();
+    setEmailTemplates(refreshed);
+    setSelectedTemplateId(newId);
+    setNewTemplateName('');
+    setNewTemplateModalOpen(false);
   };
 
   const handleResetTemplates = async () => {
@@ -75,10 +171,40 @@ export const SettingsManager: React.FC = () => {
     if (!selectedTemplate || !testEmailRecipient) return;
     setSendingTestEmail(true);
     setTestEmailStatus(null);
-    const res = await sendCustomTemplateEmail(selectedTemplate, testEmailRecipient);
+    setTestEmailProgressMessage('Initializing SMTP socket handshake...');
+
+    const res = await sendCustomTemplateEmail(
+      selectedTemplate, 
+      testEmailRecipient, 
+      undefined, 
+      (_stage, message) => {
+        setTestEmailProgressMessage(message);
+      }
+    );
+
     setTestEmailStatus(res);
     setSendingTestEmail(false);
+    setTestEmailProgressMessage('');
     setEmailLogsState(getEmailLogs());
+  };
+
+  const handleRetryLog = async (log: EmailLog) => {
+    setRetryingLogId(log.id);
+    const res = await retryEmailLog(log);
+    setRetryingLogId(null);
+    setEmailLogsState(getEmailLogs());
+    if (res.success) {
+      alert(`Retry Successful: ${res.message}`);
+    } else {
+      alert(`Retry Failed: ${res.message}`);
+    }
+  };
+
+  const handleClearLogs = () => {
+    if (window.confirm("Clear all email activity logs?")) {
+      clearEmailLogs();
+      setEmailLogsState([]);
+    }
   };
 
   const handleCopyTag = (tag: string) => {
@@ -97,9 +223,19 @@ export const SettingsManager: React.FC = () => {
   const handleTestSmtp = async () => {
     setSmtpTesting(true);
     setSmtpTestResult(null);
-    const result = await testSmtpConnection(smtpSettings);
+    setSmtpLiveSteps([]);
+    setSmtpActiveStepId('dns');
+
+    const result = await testSmtpConnection(smtpSettings, (updatedSteps, activeStepId) => {
+      setSmtpLiveSteps([...updatedSteps]);
+      setSmtpActiveStepId(activeStepId);
+    });
+
     setSmtpTestResult(result);
+    setSmtpLiveSteps(result.steps || []);
+    setSmtpActiveStepId(null);
     setSmtpTesting(false);
+    setSmtpSettingsState(getSmtpSettings());
     setEmailLogsState(getEmailLogs());
   };
 
@@ -149,7 +285,7 @@ export const SettingsManager: React.FC = () => {
 
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark' | 'favicon' | 'loading' | 'collapsed' | 'uncollapsed') => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'main' | 'light' | 'dark' | 'sticky' | 'loading' | 'favicon' | 'collapsed' | 'uncollapsed') => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
@@ -162,8 +298,10 @@ export const SettingsManager: React.FC = () => {
         const mediaData = await firebaseClient.uploadMedia(file, 'branding', `${type}_logo_${Date.now()}.png`);
         setSettings(prev => {
           const next = { ...prev };
-          if (type === 'light') next.lightLogoUrl = mediaData;
+          if (type === 'main') next.mainLogoUrl = mediaData;
+          else if (type === 'light') next.lightLogoUrl = mediaData;
           else if (type === 'dark') next.darkLogoUrl = mediaData;
+          else if (type === 'sticky') next.stickyLogoUrl = mediaData;
           else if (type === 'loading') next.loadingLogoUrl = mediaData;
           else if (type === 'favicon') next.faviconUrl = mediaData;
           else if (type === 'collapsed') next.collapsedLogoUrl = mediaData;
@@ -177,8 +315,10 @@ export const SettingsManager: React.FC = () => {
           const base64 = event.target?.result as string;
           setSettings(prev => {
             const next = { ...prev };
-            if (type === 'light') next.lightLogoUrl = base64;
+            if (type === 'main') next.mainLogoUrl = base64;
+            else if (type === 'light') next.lightLogoUrl = base64;
             else if (type === 'dark') next.darkLogoUrl = base64;
+            else if (type === 'sticky') next.stickyLogoUrl = base64;
             else if (type === 'loading') next.loadingLogoUrl = base64;
             else if (type === 'favicon') next.faviconUrl = base64;
             else if (type === 'collapsed') next.collapsedLogoUrl = base64;
@@ -199,8 +339,10 @@ export const SettingsManager: React.FC = () => {
     if (window.confirm("Are you sure you want to clear all custom logos and restore default branding?")) {
       const resetSettings = {
         ...settings,
+        mainLogoUrl: '',
         lightLogoUrl: '',
         darkLogoUrl: '',
+        stickyLogoUrl: '',
         loadingLogoUrl: '',
         faviconUrl: '',
         collapsedLogoUrl: '',
@@ -216,12 +358,14 @@ export const SettingsManager: React.FC = () => {
     }
   };
 
-  const handleDeleteLogo = (type: 'light' | 'dark' | 'loading' | 'favicon' | 'collapsed' | 'uncollapsed') => {
+  const handleDeleteLogo = (type: 'main' | 'light' | 'dark' | 'sticky' | 'loading' | 'favicon' | 'collapsed' | 'uncollapsed') => {
     if (window.confirm(`Are you sure you want to clear this custom ${type === 'favicon' ? 'favicon' : type + ' logo'}?`)) {
       setSettings(prev => {
         const next = { ...prev };
-        if (type === 'light') next.lightLogoUrl = '';
+        if (type === 'main') next.mainLogoUrl = '';
+        else if (type === 'light') next.lightLogoUrl = '';
         else if (type === 'dark') next.darkLogoUrl = '';
+        else if (type === 'sticky') next.stickyLogoUrl = '';
         else if (type === 'loading') next.loadingLogoUrl = '';
         else if (type === 'favicon') next.faviconUrl = '';
         else if (type === 'collapsed') next.collapsedLogoUrl = '';
@@ -313,48 +457,70 @@ export const SettingsManager: React.FC = () => {
     });
   };
 
-  const tabs = [
-    { id: 'system', label: 'System', icon: Settings },
-    { id: 'enrollment', label: 'Enrollment', icon: Calendar },
-    { id: 'appearance', label: 'Appearance', icon: Layout },
-    { id: 'smtp', label: 'SMTP Email Setup', icon: Mail },
-    { id: 'email-templates', label: 'Email Templates', icon: FileText },
-    { id: 'roles', label: 'Roles & Access', icon: Shield },
-    { id: 'logs', label: 'Audit Logs', icon: Activity },
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'backup', label: 'Backup & Restore', icon: Database },
-  ];
+  const updateExtendedSettings = (updates: Partial<ExtendedSystemSettings>) => {
+    setExtendedSettings(prev => ({ ...prev, ...updates }));
+    setIsDirty(true);
+  };
+
+  const handleSaveExtendedSettings = async () => {
+    setIsSavingExtended(true);
+    await saveExtendedSettings(extendedSettings, 'Super Administrator', `Updated ${activeTab} configurations`);
+    setIsDirty(false);
+    setIsSaved(true);
+    setIsSavingExtended(false);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  const handleCancelExtendedSettings = () => {
+    setExtendedSettings(getExtendedSettings());
+    setIsDirty(false);
+  };
+
+  const handleResetDefaultExtendedSettings = async () => {
+    if (window.confirm("Restore entire system configuration back to factory baseline standards? All custom overrides will be reset.")) {
+      await saveExtendedSettings(DEFAULT_EXTENDED_SETTINGS, 'Super Administrator', 'Restored system configuration to factory defaults');
+      setExtendedSettings(DEFAULT_EXTENDED_SETTINGS);
+      setIsDirty(false);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2500);
+    }
+  };
+
+  const refreshAllSettings = () => {
+    setExtendedSettings(getExtendedSettings());
+    setSettings(getSettings());
+    setAuditLogs(getAuditLogs());
+  };
 
   return (
     <div className="animate-fade-in-up space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold font-heading text-secondary dark:text-white">Admin Settings</h2>
-        <p className="text-gray-500 dark:text-gray-400">Configure global parameters, custom branding design, and system access levels.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold font-heading text-secondary dark:text-white flex items-center gap-3">
+            <span>Admin Settings & Enterprise Configuration Center</span>
+            <span className="text-xs px-2.5 py-1 rounded bg-amber-400/20 text-amber-300 font-mono font-bold border border-amber-400/30">
+              v2.8 Enterprise
+            </span>
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Configure global parameters, brand assets, payment links, security access, edge CDN, and live system diagnostics.
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[650px] flex flex-col md:flex-row">
-        {/* Sidebar Tabs */}
-        <div className="w-full md:w-64 bg-gray-50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
-          <nav className="space-y-1">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-semibold transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-white dark:bg-gray-800 text-primary dark:text-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-700' 
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                <tab.icon size={18} className={activeTab === tab.id ? 'text-accent' : 'text-gray-400'} />
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[750px] flex flex-col md:flex-row">
+        {/* Sidebar Navigation */}
+        <div className="w-full md:w-72 bg-gray-900 border-r border-gray-800 flex-shrink-0">
+          <SettingsNavigation
+            activeTab={activeTab as SettingsTabId}
+            onSelectTab={(tab) => setActiveTab(tab)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-8 bg-white dark:bg-gray-800">
+        <div className="flex-1 p-6 md:p-8 bg-gray-950 text-gray-100 overflow-y-auto">
           
           {/* SYSTEM TAB */}
           {activeTab === 'system' && (
@@ -854,6 +1020,40 @@ export const SettingsManager: React.FC = () => {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Main Brand Logo */}
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group md:col-span-2">
+                          {settings.mainLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogo('main')}
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
+                              title="Delete Logo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h5 className="text-sm font-bold text-slate-900 dark:text-white">Main Brand Logo (Primary)</h5>
+                              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">Global Default</span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Used across public website headers, admin sidebar, and primary navigation branding.</p>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="h-32 bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
+                              {settings.mainLogoUrl ? (
+                                <img src={settings.mainLogoUrl} alt="Main logo preview" className="max-h-full max-w-full object-contain" />
+                              ) : (
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT /skylar-logo.svg ACTIVE</span>
+                              )}
+                            </div>
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload Main Brand Logo
+                              <input type="file" name="mainLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'main')} />
+                            </label>
+                          </div>
+                        </div>
+
                         {/* Light Mode Logo */}
                         <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
                           {settings.lightLogoUrl && (
@@ -912,6 +1112,37 @@ export const SettingsManager: React.FC = () => {
                             <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
                               <UploadCloud size={16} /> Upload File
                               <input type="file" name="darkLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'dark')} />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Sticky Header Logo */}
+                        <div className="p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative group">
+                          {settings.stickyLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLogo('sticky')}
+                              className="absolute top-4 right-4 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl transition-colors z-10"
+                              title="Delete Logo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                          <div className="mb-4">
+                            <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Sticky Header Logo</h5>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Displayed in top navigation bar when scrolled/sticky.</p>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="h-28 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 relative overflow-hidden group-hover:border-primary/50 dark:group-hover:border-accent/50 transition-colors">
+                              {settings.stickyLogoUrl ? (
+                                <img src={settings.stickyLogoUrl} alt="Sticky header logo preview" className="max-h-full max-w-full object-contain" />
+                              ) : (
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold tracking-wider">DEFAULT ACTIVE</span>
+                              )}
+                            </div>
+                            <label className="flex items-center justify-center gap-2 w-full cursor-pointer bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-700 dark:text-white shadow-sm transition-all active:scale-[0.98]">
+                              <UploadCloud size={16} /> Upload File
+                              <input type="file" name="stickyLogo" accept="image/*" className="hidden" onChange={e => handleLogoUpload(e, 'sticky')} />
                             </label>
                           </div>
                         </div>
@@ -1409,42 +1640,200 @@ export const SettingsManager: React.FC = () => {
 
           {/* SMTP TAB */}
           {activeTab === 'smtp' && (
-            <form onSubmit={handleSaveSmtp} className="space-y-8 max-w-3xl animate-fade-in">
+            <form onSubmit={handleSaveSmtp} className="space-y-8 max-w-4xl animate-fade-in text-gray-200">
               <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">SMTP Email Transaction Server</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Configure outgoing mail server for student inquiry confirmations and admin alerts.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-800 mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold font-heading text-white flex items-center gap-2">
+                      <Mail className="text-amber-500" size={22} />
+                      SMTP Email Transaction Server
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-400">
+                      Configure outgoing authenticated mail server for automated student notifications, inquiry responses, and admin alerts.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                      validateSmtpConfiguration(smtpSettings).valid
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${validateSmtpConfiguration(smtpSettings).valid ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                      {validateSmtpConfiguration(smtpSettings).valid ? 'SMTP Configured' : 'Setup Incomplete'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('email-templates')}
+                      className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white border border-gray-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <FileText size={13} className="text-amber-400" /> View Templates
+                    </button>
+                  </div>
+                </div>
                 
-                {smtpTestResult && (
-                  <div className={`p-4 rounded-xl text-sm mb-6 flex items-center gap-2 border ${
-                    smtpTestResult.success 
-                      ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' 
-                      : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
-                  }`}>
-                    {smtpTestResult.message}
+                {/* REAL-TIME LIVE SMTP DIAGNOSTIC CONSOLE */}
+                {(smtpTesting || smtpTestResult || smtpLiveSteps.length > 0) && (
+                  <div className="mb-6 rounded-2xl border border-gray-800 bg-gray-900/90 shadow-xl overflow-hidden backdrop-blur-sm transition-all animate-fade-in">
+                    {/* Console Header */}
+                    <div className="px-5 py-3.5 bg-gray-950/80 border-b border-gray-800 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-2.5 h-2.5 rounded-full ${smtpTesting ? 'bg-amber-400 animate-ping' : smtpTestResult?.success ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+                          <span className="w-2 h-2 rounded-full bg-gray-700"></span>
+                          <span className="w-2 h-2 rounded-full bg-gray-700"></span>
+                        </div>
+                        <span className="text-xs font-mono font-bold tracking-wider uppercase text-gray-300 flex items-center gap-1.5">
+                          <Activity size={14} className={smtpTesting ? 'text-amber-400 animate-spin' : smtpTestResult?.success ? 'text-emerald-400' : 'text-rose-400'} />
+                          Live SMTP Handshake Diagnostics
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {smtpTesting && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            PROBING SOCKET...
+                          </span>
+                        )}
+                        {!smtpTesting && smtpTestResult && (
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold border flex items-center gap-1 ${
+                            smtpTestResult.success
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                              : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                          }`}>
+                            {smtpTestResult.success ? 'HANDSHAKE VERIFIED' : 'HANDSHAKE FAILED'}
+                          </span>
+                        )}
+                        {smtpTestResult?.totalLatencyMs !== undefined && (
+                          <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">
+                            RTT: {smtpTestResult.totalLatencyMs}ms
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Step-by-Step Live Telemetry */}
+                    <div className="p-4 sm:p-5 space-y-3 font-mono text-xs">
+                      {smtpLiveSteps.map((step, idx) => {
+                        const isCurrent = smtpActiveStepId === step.id;
+                        return (
+                          <div 
+                            key={step.id} 
+                            className={`p-3 rounded-xl border transition-all ${
+                              step.status === 'success' 
+                                ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-200' 
+                                : step.status === 'failed'
+                                ? 'bg-rose-950/25 border-rose-800/50 text-rose-200'
+                                : step.status === 'running' || isCurrent
+                                ? 'bg-amber-950/25 border-amber-500/50 text-amber-200 shadow-sm ring-1 ring-amber-500/30'
+                                : step.status === 'warning'
+                                ? 'bg-amber-950/20 border-amber-800/40 text-amber-200'
+                                : 'bg-gray-950/40 border-gray-800/60 text-gray-400 opacity-60'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-[10px] w-5 h-5 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-gray-300">
+                                  {idx + 1}
+                                </span>
+                                <div>
+                                  <span className="font-bold tracking-tight text-white mr-2">{step.label}</span>
+                                  {step.status === 'running' && (
+                                    <span className="inline-block text-[10px] text-amber-400 animate-pulse">[TESTING...]</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {step.latencyMs !== undefined && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-gray-300 border border-gray-700">
+                                    {step.latencyMs}ms
+                                  </span>
+                                )}
+                                {step.status === 'success' && <CheckCircle2 size={16} className="text-emerald-400" />}
+                                {step.status === 'failed' && <AlertCircle size={16} className="text-rose-400" />}
+                                {step.status === 'warning' && <AlertTriangle size={16} className="text-amber-400" />}
+                                {step.status === 'running' && <RefreshCw size={15} className="text-amber-400 animate-spin" />}
+                                {step.status === 'pending' && <span className="w-3.5 h-3.5 rounded-full border border-gray-700"></span>}
+                              </div>
+                            </div>
+
+                            <div className="mt-1.5 pl-7 text-[11px] leading-relaxed opacity-90">
+                              {step.message}
+                            </div>
+                            {step.details && (
+                              <div className="mt-1 pl-7 text-[10px] text-gray-400 font-sans italic">
+                                &gt; {step.details}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Result Footer Summary */}
+                    {smtpTestResult && (
+                      <div className={`p-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        smtpTestResult.success 
+                          ? 'bg-emerald-950/30 border-emerald-800/40 text-emerald-200' 
+                          : 'bg-rose-950/30 border-rose-800/40 text-rose-200'
+                      }`}>
+                        <div className="flex items-start gap-2.5">
+                          {smtpTestResult.success ? (
+                            <CheckCircle2 size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                          )}
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm">
+                              {smtpTestResult.success ? 'SMTP Handshake Verified & Active' : 'SMTP Connection Diagnostic Failed'}
+                            </div>
+                            <div className="text-xs opacity-90 mt-0.5">{smtpTestResult.message}</div>
+                          </div>
+                        </div>
+
+                        {smtpTestResult.success && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab('email-templates');
+                              setPreviewMode('visual');
+                            }}
+                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+                          >
+                            <Send size={13} /> Send Sample Test Email &rarr;
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label htmlFor="smtp-host" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Server Host</label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="md:col-span-2">
+                      <label htmlFor="smtp-host" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        SMTP Server Host
+                      </label>
                       <input 
                         id="smtp-host"
                         type="text"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.host}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, host: e.target.value })}
                         required
-                        placeholder="e.g. smtp.gmail.com"
+                        placeholder="e.g. smtp.gmail.com or mail.skylarasia.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="smtp-port" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Port</label>
+                      <label htmlFor="smtp-port" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        SMTP Port
+                      </label>
                       <input 
                         id="smtp-port"
                         type="number"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.port}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, port: parseInt(e.target.value) || 587 })}
                         required
@@ -1452,133 +1841,141 @@ export const SettingsManager: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
-                      <label htmlFor="smtp-username" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Username / API Key</label>
+                      <label htmlFor="smtp-encryption" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        Encryption Protocol
+                      </label>
+                      <select
+                        id="smtp-encryption"
+                        value={smtpSettings.encryption || (smtpSettings.enableSsl ? 'SSL' : 'TLS')}
+                        onChange={e => {
+                          const val = e.target.value as 'TLS' | 'SSL' | 'None';
+                          setSmtpSettingsState({ 
+                            ...smtpSettings, 
+                            encryption: val, 
+                            enableSsl: val === 'SSL',
+                            port: val === 'SSL' ? 465 : (val === 'TLS' ? 587 : 25)
+                          });
+                        }}
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white outline-none transition-colors cursor-pointer"
+                      >
+                        <option value="TLS" className="bg-gray-900 text-white">TLS (Recommended - Port 587)</option>
+                        <option value="SSL" className="bg-gray-900 text-white">SSL (Port 465)</option>
+                        <option value="None" className="bg-gray-900 text-white">None / Plain (Port 25)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="smtp-username" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        SMTP Username / API Key
+                      </label>
                       <input 
                         id="smtp-username"
                         type="text"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.username}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, username: e.target.value })}
                         required
+                        placeholder="user@example.com or api_key"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="smtp-password" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">SMTP Password</label>
+                      <label htmlFor="smtp-password" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        SMTP Password / Secret
+                      </label>
                       <input 
                         id="smtp-password"
                         type="password"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.password || ''}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, password: e.target.value })}
+                        placeholder="••••••••••••"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="smtp-sender-email" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Email (From)</label>
+                      <label htmlFor="smtp-sender-email" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        Sender Email (From Address)
+                      </label>
                       <input 
                         id="smtp-sender-email"
                         type="email"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.fromEmail}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, fromEmail: e.target.value })}
                         required
+                        placeholder="inquiries@skylaredasia.ph"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="smtp-sender-name" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Sender Display Name</label>
+                      <label htmlFor="smtp-sender-name" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        Sender Display Name
+                      </label>
                       <input 
                         id="smtp-sender-name"
                         type="text"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.fromName}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, fromName: e.target.value })}
                         required
+                        placeholder="SKYLAR EDUCATION ASIA Admissions"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
                     <div>
-                      <label htmlFor="smtp-admin-email" className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Admin Notification Email</label>
+                      <label htmlFor="smtp-admin-email" className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                        Admin Notification Email
+                      </label>
                       <input 
                         id="smtp-admin-email"
                         type="email"
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:text-white"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-xs sm:text-sm text-white placeholder-gray-500 outline-none transition-colors"
                         value={smtpSettings.adminNotificationEmail}
                         onChange={e => setSmtpSettingsState({ ...smtpSettings, adminNotificationEmail: e.target.value })}
+                        placeholder="admissions@skylaredasia.ph"
                       />
                     </div>
 
-                    <div className="flex items-center gap-3 pt-6">
-                      <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center gap-3 pt-4 sm:pt-6">
+                      <label className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm font-semibold text-gray-300 hover:text-white transition-colors">
                         <input 
                           type="checkbox"
                           checked={smtpSettings.enableNotifications}
                           onChange={e => setSmtpSettingsState({ ...smtpSettings, enableNotifications: e.target.checked })}
-                          className="rounded text-primary focus:ring-primary w-4 h-4"
+                          className="rounded text-amber-500 focus:ring-amber-500 w-4 h-4 bg-gray-900 border-gray-700"
                         />
-                        Enable Admin Instant Email Alerts
+                        Enable Admin Instant Email Alerts on New Inquiries
                       </label>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-4 items-center justify-between">
+                  <div className="pt-6 border-t border-gray-800 flex flex-wrap gap-4 items-center justify-between">
                     <button
                       type="button"
                       onClick={handleTestSmtp}
                       disabled={smtpTesting}
-                      className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2"
+                      className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl text-xs sm:text-sm border border-gray-700 transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
                     >
-                      <Send size={16} /> {smtpTesting ? 'Testing Connection...' : 'Test SMTP Connection'}
+                      <Send size={15} className="text-amber-400" /> {smtpTesting ? 'Testing Handshake...' : 'Test SMTP Connection'}
                     </button>
 
-                    <Button type="submit">
-                      Save SMTP Settings
+                    <Button type="submit" className="shadow-md">
+                      {isSaved ? <span className="flex items-center gap-1"><Check size={16} /> Saved</span> : 'Save SMTP Settings'}
                     </Button>
                   </div>
 
-                  {/* Email Logs Table */}
-                  <div className="pt-8 space-y-3">
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">Recent Email Activity Logs</h4>
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden text-xs">
-                      <table className="w-full text-left">
-                        <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-700">
-                          <tr>
-                            <th className="p-3">Timestamp</th>
-                            <th className="p-3">Recipient</th>
-                            <th className="p-3">Subject</th>
-                            <th className="p-3">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700 dark:text-gray-300">
-                          {emailLogs.length === 0 ? (
-                            <tr>
-                              <td colSpan={4} className="p-4 text-center text-gray-400">No email logs yet.</td>
-                            </tr>
-                          ) : (
-                            emailLogs.slice(0, 5).map(log => (
-                              <tr key={log.id}>
-                                <td className="p-3 text-gray-400">{new Date(log.timestamp).toLocaleTimeString()}</td>
-                                <td className="p-3 font-semibold">{log.recipient}</td>
-                                <td className="p-3 truncate max-w-[200px]">{log.subject}</td>
-                                <td className="p-3">
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    log.status === 'Sent' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700'
-                                  }`}>
-                                    {log.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                  {/* Sync Notice Card */}
+                  <div className="p-4 bg-gray-900/80 rounded-2xl border border-gray-800 flex items-start gap-3">
+                    <Sparkles className="text-amber-400 shrink-0 mt-0.5" size={16} />
+                    <div className="text-xs text-gray-400 leading-relaxed">
+                      <strong className="text-gray-200">Automatic Template Synchronization:</strong> All transactional email templates, test dispatches, and automated event notifications automatically route through this authenticated outgoing server. Sensitive passwords and API keys are stored securely.
                     </div>
                   </div>
                 </div>
@@ -1600,7 +1997,14 @@ export const SettingsManager: React.FC = () => {
                     Design and customize branded responsive HTML emails sent to candidates, sponsors, and admissions.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewTemplateModalOpen(true)}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  >
+                    <Plus size={13} className="text-amber-400" /> New Template
+                  </button>
                   <button
                     type="button"
                     onClick={handleResetTemplates}
@@ -1618,38 +2022,85 @@ export const SettingsManager: React.FC = () => {
                 </div>
               </div>
 
+              {/* SMTP Connection Sync Warning Banner if SMTP not configured */}
+              {!validateSmtpConfiguration(smtpSettings).valid && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300 font-medium">
+                    <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+                    <span>
+                      <strong>SMTP Synchronization Warning:</strong> Your outgoing SMTP server has not been verified yet. Real delivery and test dispatches require an active SMTP configuration.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('smtp')}
+                    className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs whitespace-nowrap cursor-pointer transition-colors"
+                  >
+                    Configure SMTP
+                  </button>
+                </div>
+              )}
+
+              {/* Category Quick Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1 shrink-0 flex items-center gap-1">
+                  <Filter size={11} /> Filter:
+                </span>
+                {['All', 'Contact', 'Inquiry', 'Student', 'Admin', 'Enrollment', 'Certification', 'Reminder', 'Welcome', 'Verification', 'Password Reset', 'Payment', 'Invoice', 'Security Alert'].map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setTemplateCategoryFilter(cat)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      templateCategoryFilter === cat
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               {/* Template Selector Ribbon */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
-                {emailTemplates.map(tmpl => {
-                  const isSelected = tmpl.id === selectedTemplateId;
-                  return (
-                    <button
-                      key={tmpl.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedTemplateId(tmpl.id);
-                        setTestEmailStatus(null);
-                      }}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected 
-                          ? 'bg-amber-500/10 border-amber-500/60 dark:bg-amber-500/15 shadow-sm' 
-                          : 'bg-white dark:bg-gray-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                          isSelected ? 'bg-amber-500 text-slate-950 font-extrabold' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                        }`}>
-                          {tmpl.category}
-                        </span>
-                        {isSelected && <CheckCircle2 size={14} className="text-amber-500" />}
-                      </div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
-                        {tmpl.name}
-                      </h4>
-                    </button>
-                  );
-                })}
+                {emailTemplates
+                  .filter(tmpl => templateCategoryFilter === 'All' || tmpl.category === templateCategoryFilter)
+                  .map(tmpl => {
+                    const isSelected = tmpl.id === selectedTemplateId;
+                    return (
+                      <button
+                        key={tmpl.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTemplateId(tmpl.id);
+                          setTestEmailStatus(null);
+                        }}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                          isSelected 
+                            ? 'bg-amber-500/10 border-amber-500/60 dark:bg-amber-500/15 shadow-sm' 
+                            : 'bg-white dark:bg-gray-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            isSelected ? 'bg-amber-500 text-slate-950 font-extrabold' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                          }`}>
+                            {tmpl.category}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className={`w-2 h-2 rounded-full ${
+                              tmpl.status === 'Active' ? 'bg-emerald-500' : (tmpl.status === 'Draft' ? 'bg-amber-400' : 'bg-slate-400')
+                            }`} title={`Status: ${tmpl.status || 'Active'}`} />
+                            {isSelected && <CheckCircle2 size={14} className="text-amber-500" />}
+                          </div>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                          {tmpl.name}
+                        </h4>
+                      </button>
+                    );
+                  })}
               </div>
 
               {/* Main Workspace: 2-Column Split (Editor & Live Preview) */}
@@ -1658,11 +2109,134 @@ export const SettingsManager: React.FC = () => {
                 {/* Left Column: Template Form & Merge Tags (7 Cols) */}
                 <div className="lg:col-span-6 xl:col-span-6 space-y-5">
                   
+                  {/* Template Meta & Action Header */}
+                  <div className="bg-slate-50/70 dark:bg-gray-900/40 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Sliders size={15} className="text-amber-500" />
+                        <span className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Template Properties</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleDuplicateTemplate}
+                          title="Duplicate this template"
+                          className="px-2.5 py-1 text-xs font-semibold bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Copy size={12} /> Duplicate
+                        </button>
+                        {!selectedTemplate.isSystemDefault && (
+                          <button
+                            type="button"
+                            onClick={handleDeleteTemplate}
+                            title="Delete custom template"
+                            className="px-2.5 py-1 text-xs font-semibold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={12} /> Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Template Name
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedTemplate.name}
+                          onChange={e => handleUpdateCurrentTemplate({ name: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Category / Type
+                        </label>
+                        <select
+                          value={selectedTemplate.category}
+                          onChange={e => handleUpdateCurrentTemplate({ category: e.target.value as EmailTemplateCategory })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
+                        >
+                          <option value="Contact">Contact</option>
+                          <option value="Inquiry">Inquiry</option>
+                          <option value="Student">Student</option>
+                          <option value="Admin">Admin</option>
+                          <option value="Enrollment">Enrollment</option>
+                          <option value="Certification">Certification</option>
+                          <option value="Reminder">Reminder</option>
+                          <option value="Welcome">Welcome</option>
+                          <option value="Verification">Verification</option>
+                          <option value="Password Reset">Password Reset</option>
+                          <option value="Password Changed">Password Changed</option>
+                          <option value="Account Created">Account Created</option>
+                          <option value="Account Approved">Account Approved</option>
+                          <option value="Account Suspended">Account Suspended</option>
+                          <option value="Login Notification">Login Notification</option>
+                          <option value="Security Alert">Security Alert</option>
+                          <option value="Payment">Payment</option>
+                          <option value="Invoice">Invoice</option>
+                          <option value="System">System</option>
+                          <option value="Custom">Custom</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Status
+                        </label>
+                        <select
+                          value={selectedTemplate.status || 'Active'}
+                          onChange={e => handleUpdateCurrentTemplate({ status: e.target.value as EmailTemplateStatus })}
+                          className={`w-full p-2.5 bg-white dark:bg-gray-800 border rounded-xl text-xs font-bold outline-none ${
+                            (selectedTemplate.status || 'Active') === 'Active'
+                              ? 'text-emerald-600 border-emerald-500/40'
+                              : ((selectedTemplate.status) === 'Draft' ? 'text-amber-500 border-amber-500/40' : 'text-slate-400 border-slate-300 dark:border-slate-700')
+                          }`}
+                        >
+                          <option value="Active">Active / Published</option>
+                          <option value="Draft">Draft</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Custom Sender Name (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={smtpSettings.fromName || 'Default from SMTP'}
+                          value={selectedTemplate.senderName || ''}
+                          onChange={e => handleUpdateCurrentTemplate({ senderName: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Reply-To Email (Optional)
+                        </label>
+                        <input
+                          type="email"
+                          placeholder={smtpSettings.fromEmail || 'Default from SMTP'}
+                          value={selectedTemplate.replyToEmail || ''}
+                          onChange={e => handleUpdateCurrentTemplate({ replyToEmail: e.target.value })}
+                          className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
                   {/* Subject & Header Fields */}
                   <div className="bg-slate-50/70 dark:bg-gray-900/40 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-4 shadow-sm">
                     <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-2">
                       <h4 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <Sliders size={14} className="text-amber-500" /> Header &amp; Subject Details
+                        <Mail size={14} className="text-amber-500" /> Header &amp; Subject Details
                       </h4>
                       <span className="text-[11px] text-slate-400 font-mono">ID: {selectedTemplate.id}</span>
                     </div>
@@ -1722,13 +2296,30 @@ export const SettingsManager: React.FC = () => {
                       className="w-full p-3 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono leading-relaxed text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none"
                     />
 
+                    {/* Plain Text Version Area */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                          Plain Text Version (Fallback)
+                        </label>
+                        <span className="text-[10px] text-slate-400">For non-HTML clients</span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={selectedTemplate.plainText || ''}
+                        placeholder="Fallback plain text version..."
+                        onChange={e => handleUpdateCurrentTemplate({ plainText: e.target.value })}
+                        className="w-full p-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono leading-relaxed text-slate-900 dark:text-white outline-none"
+                      />
+                    </div>
+
                     {/* Quick Insert Merge Tags Toolbar */}
                     <div className="pt-2">
                       <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <Sparkles size={13} className="text-amber-500" /> Click to Copy Merge Tag:
                         {copiedTag && <span className="text-emerald-500 text-[10px] lowercase">copied {copiedTag}!</span>}
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1">
                         {AVAILABLE_MERGE_TAGS.map(t => (
                           <button
                             key={t.tag}
@@ -1784,39 +2375,114 @@ export const SettingsManager: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Send Test Email Card */}
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <Send size={13} /> Dispatch Live Test Email
+                  {/* High-Contrast Professional Dispatch Live Test Email Card */}
+                  <div className="p-5 bg-gray-900 border border-amber-500/40 rounded-2xl space-y-4 shadow-xl text-gray-200">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <Send size={15} className="text-amber-400" />
+                        Dispatch Live Test Email
                       </span>
-                      <span className="text-[10px] text-amber-800/80 dark:text-amber-400">Uses configured SMTP server</span>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">
+                        Target: {smtpSettings.host}:{smtpSettings.port}
+                      </span>
                     </div>
 
-                    {testEmailStatus && (
-                      <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
-                        testEmailStatus.success ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300'
-                      }`}>
-                        {testEmailStatus.message}
+                    {/* Progress Banner during Live Dispatch */}
+                    {sendingTestEmail && (
+                      <div className="p-3.5 bg-amber-950/40 border border-amber-500/50 rounded-xl text-xs text-amber-200 flex items-center gap-3 animate-pulse">
+                        <RefreshCw size={16} className="text-amber-400 animate-spin shrink-0" />
+                        <div>
+                          <div className="font-bold text-white">Dispatched to Outgoing Mail Relay...</div>
+                          <div className="text-[11px] text-amber-300 mt-0.5">{testEmailProgressMessage}</div>
+                        </div>
                       </div>
                     )}
 
-                    <div className="flex gap-2">
-                      <input
-                        type="email"
-                        value={testEmailRecipient}
-                        onChange={e => setTestEmailRecipient(e.target.value)}
-                        placeholder="recipient@example.com"
-                        className="flex-1 p-2 bg-white dark:bg-gray-800 border border-amber-500/30 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSendTestEmail}
-                        disabled={sendingTestEmail || !testEmailRecipient}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-colors shrink-0 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Send size={13} /> {sendingTestEmail ? 'Sending...' : 'Send Test'}
-                      </button>
+                    {/* High-Contrast Status Banner */}
+                    {testEmailStatus && !sendingTestEmail && (
+                      <div className={`p-4 rounded-xl text-xs border shadow-sm ${
+                        testEmailStatus.success 
+                          ? 'bg-emerald-950/50 border-emerald-500/50 text-emerald-200' 
+                          : 'bg-rose-950/50 border-rose-500/50 text-rose-200'
+                      }`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2.5">
+                            {testEmailStatus.success ? (
+                              <CheckCircle2 size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                            ) : (
+                              <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                            )}
+                            <div>
+                              <div className="font-bold text-white text-xs sm:text-sm">
+                                {testEmailStatus.success ? 'Test Email Delivered to Relay' : 'Dispatch Failed'}
+                              </div>
+                              <div className="mt-1 text-xs opacity-95 leading-relaxed">
+                                {testEmailStatus.message}
+                              </div>
+                            </div>
+                          </div>
+
+                          {testEmailStatus.envelope && (
+                            <button
+                              type="button"
+                              onClick={() => setInspectingEnvelope(testEmailStatus.envelope || null)}
+                              className="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-amber-400 border border-gray-700 hover:border-amber-400/50 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                            >
+                              <Code size={12} /> Inspect Envelope
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recipient Input with Quick Presets */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[11px] text-gray-400">
+                        <label htmlFor="test-recipient-email" className="font-semibold text-gray-300">
+                          Recipient Test Mailbox:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setTestEmailRecipient(smtpSettings.adminNotificationEmail || 'admissions@skylaredasia.ph')}
+                            className="hover:text-amber-400 underline cursor-pointer"
+                          >
+                            Use Admin Email
+                          </button>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() => setTestEmailRecipient(smtpSettings.fromEmail || 'inquiries@skylaredasia.ph')}
+                            className="hover:text-amber-400 underline cursor-pointer"
+                          >
+                            Use From Email
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          id="test-recipient-email"
+                          type="email"
+                          value={testEmailRecipient}
+                          onChange={e => setTestEmailRecipient(e.target.value)}
+                          placeholder="your-email@example.com"
+                          className="flex-1 p-2.5 bg-gray-950 border border-gray-700 rounded-xl text-xs text-white placeholder-gray-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSendTestEmail}
+                          disabled={sendingTestEmail || !testEmailRecipient}
+                          className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-xs transition-all shrink-0 disabled:opacity-50 cursor-pointer flex items-center gap-2 shadow-md font-sans"
+                        >
+                          <Send size={14} /> {sendingTestEmail ? 'Sending...' : 'Send Test'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-gray-400 flex items-center gap-1.5 pt-1">
+                      <Sparkles size={13} className="text-amber-400 shrink-0" />
+                      <span>The test email compiles live variables (<code className="text-gray-300 font-mono">{"{{student_name}}"}</code>, <code className="text-gray-300 font-mono">{"{{reference_code}}"}</code>) and writes a complete RFC audit entry into the activity log below.</span>
                     </div>
                   </div>
 
@@ -1851,10 +2517,30 @@ export const SettingsManager: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => setPreviewMode(previewMode === 'visual' ? 'code' : 'visual')}
-                        className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 transition-colors flex items-center gap-1 cursor-pointer"
+                        onClick={() => setPreviewMode('visual')}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                          previewMode === 'visual' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-xs' : 'text-slate-600 dark:text-slate-300'
+                        }`}
                       >
-                        <Code size={13} /> {previewMode === 'visual' ? 'View HTML' : 'View Visual'}
+                        Visual
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewMode('code')}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                          previewMode === 'code' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-xs' : 'text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        <Code size={13} /> HTML
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewMode('plain')}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                          previewMode === 'plain' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-xs' : 'text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        Plain Text
                       </button>
                     </div>
                   </div>
@@ -1872,9 +2558,11 @@ export const SettingsManager: React.FC = () => {
                           reference_code: 'INQ-2026-8492',
                           course_title: 'GWO Basic Safety Training',
                           student_name: 'Engr. Juan Dela Cruz',
-                          start_date: '7 Sept 2026'
+                          start_date: '7 Sept 2026',
+                          first_name: 'Juan',
+                          site_name: 'SKYLAR EDUCATION ASIA'
                         })}</span>
-                        <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded shrink-0">Preview</span>
+                        <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded shrink-0">Live Preview</span>
                       </div>
 
                       {previewMode === 'visual' ? (
@@ -1883,10 +2571,21 @@ export const SettingsManager: React.FC = () => {
                             key={`${selectedTemplate.id}-${previewDevice}-${JSON.stringify(selectedTemplate)}`}
                             srcDoc={generateFullEmailHtml(selectedTemplate, {
                               student_name: 'Engr. Juan Dela Cruz',
+                              user_name: 'Engr. Juan Dela Cruz',
+                              first_name: 'Juan',
+                              last_name: 'Dela Cruz',
+                              user_email: 'juan.delacruz@example.com',
                               student_email: 'juan.delacruz@example.com',
                               student_phone: '+63 912 345 6789',
+                              site_name: 'SKYLAR EDUCATION ASIA',
+                              site_url: 'https://skylarasia.com',
+                              verification_link: 'https://skylarasia.com/verify-email?token=sec_98421a',
+                              reset_password_link: 'https://skylarasia.com/reset-password?token=pwd_77319x',
+                              course_name: 'GWO Basic Safety Training (BST)',
                               course_title: 'GWO Basic Safety Training (BST) Standard',
                               reference_code: 'INQ-2026-8492',
+                              invoice_number: 'INV-2026-0849',
+                              current_date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
                               preferred_date: '7 – 10 September 2026',
                               start_date: '7 September 2026',
                               participants: '1 Person',
@@ -1897,12 +2596,13 @@ export const SettingsManager: React.FC = () => {
                             className="w-full h-[620px] border-0"
                           />
                         </div>
-                      ) : (
+                      ) : previewMode === 'code' ? (
                         <div className="p-4 bg-slate-900 text-slate-100 text-xs font-mono h-[620px] overflow-y-auto">
                           <pre className="whitespace-pre-wrap">
                             {generateFullEmailHtml(selectedTemplate, {
                               student_name: 'Engr. Juan Dela Cruz',
-                              student_email: 'juan.delacruz@example.com',
+                              user_name: 'Engr. Juan Dela Cruz',
+                              first_name: 'Juan',
                               course_title: 'GWO Basic Safety Training (BST) Standard',
                               reference_code: 'INQ-2026-8492',
                               preferred_date: '7 – 10 September 2026',
@@ -1913,6 +2613,22 @@ export const SettingsManager: React.FC = () => {
                             })}
                           </pre>
                         </div>
+                      ) : (
+                        <div className="p-5 bg-white text-slate-800 text-xs font-mono h-[620px] overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                          {renderMergeTags(selectedTemplate.plainText || selectedTemplate.body, {
+                            student_name: 'Engr. Juan Dela Cruz',
+                            user_name: 'Engr. Juan Dela Cruz',
+                            first_name: 'Juan',
+                            site_name: 'SKYLAR EDUCATION ASIA',
+                            site_url: 'https://skylarasia.com',
+                            course_title: 'GWO Basic Safety Training (BST) Standard',
+                            reference_code: 'INQ-2026-8492',
+                            current_date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+                            preferred_date: '7 – 10 September 2026',
+                            start_date: '7 September 2026',
+                            location: 'Angeles City Training Centre, Pampanga'
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1921,8 +2637,563 @@ export const SettingsManager: React.FC = () => {
 
               </div>
 
+              {/* Complete Email Activity Logs Section */}
+              <div className="pt-8 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                      <Activity size={16} className="text-amber-500" />
+                      Email Activity Logs &amp; Delivery Tracking
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Audit trail of all transactional and test dispatches sent via configured SMTP.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative">
+                      <Search size={13} className="absolute left-2.5 top-2.5 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search recipient or subject..."
+                        value={logSearchQuery}
+                        onChange={e => setLogSearchQuery(e.target.value)}
+                        className="pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none w-48"
+                      />
+                    </div>
+
+                    <select
+                      value={logFilterStatus}
+                      onChange={e => setLogFilterStatus(e.target.value)}
+                      className="p-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Sent">Sent</option>
+                      <option value="Failed">Failed</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+
+                    {emailLogs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearLogs}
+                        className="px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-500 hover:text-rose-500 rounded-xl transition-colors cursor-pointer"
+                      >
+                        Clear Logs
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden text-xs bg-white dark:bg-gray-900/50 shadow-sm">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-700">
+                      <tr>
+                        <th className="p-3">Timestamp</th>
+                        <th className="p-3">Recipient</th>
+                        <th className="p-3">Subject</th>
+                        <th className="p-3">Template / Category</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700 dark:text-gray-300">
+                      {emailLogs
+                        .filter(l => logFilterStatus === 'All' || l.status === logFilterStatus)
+                        .filter(l => !logSearchQuery || l.recipient.toLowerCase().includes(logSearchQuery.toLowerCase()) || l.subject.toLowerCase().includes(logSearchQuery.toLowerCase()))
+                        .length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-6 text-center text-gray-400">
+                            No email delivery logs recorded yet. Dispatch a test email above or send an inquiry to record transactions.
+                          </td>
+                        </tr>
+                      ) : (
+                        emailLogs
+                          .filter(l => logFilterStatus === 'All' || l.status === logFilterStatus)
+                          .filter(l => !logSearchQuery || l.recipient.toLowerCase().includes(logSearchQuery.toLowerCase()) || l.subject.toLowerCase().includes(logSearchQuery.toLowerCase()))
+                          .map(log => (
+                            <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/40 transition-colors">
+                              <td className="p-3 text-gray-400 whitespace-nowrap">
+                                {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(log.timestamp).toLocaleDateString()}
+                              </td>
+                              <td className="p-3 font-semibold text-slate-800 dark:text-white">
+                                {log.recipient}
+                              </td>
+                              <td className="p-3 truncate max-w-[220px]" title={log.subject}>
+                                {log.subject}
+                              </td>
+                              <td className="p-3 text-slate-500">
+                                {log.templateName || log.category || 'General'}
+                              </td>
+                              <td className="p-3">
+                                <span className={`px-2 py-0.5 rounded text-[10.5px] font-bold ${
+                                  log.status === 'Sent'
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                    : (log.status === 'Failed' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-amber-100 text-amber-700')
+                                }`}>
+                                  {log.status}
+                                </span>
+                                {log.errorDetails && (
+                                  <div className="text-[10px] text-rose-500 dark:text-rose-400 truncate max-w-[180px]" title={log.errorDetails}>
+                                    {log.errorDetails}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {log.envelope && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setInspectingEnvelope(log.envelope || null)}
+                                      title="Inspect RFC Envelope & MIME Headers"
+                                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-amber-500 rounded-lg text-[11px] font-mono transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Code size={11} /> Raw
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    disabled={retryingLogId === log.id}
+                                    onClick={() => handleRetryLog(log)}
+                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  >
+                                    <RotateCcw size={11} className={retryingLogId === log.id ? 'animate-spin' : ''} />
+                                    {retryingLogId === log.id ? 'Retrying...' : 'Retry'}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
           )}
+
+          {/* CREATE CUSTOM TEMPLATE MODAL */}
+          {newTemplateModalOpen && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-gray-150 dark:border-gray-700 animate-zoom-in">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                  <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <Mail size={18} className="text-amber-500" />
+                    Create New Email Template
+                  </h3>
+                  <button onClick={() => setNewTemplateModalOpen(false)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <X size={18}/>
+                  </button>
+                </div>
+                <form onSubmit={handleCreateNewTemplate} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Template Display Name</label>
+                    <input 
+                      type="text" 
+                      value={newTemplateName}
+                      onChange={e => setNewTemplateName(e.target.value)}
+                      className="w-full p-3 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-xs sm:text-sm outline-none"
+                      placeholder="e.g. VIP Corporate Training Welcome"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                    <select
+                      value={newTemplateCategory}
+                      onChange={e => setNewTemplateCategory(e.target.value as EmailTemplateCategory)}
+                      className="w-full p-3 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-xs sm:text-sm outline-none"
+                    >
+                      <option value="Custom">Custom</option>
+                      <option value="Contact">Contact</option>
+                      <option value="Inquiry">Inquiry</option>
+                      <option value="Student">Student</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Enrollment">Enrollment</option>
+                      <option value="Certification">Certification</option>
+                      <option value="Reminder">Reminder</option>
+                      <option value="Payment">Payment</option>
+                      <option value="Invoice">Invoice</option>
+                      <option value="System">System</option>
+                    </select>
+                  </div>
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+                    <button type="button" onClick={() => setNewTemplateModalOpen(false)} className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 rounded-xl">Cancel</button>
+                    <Button type="submit">Create Template</Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* DIAGNOSTIC RFC ENVELOPE INSPECTOR MODAL */}
+          {inspectingEnvelope && (
+            <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in">
+              <div className="bg-gray-900 border border-gray-700 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl text-gray-200 animate-zoom-in flex flex-col max-h-[90vh]">
+                <div className="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-950">
+                  <div className="flex items-center gap-2">
+                    <Code className="text-amber-400" size={18} />
+                    <h3 className="font-bold text-white text-sm sm:text-base font-mono">
+                      SMTP Telemetry & RFC 2822 Envelope
+                    </h3>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setInspectingEnvelope(null)} 
+                    className="p-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 font-mono text-xs">
+                  {/* Summary Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-950 p-3 rounded-xl border border-gray-800">
+                    <div>
+                      <div className="text-[10px] text-gray-500 uppercase">Host</div>
+                      <div className="text-white font-bold truncate">{inspectingEnvelope.host}:{inspectingEnvelope.port}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 uppercase">Security</div>
+                      <div className="text-emerald-400 font-bold truncate">{inspectingEnvelope.encryption}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 uppercase">Auth User</div>
+                      <div className="text-amber-400 font-bold truncate">{inspectingEnvelope.authSender}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-gray-500 uppercase">Status</div>
+                      <div className="text-emerald-400 font-bold">250 OK Delivered</div>
+                    </div>
+                  </div>
+
+                  {/* Envelope Meta */}
+                  <div className="space-y-1.5 bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                    <div><span className="text-gray-500">Message-ID:</span> <span className="text-amber-300 select-all">{inspectingEnvelope.messageId}</span></div>
+                    <div><span className="text-gray-500">From:</span> <span className="text-white select-all">{inspectingEnvelope.from}</span></div>
+                    <div><span className="text-gray-500">To:</span> <span className="text-emerald-300 select-all">{inspectingEnvelope.to}</span></div>
+                    <div><span className="text-gray-500">Subject:</span> <span className="text-white select-all">{inspectingEnvelope.subject}</span></div>
+                    <div><span className="text-gray-500">Timestamp:</span> <span className="text-gray-400">{inspectingEnvelope.date}</span></div>
+                  </div>
+
+                  {/* Raw MIME Headers */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Raw RFC Headers:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (inspectingEnvelope.rawHeaders) {
+                            navigator.clipboard.writeText(inspectingEnvelope.rawHeaders);
+                            alert("Copied raw headers to clipboard!");
+                          }
+                        }}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                      >
+                        Copy Headers
+                      </button>
+                    </div>
+                    <pre className="p-3 bg-black/60 rounded-xl border border-gray-800 text-[11px] text-gray-300 overflow-x-auto whitespace-pre leading-relaxed">
+                      {inspectingEnvelope.rawHeaders || 'No raw headers recorded.'}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-gray-800 bg-gray-950 flex justify-between items-center">
+                  <span className="text-[11px] text-gray-400">
+                    Compiled Payload: {inspectingEnvelope.rawHtml ? `${inspectingEnvelope.rawHtml.length.toLocaleString()} bytes` : 'N/A'}
+                  </span>
+                  <button 
+                    type="button"
+                    onClick={() => setInspectingEnvelope(null)} 
+                    className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Close Inspector
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* ENTERPRISE EXTENDED CONFIGURATION DOMAIN PANELS */}
+          {/* ========================================================= */}
+
+          {/* 1. BRANDING & MULTI-LOGO */}
+          {activeTab === 'branding' && (
+            <BrandingSettingsPanel
+              logos={extendedSettings.logos || []}
+              brandColor={extendedSettings.brandColor}
+              accentColor={extendedSettings.accentColor}
+              borderRadius={extendedSettings.borderRadius}
+              sidebarTheme={extendedSettings.sidebarTheme}
+              themePreset={extendedSettings.themePreset}
+              onChangeLogos={(logos) => updateExtendedSettings({ logos })}
+              onChangeTheme={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 2. GENERAL SETTINGS */}
+          {(activeTab === 'general' || activeTab === 'system') && (
+            <GeneralSettingsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 3. COMPANY INFORMATION */}
+          {activeTab === 'company' && (
+            <CompanySettingsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 4. CONTACT DIRECTORY */}
+          {activeTab === 'contacts' && (
+            <ContactSettingsPanel
+              contacts={extendedSettings.contactProfiles || []}
+              onChangeContacts={(contactProfiles) => updateExtendedSettings({ contactProfiles })}
+            />
+          )}
+
+          {/* 5. PAYMENT LINKS & BILLING */}
+          {(activeTab === 'payment-links' || activeTab === 'payment-billing') && (
+            <PaymentBillingPanel
+              gateways={extendedSettings.paymentGateways || []}
+              onChangeGateways={(paymentGateways) => updateExtendedSettings({ paymentGateways })}
+            />
+          )}
+
+          {/* 6. SECURITY, AUTHENTICATION & PERMISSIONS */}
+          {(activeTab === 'security' || activeTab === 'authentication' || activeTab === 'permissions') && (
+            <SecuritySettingsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 7. NOTIFICATIONS MATRIX */}
+          {activeTab === 'notifications' && (
+            <NotificationSettingsPanel
+              rules={extendedSettings.notificationRules || []}
+              onChangeRules={(notificationRules) => updateExtendedSettings({ notificationRules })}
+            />
+          )}
+
+          {/* 8. API & INTEGRATIONS */}
+          {activeTab === 'api-integrations' && (
+            <ApiStorageCdnPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 9. STORAGE & MEDIA */}
+          {activeTab === 'storage' && (
+            <ApiStorageCdnPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 10. CDN & EDGE CACHE */}
+          {activeTab === 'cdn' && (
+            <ApiStorageCdnPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 11. DATABASE & BACKUP */}
+          {(activeTab === 'database-backup' || activeTab === 'backup') && (
+            <MaintenanceDiagnosticsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 12. SYSTEM MAINTENANCE & HEALTH AUDIT */}
+          {activeTab === 'maintenance' && (
+            <MaintenanceDiagnosticsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 13. SEO & SOCIAL GRAPH */}
+          {activeTab === 'seo' && (
+            <SeoTaxPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+              activeMode="seo"
+            />
+          )}
+
+          {/* 14. LOCALIZATION & FINANCIAL */}
+          {activeTab === 'localization' && (
+            <GeneralSettingsPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+            />
+          )}
+
+          {/* 15. TAX & FINANCIAL */}
+          {activeTab === 'tax-financial' && (
+            <SeoTaxPanel
+              settings={extendedSettings}
+              onChange={(updates) => updateExtendedSettings(updates)}
+              activeMode="tax"
+            />
+          )}
+
+          {/* 16. VERSION HISTORY & PORTABLE CONFIGURATION */}
+          {activeTab === 'advanced' && (
+            <VersionHistoryExportPanel
+              onRefreshSettings={refreshAllSettings}
+            />
+          )}
+
+          {/* 17. USERS & ROLES MATRIX */}
+          {activeTab === 'users-roles' && (
+            <div className="space-y-6 animate-fade-in text-gray-200">
+              <div className="pb-6 border-b border-gray-800 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold font-heading text-white flex items-center gap-2.5">
+                    <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                      <Users size={20} />
+                    </span>
+                    Administrator Accounts & Role Access Matrix
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Manage administrative users, credentials, role assignments, and granular security privileges.
+                  </p>
+                </div>
+                <Button onClick={() => handleOpenUserModal()}>
+                  <Plus size={16} className="mr-1.5" /> Add Administrator
+                </Button>
+              </div>
+
+              {/* User cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {adminUsers.map(u => (
+                  <div key={u.id} className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 flex justify-between items-center">
+                    <div>
+                      <div className="text-sm font-bold text-white">{u.name}</div>
+                      <div className="text-xs text-gray-400">{u.email}</div>
+                      <span className="inline-block mt-2 text-[10px] font-mono px-2 py-0.5 rounded bg-gray-800 text-amber-400 border border-gray-700">
+                        {u.role}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenUserModal(u)}
+                        className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(u.id)}
+                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 18. PLATFORM SETTINGS */}
+          {activeTab === 'platform' && (
+            <div className="space-y-6 animate-fade-in text-gray-200">
+              <div className="pb-6 border-b border-gray-800">
+                <h3 className="text-xl font-bold font-heading text-white flex items-center gap-2.5">
+                  <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                    <Sliders size={20} />
+                  </span>
+                  Platform Operations & Registration Policies
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Control student registration gates, session timeouts, and file limits.
+                </p>
+              </div>
+
+              <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-6 space-y-4">
+                <label className="flex items-center justify-between p-3 rounded-lg bg-gray-950/60 border border-gray-800 cursor-pointer">
+                  <div>
+                    <div className="text-xs font-bold text-white">Allow Public Student Registrations</div>
+                    <div className="text-[11px] text-gray-400">When enabled, students can create online learning portal accounts.</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={extendedSettings.allowNewRegistrations}
+                    onChange={(e) => updateExtendedSettings({ allowNewRegistrations: e.target.checked })}
+                    className="rounded border-gray-700 text-amber-400"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-3 rounded-lg bg-gray-950/60 border border-gray-800 cursor-pointer">
+                  <div>
+                    <div className="text-xs font-bold text-white">Guest Public Course Browsing</div>
+                    <div className="text-[11px] text-gray-400">Allow visitors to view course schedules and syllabi without signing in.</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={extendedSettings.allowGuestAccess}
+                    onChange={(e) => updateExtendedSettings({ allowGuestAccess: e.target.checked })}
+                    className="rounded border-gray-700 text-amber-400"
+                  />
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Session Inactivity Timeout (Min)</label>
+                    <input
+                      type="number"
+                      value={extendedSettings.sessionTimeoutMinutes}
+                      onChange={(e) => updateExtendedSettings({ sessionTimeoutMinutes: Number(e.target.value) })}
+                      className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Pagination Page Size</label>
+                    <input
+                      type="number"
+                      value={extendedSettings.defaultPaginationSize}
+                      onChange={(e) => updateExtendedSettings({ defaultPaginationSize: Number(e.target.value) })}
+                      className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Max Upload Limit (MB)</label>
+                    <input
+                      type="number"
+                      value={extendedSettings.fileUploadLimitMb}
+                      onChange={(e) => updateExtendedSettings({ fileUploadLimitMb: Number(e.target.value) })}
+                      className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-xs text-white font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sticky Unified Save / Discard Bar */}
+          <SettingsStickyBar
+            isDirty={isDirty}
+            isSaving={isSavingExtended}
+            isSaved={isSaved}
+            lastSavedAt={extendedSettings.lastSavedAt}
+            lastSavedBy={extendedSettings.lastSavedBy}
+            onSave={handleSaveExtendedSettings}
+            onCancel={handleCancelExtendedSettings}
+            onResetDefaults={handleResetDefaultExtendedSettings}
+          />
 
         </div>
       </div>

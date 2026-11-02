@@ -8,7 +8,7 @@ import {
   Sun, Moon
 } from 'lucide-react';
 import { getCart, getSettings } from '../services/storageService';
-import { LOGO_URL } from '../constants';
+import { LOGO_URL, LOGO_WHITE_URL } from '../constants';
 
 export const Navbar: React.FC = () => {
   const [settings, setSettings] = useState(getSettings());
@@ -55,9 +55,11 @@ export const Navbar: React.FC = () => {
     };
     window.addEventListener('themeUpdated', handleThemeUpdate);
     window.addEventListener('settingsUpdated', handleThemeUpdate);
+    window.addEventListener('extendedSettingsUpdated', handleThemeUpdate);
     return () => {
       window.removeEventListener('themeUpdated', handleThemeUpdate);
       window.removeEventListener('settingsUpdated', handleThemeUpdate);
+      window.removeEventListener('extendedSettingsUpdated', handleThemeUpdate);
     };
   }, []);
 
@@ -120,16 +122,48 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out ${isSolid ? 'h-[60px] md:h-[66px]' : 'h-[72px] md:h-[80px]'} flex items-center ${navBackgroundClass}`}
+        className={`fixed top-0 left-0 right-0 w-full z-[100] transition-all duration-300 ease-in-out ${isSolid ? 'h-[60px] md:h-[66px]' : 'h-[76px] md:h-[88px]'} flex items-center ${navBackgroundClass}`}
       >
         <div className="container mx-auto px-4 md:px-8">
           <nav className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2 group z-50">
-              <img
-                src={(!isSolid || isDarkMode) ? (settings.lightLogoUrl || settings.darkLogoUrl || LOGO_URL) : (settings.darkLogoUrl || LOGO_URL)}
-                alt="SKYLAR EDUCATION ASIA"
-                className={`${isSolid ? 'h-10 md:h-[44px]' : 'h-12 md:h-[56px]'} -ml-2 md:-ml-4 w-auto transition-all duration-300 object-contain ${!isSolid ? 'brightness-0 invert' : ''}`}
-              />
+              {(() => {
+                const isLightBackground = isSolid && !isDarkMode;
+                const defaultFallback = isLightBackground ? LOGO_URL : LOGO_WHITE_URL;
+                
+                // If header is transparent (not solid), enforce the crisp white brand logo
+                let candidate = '';
+                if (!isSolid) {
+                  candidate = settings.lightLogoUrl || LOGO_WHITE_URL;
+                } else if (isScrolled) {
+                  candidate = settings.stickyLogoUrl || (isLightBackground ? (settings.darkLogoUrl || settings.mainLogoUrl) : settings.lightLogoUrl) || defaultFallback;
+                } else if (isLightBackground) {
+                  candidate = settings.darkLogoUrl || settings.mainLogoUrl || LOGO_URL;
+                } else {
+                  candidate = settings.lightLogoUrl || LOGO_WHITE_URL;
+                }
+
+                // In transparent mode, default to LOGO_WHITE_URL if candidate is missing or invalid
+                const logoSrc = (!isSolid)
+                  ? ((candidate && !candidate.includes('skylar-logo.svg')) ? candidate : LOGO_WHITE_URL)
+                  : ((candidate && !candidate.includes('skylar-logo.svg')) ? candidate : defaultFallback);
+
+                const fallbackSrc = !isSolid ? LOGO_WHITE_URL : defaultFallback;
+
+                return (
+                  <img
+                    src={logoSrc}
+                    alt="SKYLAR EDUCATION ASIA"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== fallbackSrc) {
+                        target.src = fallbackSrc;
+                      }
+                    }}
+                    className={`${isSolid ? 'h-10 md:h-12' : 'h-14 md:h-16 lg:h-18 brightness-0 invert'} -ml-1 md:-ml-2 w-auto transition-all duration-300 object-contain drop-shadow-sm`}
+                  />
+                );
+              })()}
             </Link>
 
             {/* Desktop Navigation */}

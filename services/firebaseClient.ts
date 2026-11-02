@@ -172,7 +172,15 @@ export async function compressImage(
   quality = 0.85
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const mime = source instanceof File ? source.type : 'image/jpeg';
+    let mime = 'image/jpeg';
+    if (source instanceof File || source instanceof Blob) {
+      mime = source.type || 'image/jpeg';
+    } else if (typeof source === 'string') {
+      if (source.startsWith('data:image/png')) mime = 'image/png';
+      else if (source.startsWith('data:image/webp')) mime = 'image/webp';
+      else if (source.startsWith('data:image/svg+xml')) mime = 'image/svg+xml';
+    }
+
     if (mime === 'image/svg+xml') {
       if (source instanceof Blob) return resolve(source);
       return resolve(dataUrlToBlob(source as string));
@@ -208,6 +216,7 @@ export async function compressImage(
         return resolve(dataUrlToBlob(source as string));
       }
 
+      ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob(
         (blob) => {
@@ -219,7 +228,7 @@ export async function compressImage(
           }
         },
         mime,
-        quality
+        mime === 'image/png' ? undefined : quality
       );
     };
 
@@ -244,14 +253,16 @@ export async function compressImage(
 
 /**
  * Compresses an image source to an ultra-compact Base64 Data URL (<25KB)
+ * Preserves alpha transparency for PNG and WebP images.
  */
 export async function compressToDataUrl(
   source: File | Blob | string,
   maxWidth = 800,
   maxHeight = 800,
-  quality = 0.6
+  quality = 0.8
 ): Promise<string> {
   return new Promise((resolve) => {
+    // Preserve SVG vector data directly
     if (source instanceof File && source.type === 'image/svg+xml') {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -261,6 +272,16 @@ export async function compressToDataUrl(
     }
     if (typeof source === 'string' && source.startsWith('data:image/svg+xml')) {
       return resolve(source);
+    }
+
+    // Determine target MIME type from input
+    let targetMime = 'image/jpeg';
+    if (source instanceof File || source instanceof Blob) {
+      if (source.type === 'image/png') targetMime = 'image/png';
+      else if (source.type === 'image/webp') targetMime = 'image/webp';
+    } else if (typeof source === 'string') {
+      if (source.startsWith('data:image/png')) targetMime = 'image/png';
+      else if (source.startsWith('data:image/webp')) targetMime = 'image/webp';
     }
 
     const img = new Image();
@@ -296,8 +317,14 @@ export async function compressToDataUrl(
         return;
       }
 
+      // Explicitly clear canvas to preserve transparency for PNG/WebP
+      ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+      // Export using target MIME type
+      const dataUrl = targetMime === 'image/png' 
+        ? canvas.toDataURL('image/png') 
+        : canvas.toDataURL(targetMime, quality);
       resolve(dataUrl);
     };
 
@@ -447,14 +474,21 @@ export const firebaseClient = {
         ? `${timestamp}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}` 
         : `media_${timestamp}`;
 
-      const compressedDataUrl = await compressToDataUrl(fileOrDataUrl, 960, 960, 0.7);
+      const compressedDataUrl = await compressToDataUrl(fileOrDataUrl, 960, 960, 0.8);
+
+      // Determine correct mimeType
+      let mimeType = 'image/jpeg';
+      if (compressedDataUrl.startsWith('data:image/png')) mimeType = 'image/png';
+      else if (compressedDataUrl.startsWith('data:image/webp')) mimeType = 'image/webp';
+      else if (compressedDataUrl.startsWith('data:image/svg+xml')) mimeType = 'image/svg+xml';
+      else if (compressedDataUrl.startsWith('data:image/gif')) mimeType = 'image/gif';
 
       if (!isFirestoreQuotaExhaustedOrBlocked) {
         const mediaRecord = {
           id: mediaId,
           path: path.replace(/^\/+|\/+$/g, ''),
           dataUrl: compressedDataUrl,
-          mimeType: 'image/jpeg',
+          mimeType: mimeType,
           size: compressedDataUrl.length,
           created_at: new Date().toISOString()
         };
@@ -464,7 +498,7 @@ export const firebaseClient = {
       return compressedDataUrl;
     } catch (err: any) {
       if (typeof fileOrDataUrl === 'string') return fileOrDataUrl;
-      return await compressToDataUrl(fileOrDataUrl, 800, 800, 0.6);
+      return await compressToDataUrl(fileOrDataUrl, 800, 800, 0.8);
     }
   },
 

@@ -48,6 +48,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotFound } from './pages/NotFound';
 import { getThemeSettings, getPageContent, initializeFirebase, getSettings, initCloudSync } from './services/storageService';
 import { ThemeSettings } from './types';
+import { LOGO_URL, LOGO_WHITE_URL } from './constants';
 
 // Helper to map route paths to CMS Page IDs
 const getPageIdFromPath = (path: string): string => {
@@ -218,8 +219,9 @@ const App: React.FC = () => {
 
   if (loading) {
     const settings = getSettings();
-    const logoSrc = settings.loadingLogoUrl || settings.lightLogoUrl || "/skylar-logo.svg";
-    const hasCustomLogo = !!(settings.loadingLogoUrl || settings.lightLogoUrl);
+    // Loading screen is dark background (#192436); prioritize valid custom loading logo, otherwise use crisp white official brand logo
+    const validCustomUrl = (url?: string) => (url && !url.includes('skylar-logo.svg') && !url.endsWith('.svg')) ? url : '';
+    const logoSrc = validCustomUrl(settings.loadingLogoUrl) || LOGO_WHITE_URL;
 
     return (
       <div style={{
@@ -267,15 +269,23 @@ const App: React.FC = () => {
           textAlign: 'center',
           padding: '20px'
         }}>
-          {/* Logo with unconditional white filter for dark loading screen */}
+          {/* Official Brand Logo */}
           <img
             src={logoSrc}
             alt="SKYLAR EDUCATION ASIA"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src !== LOGO_WHITE_URL) {
+                target.src = LOGO_WHITE_URL;
+              }
+            }}
             style={{
-              height: '96px',
+              height: '76px',
+              maxWidth: '340px',
               width: 'auto',
+              objectFit: 'contain',
               marginBottom: '32px',
-              filter: 'brightness(0) invert(1)',
+              filter: 'none',
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
             }}
           />

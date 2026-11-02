@@ -354,7 +354,8 @@ button, input, select, textarea {
 }
 
 .logo-color-white {
-  filter: brightness(0) invert(1) !important;
+  /* Retain bright white rendering for monochrome icons/SVGs while preventing canvas blowouts */
+  filter: brightness(0) invert(1);
 }
 
 /* Hero Slider Custom Smooth Animations */
@@ -486,5 +487,16 @@ button, input, select, textarea {
   color: #041024 !important;
 }
 
+/* Hide scrollbar for clean UI while keeping scrollability if ever needed */
+.scrollbar-none::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
 
-
+.scrollbar-none,
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

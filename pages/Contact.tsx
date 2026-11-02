@@ -7,6 +7,7 @@ import { getPageContent, saveTicket, saveInquiry } from '../services/storageServ
 import { firebaseClient } from '../services/firebaseClient';
 import { SitePage, CourseInquiry } from '../types';
 import { Link } from 'react-router-dom';
+import { sendContactConfirmationEmail, sendContactAdminAlert } from '../services/emailService';
 
 // Helper to map icon names to components
 const IconMap: Record<string, any> = {
@@ -88,6 +89,25 @@ export const Contact: React.FC = () => {
         mobile: formData.mobile || undefined,
         message: formData.message,
       });
+
+      // Dispatch automated transactional email notifications
+      const contactPayload = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.mobile?.trim(),
+        message: formData.message.trim(),
+        referenceCode: refCode,
+        subject: `Contact Page Form Submission (${refCode})`
+      };
+
+      try {
+        await Promise.allSettled([
+          sendContactConfirmationEmail(contactPayload),
+          sendContactAdminAlert(contactPayload)
+        ]);
+      } catch (emailErr) {
+        console.warn("[Contact Email Dispatch Warning]:", emailErr);
+      }
 
       setStatus('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });

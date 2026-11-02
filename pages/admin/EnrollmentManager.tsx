@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { getStudents, getCourses, saveStudent, getSections, addAuditLog } from '../../services/storageService';
+import { triggerSystemEmail } from '../../services/emailService';
 import { Student, Course, SchoolSection } from '../../types';
 
 export const EnrollmentManager: React.FC = () => {
@@ -26,7 +27,7 @@ export const EnrollmentManager: React.FC = () => {
     setSections(getSections());
   }, []);
 
-  const handleStatusChange = (student: Student, newStatus: 'Active' | 'Rejected' | 'Waitlisted') => {
+  const handleStatusChange = async (student: Student, newStatus: 'Active' | 'Rejected' | 'Waitlisted') => {
     let updatedStudent = { ...student, status: newStatus };
     
     // Assign Section on approval
@@ -37,12 +38,39 @@ export const EnrollmentManager: React.FC = () => {
     saveStudent(updatedStudent);
     setStudents(prev => prev.map(s => s.id === student.id ? updatedStudent : s));
     addAuditLog('Enrollment Status Change', `Changed status of ${student.firstName} to ${newStatus}`, 'Enrollment');
+    
+    // Dispatch automated transactional email via active SMTP
+    if (newStatus === 'Active') {
+      const course = courses.find(c => c.id === student.courseId);
+      triggerSystemEmail('Account Approved', student.email, {
+        user_name: `${student.firstName} ${student.lastName}`,
+        first_name: student.firstName,
+        last_name: student.lastName,
+        student_name: `${student.firstName} ${student.lastName}`,
+        student_email: student.email,
+        course_title: course?.title || 'Industrial Training Program',
+        course_name: course?.title || 'Industrial Training Program'
+      }).catch(err => console.error('[Auto Email Error]', err));
+    }
+
     setSelectedStudent(null);
     setAssignSectionId('');
   };
 
-  const handleSendReminder = (student: Student) => {
-      alert(`Reminder sent to ${student.email} regarding missing documents.`);
+  const handleSendReminder = async (student: Student) => {
+      const course = courses.find(c => c.id === student.courseId);
+      const res = await triggerSystemEmail('Reminder', student.email, {
+        student_name: `${student.firstName} ${student.lastName}`,
+        user_name: `${student.firstName} ${student.lastName}`,
+        first_name: student.firstName,
+        student_email: student.email,
+        course_title: course?.title || 'Safety Training Course',
+        start_date: student.enrollmentDate || 'Upcoming Intake'
+      });
+
+      alert(res.success 
+        ? `Reminder email dispatched to ${student.email} via configured SMTP.` 
+        : `SMTP Notice: ${res.message}`);
       addAuditLog('Notification Sent', `Sent document reminder to ${student.firstName}`, 'Enrollment');
   };
 
